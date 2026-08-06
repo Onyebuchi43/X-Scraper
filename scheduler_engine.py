@@ -588,11 +588,12 @@ class _Campaign:
                 self._log("POST", f"{acc_label} → {taggings[:80]}")
                 result = poster.post_tweet(acc["auth_token"], acc["ct0"], tweet_text)
 
-                if result.get("error"):
-                    err_type = result.get("error_type") or poster.classify_account_error(result["error"], result.get("status_code"))
+                if result.get("error") or not result.get("tweet_id"):
+                    err_msg = result.get("error") or "Post verification failed: No tweet ID returned"
+                    err_type = result.get("error_type") or poster.classify_account_error(err_msg, result.get("status_code"))
 
                     if err_type == "BLOCKED":
-                        self._log("ERROR", f"🚨 {acc_label} has been BLOCKED/SUSPENDED ({result['error']}). Automatically removing account from database!")
+                        self._log("ERROR", f"🚨 {acc_label} has been BLOCKED/SUSPENDED ({err_msg}). Automatically removing account from database!")
                         if acc_id:
                             _delete_account_from_db(acc_id)
                         accounts.pop(account_i)
@@ -602,21 +603,20 @@ class _Campaign:
                             _set_status(campaign_id, "error")
                             return
                         continue
-                    elif err_type == "RATE_LIMIT":
-                        self._log("WARNING", f"⏳ {acc_label} is RATE LIMITED / RESTRICTED ({result['error']}). Leaving account to cool down (15m).")
-                        acc["cooldown_until"] = time.time() + 900
+                    else:
+                        cooldown_mins = 30
+                        self._log("WARNING", f"⏳ {acc_label} post did not complete ({err_msg}). Cooling down account for {cooldown_mins} minutes to protect account safety.")
+                        acc["cooldown_until"] = time.time() + (cooldown_mins * 60)
                         queue = batch + queue
                         account_i += 1
                         continue
-                    else:
-                        self._log("ERROR", f"Tweet failed: {result['error']}")
                 else:
                     _mark_tagged(campaign_id, batch)
                     already_tagged.update(h.lower() for h in batch)
                     account_post_counts[acc_key] = account_post_counts.get(acc_key, 0) + 1
                     total_posts += 1
                     posts_in_this_round += 1
-                    self._log("SUCCESS", f"Tweeted: {result.get('tweet_url', 'no URL')}")
+                    self._log("SUCCESS", f"Tweet Verified & Posted: {result.get('tweet_url', 'URL verified')}")
 
                 account_i += 1
 

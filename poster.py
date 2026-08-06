@@ -413,6 +413,13 @@ def post_tweet(
         )
         resp.raise_for_status()
         data = resp.json()
+        if data.get("errors"):
+            first_err = data["errors"][0]
+            err_msg = first_err.get("message", str(first_err))
+            logger.warning("post_tweet GraphQL error: %s", err_msg)
+            err_type = classify_account_error(err_msg, resp.status_code)
+            return {"tweet_id": "", "tweet_url": "", "error": f"GraphQL Error: {err_msg}", "error_type": err_type, "status_code": resp.status_code}
+
         result = (
             data.get("data", {})
             .get("create_tweet", {})
@@ -420,6 +427,10 @@ def post_tweet(
             .get("result", {})
         )
         tweet_id = result.get("rest_id", "")
+        if not tweet_id:
+            logger.warning("post_tweet response missing rest_id: %s", str(data)[:300])
+            return {"tweet_id": "", "tweet_url": "", "error": "Post Verification Failed: No tweet ID returned by Twitter/X API", "error_type": "RATE_LIMIT", "status_code": resp.status_code}
+
         screen_name = (
             result.get("core", {})
             .get("user_results", {})
@@ -427,7 +438,7 @@ def post_tweet(
             .get("legacy", {})
             .get("screen_name", "unknown")
         )
-        tweet_url = f"https://x.com/{screen_name}/status/{tweet_id}" if tweet_id else ""
+        tweet_url = f"https://x.com/{screen_name}/status/{tweet_id}"
         return {"tweet_id": tweet_id, "tweet_url": tweet_url, "error": None, "error_type": None, "status_code": 200}
     except httpx.HTTPStatusError as exc:
         status_code = exc.response.status_code
