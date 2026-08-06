@@ -623,6 +623,15 @@ def delete_all_campaigns():
     return jsonify({"msg": "All campaigns deleted"})
 
 
+def _get_scheduler_engine():
+    try:
+        import scheduler_engine
+        return scheduler_engine
+    except ImportError:
+        from dashboard import scheduler_engine  # type: ignore
+        return scheduler_engine
+
+
 @app.route("/api/campaigns/<int:cid>", methods=["GET", "DELETE"])
 def get_campaign(cid: int):
     conn = _db()
@@ -634,8 +643,7 @@ def get_campaign(cid: int):
     if request.method == "DELETE":
         conn.close()
         try:
-            from dashboard import scheduler_engine  # type: ignore
-            scheduler_engine.stop_campaign(cid)
+            _get_scheduler_engine().stop_campaign(cid)
         except Exception:
             pass
         conn2 = _db()
@@ -675,16 +683,14 @@ def start_campaign(cid: int):
     conn.close()
     config["accounts"] = accounts
 
-    from dashboard import scheduler_engine  # type: ignore
-    scheduler_engine.launch_campaign(cid, config)
+    _get_scheduler_engine().launch_campaign(cid, config)
 
     return jsonify({"msg": "Campaign started"})
 
 
 @app.route("/api/campaigns/<int:cid>/stop", methods=["POST"])
 def stop_campaign(cid: int):
-    from dashboard import scheduler_engine  # type: ignore
-    ok = scheduler_engine.stop_campaign(cid)
+    ok = _get_scheduler_engine().stop_campaign(cid)
     return jsonify({"msg": "Stop signal sent" if ok else "Campaign not running"})
 
 
