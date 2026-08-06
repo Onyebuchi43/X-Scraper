@@ -28,7 +28,25 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # ── Active campaign registry ───────────────────────────────────────────────────
 _campaigns: dict[int, "_Campaign"] = {}
+_GLOBAL_ACCOUNT_COOLDOWNS: dict[int, float] = {}
 _lock = threading.RLock()
+
+
+def set_account_cooldown(account_id: int, duration_seconds: float) -> None:
+    with _lock:
+        if account_id:
+            _GLOBAL_ACCOUNT_COOLDOWNS[account_id] = time.time() + duration_seconds
+
+
+def get_account_cooldown(account_id: int) -> float:
+    with _lock:
+        return _GLOBAL_ACCOUNT_COOLDOWNS.get(account_id, 0.0)
+
+
+def is_account_cooling(account_id: int) -> bool:
+    with _lock:
+        until = _GLOBAL_ACCOUNT_COOLDOWNS.get(account_id, 0.0)
+        return until > time.time()
 
 
 def get_campaign(campaign_id: int) -> Optional["_Campaign"]:
@@ -474,7 +492,8 @@ class _Campaign:
                 acc_key = acc_id or account_i
 
                 # Skip account if cooling down or max limit reached
-                if acc.get("cooldown_until", 0) > time.time():
+                cooldown_until = get_account_cooldown(acc_id) if acc_id else acc.get("cooldown_until", 0)
+                if cooldown_until > time.time():
                     account_i += 1
                     continue
 
@@ -607,6 +626,8 @@ class _Campaign:
                     else:
                         cooldown_mins = 30
                         self._log("WARNING", f"⏳ {acc_label} post did not complete ({err_msg}). Cooling down account for {cooldown_mins} minutes to protect account safety.")
+                        if acc_id:
+                            set_account_cooldown(acc_id, cooldown_mins * 60)
                         acc["cooldown_until"] = time.time() + (cooldown_mins * 60)
                         queue = batch + queue
                         account_i += 1
@@ -631,7 +652,10 @@ class _Campaign:
                 _set_status(campaign_id, "stopped")
                 break
 
-            all_cooling = all(a.get("cooldown_until", 0) > time.time() for a in accounts)
+            all_cooling = all(
+                is_account_cooling(a.get("id")) if a.get("id") else (a.get("cooldown_until", 0) > time.time())
+                for a in accounts
+            )
             all_maxed = all(account_post_counts.get(a.get("id") or idx, 0) >= max_posts_per_account for idx, a in enumerate(accounts))
 
             if all_maxed:
