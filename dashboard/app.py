@@ -691,6 +691,10 @@ def start_campaign(cid: int):
 @app.route("/api/campaigns/<int:cid>/stop", methods=["POST"])
 def stop_campaign(cid: int):
     ok = _get_scheduler_engine().stop_campaign(cid)
+    conn = _db()
+    conn.execute("UPDATE campaigns SET status='stopped', updated_at=CURRENT_TIMESTAMP WHERE id=?", (cid,))
+    conn.commit()
+    conn.close()
     return jsonify({"msg": "Stop signal sent" if ok else "Campaign not running"})
 
 

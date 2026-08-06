@@ -37,6 +37,7 @@ def get_campaign(campaign_id: int) -> Optional["_Campaign"]:
 
 
 def stop_campaign(campaign_id: int) -> bool:
+    _set_status(campaign_id, "stopped")
     with _lock:
         c = _campaigns.get(campaign_id)
         if c:

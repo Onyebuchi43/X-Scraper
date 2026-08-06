@@ -463,11 +463,13 @@ async function stopCampaign() {
 }
 
 async function stopCampaignId(cid) {
-  const res = await api(`/api/campaigns/${cid}/stop`, { method: 'POST' });
+  await api(`/api/campaigns/${cid}/stop`, { method: 'POST' });
   toast(`Campaign #${cid} stopped`, 'info');
   const stopBtn = document.getElementById('stop-btn');
   const resumeBtn = document.getElementById('resume-btn');
+  const pill = document.getElementById('camp-status-pill');
   if (currentCampaignId === cid) {
+    if (pill) { pill.textContent = 'stopped'; pill.setAttribute('data-s', 'stopped'); }
     if (stopBtn) stopBtn.style.display = 'none';
     if (resumeBtn) resumeBtn.style.display = 'inline-flex';
   }
@@ -654,11 +656,7 @@ async function loadCampaignDbPanel() {
               <td><span class="status-pill" data-status="${c.status}">${c.status}</span></td>
               <td><strong>${c.tagged_count.toLocaleString()}</strong></td>
               <td style="display:flex;gap:4px;flex-wrap:wrap;">
-                ${c.status === 'running'
-                  ? `<button class="btn btn-sm btn-danger" onclick="stopCampaignId(${c.id})">⏹ Stop</button>`
-                  : `<button class="btn btn-sm btn-success" onclick="resumeCampaign(${c.id})">▶ Resume</button>`
-                }
-                <button class="btn btn-sm btn-ghost" onclick="selectCampaignForLogs(${c.id})">👁 Logs</button>
+                <button class="btn btn-sm btn-success" onclick="resumeCampaign(${c.id})">▶ Resume</button>
                 <button class="btn btn-sm btn-ghost" onclick="clearCampaignTagged(${c.id})">🗑 Clear</button>
                 <button class="btn btn-sm btn-danger" onclick="deleteCampaign(${c.id})">✕ Delete</button>
               </td>
