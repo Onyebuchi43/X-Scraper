@@ -49,6 +49,17 @@ def add_header(response):
 def favicon():
     return "", 204
 
+
+@app.route("/health")
+@app.route("/api/health")
+def health_check():
+    return jsonify({
+        "status": "healthy",
+        "service": "X-Scraper 24/7 Engine",
+        "time": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime())
+    }), 200
+
+
 for _d in [app.config["UPLOAD_FOLDER"], app.config["GENERATED_FOLDER"], "outputs"]:
     os.makedirs(_d, exist_ok=True)
 
@@ -60,8 +71,12 @@ DASH_DB = os.path.join(os.path.dirname(__file__), "dashboard.db")
 
 
 def _db() -> sqlite3.Connection:
-    conn = sqlite3.connect(DASH_DB)
+    conn = sqlite3.connect(DASH_DB, timeout=30.0)
     conn.row_factory = sqlite3.Row
+    try:
+        conn.execute("PRAGMA journal_mode=WAL;")
+    except Exception:
+        pass
     return conn
 
 
