@@ -465,6 +465,12 @@ async function stopCampaign() {
   document.getElementById('resume-btn').style.display = 'inline-flex';
 }
 
+async function stopCampaignId(cid) {
+  await api(`/api/campaigns/${cid}/stop`, { method: 'POST' });
+  toast(`Campaign #${cid} stopped`, 'info');
+  loadCampaignDbPanel();
+}
+
 async function resumeCampaign(cid) {
   currentCampaignId = cid;
   const res = await api(`/api/campaigns/${cid}/resume`, { method: 'POST' });
@@ -635,7 +641,10 @@ async function loadCampaignDbPanel() {
               <td><span class="status-pill" data-status="${c.status}">${c.status}</span></td>
               <td><strong>${c.tagged_count.toLocaleString()}</strong></td>
               <td style="display:flex;gap:4px;flex-wrap:wrap;">
-                ${c.status !== 'running' ? `<button class="btn btn-sm btn-success" onclick="resumeCampaign(${c.id})">▶ Resume</button>` : ''}
+                ${c.status === 'running'
+                  ? `<button class="btn btn-sm btn-danger" onclick="stopCampaignId(${c.id})">⏹ Stop</button>`
+                  : `<button class="btn btn-sm btn-success" onclick="resumeCampaign(${c.id})">▶ Resume</button>`
+                }
                 <button class="btn btn-sm btn-ghost" onclick="clearCampaignTagged(${c.id})">🗑 Clear</button>
                 <button class="btn btn-sm btn-danger" onclick="deleteCampaign(${c.id})">✕ Delete</button>
               </td>
