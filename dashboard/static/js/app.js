@@ -387,10 +387,10 @@ async function generateImage() { return generateCardImage(); }
 
 // ══ Campaign ══════════════════════════════════════════════════════════════════
 async function startCampaign() {
-  const accountIds = Array.from(
-    document.getElementById('c-accounts').selectedOptions
-  ).map(o => parseInt(o.value));
-  if (!accountIds.length) { toast('Select at least one posting account', 'error'); return; }
+  const checkedBoxes = Array.from(document.querySelectorAll('.chk-account:checked')).map(cb => parseInt(cb.value));
+  const selectOpts = document.getElementById('c-accounts') ? Array.from(document.getElementById('c-accounts').selectedOptions).map(o => parseInt(o.value)) : [];
+  const accountIds = Array.from(new Set([...checkedBoxes, ...selectOpts])).filter(id => !isNaN(id));
+  if (!accountIds.length) { toast('Select at least one posting account in Step 1', 'error'); return; }
 
   const source_profiles = val('c-source-profiles');
   if (!source_profiles) { toast('Enter at least one source profile to scrape from', 'error'); return; }
