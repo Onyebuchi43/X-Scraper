@@ -344,7 +344,10 @@ class _Campaign:
 
     # ── Main loop ─────────────────────────────────────────────────────────────
     def _run(self) -> None:
-        from . import poster, image_editor  # type: ignore
+        try:
+            from . import poster, image_editor  # type: ignore
+        except ImportError:
+            import poster, image_editor  # type: ignore
 
         cfg = self.config
         campaign_id = self.campaign_id
