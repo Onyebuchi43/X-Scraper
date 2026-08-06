@@ -28,7 +28,7 @@ dashboard/generated_images/
 *.log
 *.png
 !assets/*.png
-elonmusk_followers.json
+!test_card.png
 
 # Ignore IDE settings
 .idea/

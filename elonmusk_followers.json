@@ -1,0 +1,5821 @@
+[
+  {
+    "type": "followers",
+    "target": {
+      "raw": "elonmusk",
+      "source": "users",
+      "user_id": "",
+      "username": "elonmusk",
+      "profile_url": ""
+    },
+    "user_id": "95092020",
+    "username": "jordanbpeterson",
+    "name": "Dr Jordan B Peterson",
+    "description": "Best-Selling Author | Clinical Psychologist | #1 Education Podcast | Co-founder of @petersonacademy | Order my new book \"We Who Wrestle With God\" here:",
+    "location": null,
+    "created_at": "Sun Dec 06 23:33:02 +0000 2009",
+    "followers_count": 6181801,
+    "following_count": 1651,
+    "statuses_count": 51572,
+    "favourites_count": 252,
+    "media_count": 7384,
+    "listed_count": 14783,
+    "verified": false,
+    "blue_verified": true,
+    "protected": false,
+    "profile_image_url": "https://pbs.twimg.com/profile_images/1407056014776614923/TKBC60e1_normal.jpg",
+    "profile_banner_url": "https://pbs.twimg.com/profile_banners/95092020/1768079001",
+    "url": "https://t.co/KgUEvmxeQD",
+    "raw": {
+      "__typename": "User",
+      "affiliates_highlighted_label": {
+        "label": {
+          "badge": {
+            "url": "https://pbs.twimg.com/profile_images/2010195782155350017/0xKKxQJs_bigger.jpg"
+          },
+          "description": "Peterson Academy",
+          "url": {
+            "url": "https://twitter.com/petersonacademy",
+            "urlType": "DeepLink"
+          },
+          "userLabelDisplayType": "Badge",
+          "userLabelType": "BusinessLabel"
+        }
+      },
+      "avatar": {
+        "image_url": "https://pbs.twimg.com/profile_images/1407056014776614923/TKBC60e1_normal.jpg"
+      },
+      "core": {
+        "created_at": "Sun Dec 06 23:33:02 +0000 2009",
+        "name": "Dr Jordan B Peterson",
+        "screen_name": "jordanbpeterson"
+      },
+      "dm_permissions": {
+        "can_dm": true
+      },
+      "follow_request_sent": false,
+      "has_graduated_access": true,
+      "id": "VXNlcjo5NTA5MjAyMA==",
+      "is_blue_verified": true,
+      "legacy": {
+        "default_profile": false,
+        "default_profile_image": false,
+        "description": "Best-Selling Author | Clinical Psychologist | #1 Education Podcast | Co-founder of @petersonacademy | Order my new book \"We Who Wrestle With God\" here:",
+        "entities": {
+          "description": {},
+          "url": {
+            "urls": [
+              {
+                "display_url": "jordanbpeterson.com/books",
+                "expanded_url": "http://jordanbpeterson.com/books",
+                "indices": [
+                  0,
+                  23
+                ],
+                "url": "https://t.co/KgUEvmxeQD"
+              }
+            ]
+          }
+        },
+        "fast_followers_count": 0,
+        "favourites_count": 252,
+        "follow_request_sent": false,
+        "followers_count": 6181801,
+        "friends_count": 1651,
+        "has_custom_timelines": true,
+        "is_translator": false,
+        "listed_count": 14783,
+        "media_count": 7384,
+        "needs_phone_verification": false,
+        "normal_followers_count": 6181801,
+        "notifications": false,
+        "pinned_tweet_ids_str": [
+          "2084670704742527257"
+        ],
+        "possibly_sensitive": false,
+        "profile_banner_url": "https://pbs.twimg.com/profile_banners/95092020/1768079001",
+        "profile_interstitial_type": "",
+        "statuses_count": 51572,
+        "time_zone": "",
+        "translator_type": "none",
+        "url": "https://t.co/KgUEvmxeQD",
+        "utc_offset": 0,
+        "want_retweets": false,
+        "withheld_description": "",
+        "withheld_scope": ""
+      },
+      "location": {
+        "location": ""
+      },
+      "media_permissions": {
+        "can_media_tag": false
+      },
+      "parody_commentary_fan_label": "None",
+      "privacy": {
+        "protected": false
+      },
+      "professional": {
+        "category": [
+          {
+            "icon_name": "IconBriefcaseStroke",
+            "id": 144,
+            "name": "Education"
+          }
+        ],
+        "professional_type": "Creator",
+        "rest_id": "1680046132699840514"
+      },
+      "profile_bio": {
+        "description": "Best-Selling Author | Clinical Psychologist | #1 Education Podcast | Co-founder of @petersonacademy | Order my new book \"We Who Wrestle With God\" here:"
+      },
+      "profile_description_language": "en",
+      "profile_image_shape": "Circle",
+      "relationship_perspectives": {
+        "blocked_by": false,
+        "blocking": false,
+        "followed_by": false,
+        "following": false,
+        "muting": false
+      },
+      "rest_id": "95092020",
+      "super_follow_eligible": true,
+      "super_followed_by": false,
+      "super_following": false,
+      "verification": {
+        "verified": false
+      }
+    }
+  },
+  {
+    "type": "followers",
+    "target": {
+      "raw": "elonmusk",
+      "source": "users",
+      "user_id": "",
+      "username": "elonmusk",
+      "profile_url": ""
+    },
+    "user_id": "39344374",
+    "username": "DonaldJTrumpJr",
+    "name": "Donald Trump Jr.",
+    "description": "Co-Founder @worldlibertyfi",
+    "location": "Florida, USA",
+    "created_at": "Mon May 11 21:18:33 +0000 2009",
+    "followers_count": 16213060,
+    "following_count": 2337,
+    "statuses_count": 52436,
+    "favourites_count": 39892,
+    "media_count": 3479,
+    "listed_count": 25631,
+    "verified": false,
+    "blue_verified": true,
+    "protected": false,
+    "profile_image_url": "https://pbs.twimg.com/profile_images/766652495858896897/LjrJJB9a_normal.jpg",
+    "profile_banner_url": "https://pbs.twimg.com/profile_banners/39344374/1674355501",
+    "url": "https://t.co/ni5HwFvEjX",
+    "raw": {
+      "__typename": "User",
+      "affiliates_highlighted_label": {},
+      "avatar": {
+        "image_url": "https://pbs.twimg.com/profile_images/766652495858896897/LjrJJB9a_normal.jpg"
+      },
+      "core": {
+        "created_at": "Mon May 11 21:18:33 +0000 2009",
+        "name": "Donald Trump Jr.",
+        "screen_name": "DonaldJTrumpJr"
+      },
+      "dm_permissions": {
+        "can_dm": false
+      },
+      "follow_request_sent": false,
+      "has_graduated_access": true,
+      "id": "VXNlcjozOTM0NDM3NA==",
+      "is_blue_verified": true,
+      "legacy": {
+        "default_profile": false,
+        "default_profile_image": false,
+        "description": "Co-Founder @worldlibertyfi",
+        "entities": {
+          "description": {},
+          "url": {
+            "urls": [
+              {
+                "display_url": "linktr.ee/donaldjtrumpjr",
+                "expanded_url": "https://linktr.ee/donaldjtrumpjr",
+                "indices": [
+                  0,
+                  23
+                ],
+                "url": "https://t.co/ni5HwFvEjX"
+              }
+            ]
+          }
+        },
+        "fast_followers_count": 0,
+        "favourites_count": 39892,
+        "follow_request_sent": false,
+        "followers_count": 16213060,
+        "friends_count": 2337,
+        "has_custom_timelines": true,
+        "is_translator": false,
+        "listed_count": 25631,
+        "media_count": 3479,
+        "needs_phone_verification": false,
+        "normal_followers_count": 16213060,
+        "notifications": false,
+        "pinned_tweet_ids_str": [
+          "2076687426706190661"
+        ],
+        "possibly_sensitive": false,
+        "profile_banner_url": "https://pbs.twimg.com/profile_banners/39344374/1674355501",
+        "profile_interstitial_type": "",
+        "statuses_count": 52436,
+        "time_zone": "",
+        "translator_type": "none",
+        "url": "https://t.co/ni5HwFvEjX",
+        "utc_offset": 0,
+        "want_retweets": false,
+        "withheld_description": "",
+        "withheld_scope": ""
+      },
+      "location": {
+        "location": "Florida, USA"
+      },
+      "media_permissions": {
+        "can_media_tag": true
+      },
+      "parody_commentary_fan_label": "None",
+      "privacy": {
+        "protected": false
+      },
+      "profile_bio": {
+        "description": "Co-Founder @worldlibertyfi"
+      },
+      "profile_description_language": "en",
+      "profile_image_shape": "Circle",
+      "relationship_perspectives": {
+        "blocked_by": false,
+        "blocking": false,
+        "followed_by": false,
+        "following": false,
+        "muting": false
+      },
+      "rest_id": "39344374",
+      "super_follow_eligible": false,
+      "super_followed_by": false,
+      "super_following": false,
+      "verification": {
+        "verified": false
+      }
+    }
+  },
+  {
+    "type": "followers",
+    "target": {
+      "raw": "elonmusk",
+      "source": "users",
+      "user_id": "",
+      "username": "elonmusk",
+      "profile_url": ""
+    },
+    "user_id": "18584875",
+    "username": "hodgetwins",
+    "name": "Hodgetwins",
+    "description": "Merch & Giveaways at: https://t.co/kxb8qjHatu —— PODCAST: @hodgetwinspod",
+    "location": "United States",
+    "created_at": "Sat Jan 03 19:24:16 +0000 2009",
+    "followers_count": 3493111,
+    "following_count": 3647,
+    "statuses_count": 66132,
+    "favourites_count": 14663,
+    "media_count": 4062,
+    "listed_count": 4647,
+    "verified": false,
+    "blue_verified": true,
+    "protected": false,
+    "profile_image_url": "https://pbs.twimg.com/profile_images/2029992352232919040/UquWwHmh_normal.jpg",
+    "profile_banner_url": "https://pbs.twimg.com/profile_banners/18584875/1720914411",
+    "url": "https://t.co/ybNwIM3IxM",
+    "raw": {
+      "__typename": "User",
+      "affiliates_highlighted_label": {},
+      "avatar": {
+        "image_url": "https://pbs.twimg.com/profile_images/2029992352232919040/UquWwHmh_normal.jpg"
+      },
+      "core": {
+        "created_at": "Sat Jan 03 19:24:16 +0000 2009",
+        "name": "Hodgetwins",
+        "screen_name": "hodgetwins"
+      },
+      "dm_permissions": {
+        "can_dm": true
+      },
+      "follow_request_sent": false,
+      "has_graduated_access": true,
+      "id": "VXNlcjoxODU4NDg3NQ==",
+      "is_blue_verified": true,
+      "legacy": {
+        "default_profile": false,
+        "default_profile_image": false,
+        "description": "Merch & Giveaways at: https://t.co/kxb8qjHatu —— PODCAST: @hodgetwinspod",
+        "entities": {
+          "description": {
+            "urls": [
+              {
+                "display_url": "officialhodgetwins.com",
+                "expanded_url": "http://officialhodgetwins.com",
+                "indices": [
+                  22,
+                  45
+                ],
+                "url": "https://t.co/kxb8qjHatu"
+              }
+            ]
+          },
+          "url": {
+            "urls": [
+              {
+                "display_url": "officialhodgetwins.com",
+                "expanded_url": "https://officialhodgetwins.com",
+                "indices": [
+                  0,
+                  23
+                ],
+                "url": "https://t.co/ybNwIM3IxM"
+              }
+            ]
+          }
+        },
+        "fast_followers_count": 0,
+        "favourites_count": 14663,
+        "follow_request_sent": false,
+        "followers_count": 3493111,
+        "friends_count": 3647,
+        "has_custom_timelines": false,
+        "is_translator": false,
+        "listed_count": 4647,
+        "media_count": 4062,
+        "needs_phone_verification": false,
+        "normal_followers_count": 3493111,
+        "notifications": false,
+        "pinned_tweet_ids_str": [
+          "2083269791662653674"
+        ],
+        "possibly_sensitive": false,
+        "profile_banner_url": "https://pbs.twimg.com/profile_banners/18584875/1720914411",
+        "profile_interstitial_type": "",
+        "statuses_count": 66132,
+        "time_zone": "",
+        "translator_type": "none",
+        "url": "https://t.co/ybNwIM3IxM",
+        "utc_offset": 0,
+        "want_retweets": false,
+        "withheld_description": "",
+        "withheld_scope": ""
+      },
+      "location": {
+        "location": "United States"
+      },
+      "media_permissions": {
+        "can_media_tag": true
+      },
+      "parody_commentary_fan_label": "None",
+      "privacy": {
+        "protected": false
+      },
+      "professional": {
+        "category": [
+          {
+            "icon_name": "IconBriefcaseStroke",
+            "id": 934,
+            "name": "Social Media Influencer"
+          }
+        ],
+        "professional_type": "Creator",
+        "rest_id": "1487870054645391361"
+      },
+      "profile_bio": {
+        "description": "Merch & Giveaways at: https://t.co/kxb8qjHatu —— PODCAST: @hodgetwinspod"
+      },
+      "profile_description_language": "en",
+      "profile_image_shape": "Circle",
+      "relationship_perspectives": {
+        "blocked_by": false,
+        "blocking": false,
+        "followed_by": false,
+        "following": false,
+        "muting": false
+      },
+      "rest_id": "18584875",
+      "super_follow_eligible": true,
+      "super_followed_by": false,
+      "super_following": false,
+      "verification": {
+        "verified": false
+      }
+    }
+  },
+  {
+    "type": "followers",
+    "target": {
+      "raw": "elonmusk",
+      "source": "users",
+      "user_id": "",
+      "username": "elonmusk",
+      "profile_url": ""
+    },
+    "user_id": "4914384040",
+    "username": "TheBabylonBee",
+    "name": "The Babylon Bee",
+    "description": "Fake news you can trust 🐝",
+    "location": "United States",
+    "created_at": "Mon Feb 15 16:05:21 +0000 2016",
+    "followers_count": 5265570,
+    "following_count": 8,
+    "statuses_count": 37320,
+    "favourites_count": 1908,
+    "media_count": 19677,
+    "listed_count": 8702,
+    "verified": false,
+    "blue_verified": true,
+    "protected": false,
+    "profile_image_url": "https://pbs.twimg.com/profile_images/1400100770624720898/-HC7kL5x_normal.jpg",
+    "profile_banner_url": "https://pbs.twimg.com/profile_banners/4914384040/1781118589",
+    "url": "https://t.co/0PhJZkm4ar",
+    "raw": {
+      "__typename": "User",
+      "affiliates_highlighted_label": {},
+      "avatar": {
+        "image_url": "https://pbs.twimg.com/profile_images/1400100770624720898/-HC7kL5x_normal.jpg"
+      },
+      "core": {
+        "created_at": "Mon Feb 15 16:05:21 +0000 2016",
+        "name": "The Babylon Bee",
+        "screen_name": "TheBabylonBee"
+      },
+      "dm_permissions": {
+        "can_dm": false
+      },
+      "follow_request_sent": false,
+      "has_graduated_access": true,
+      "id": "VXNlcjo0OTE0Mzg0MDQw",
+      "is_blue_verified": true,
+      "legacy": {
+        "default_profile": false,
+        "default_profile_image": false,
+        "description": "Fake news you can trust 🐝",
+        "entities": {
+          "description": {},
+          "url": {
+            "urls": [
+              {
+                "display_url": "linktr.ee/babylonbee",
+                "expanded_url": "https://linktr.ee/babylonbee",
+                "indices": [
+                  0,
+                  23
+                ],
+                "url": "https://t.co/0PhJZkm4ar"
+              }
+            ]
+          }
+        },
+        "fast_followers_count": 0,
+        "favourites_count": 1908,
+        "follow_request_sent": false,
+        "followers_count": 5265570,
+        "friends_count": 8,
+        "has_custom_timelines": false,
+        "is_translator": false,
+        "listed_count": 8702,
+        "media_count": 19677,
+        "needs_phone_verification": false,
+        "normal_followers_count": 5265570,
+        "notifications": false,
+        "possibly_sensitive": false,
+        "profile_banner_url": "https://pbs.twimg.com/profile_banners/4914384040/1781118589",
+        "profile_interstitial_type": "",
+        "statuses_count": 37320,
+        "time_zone": "",
+        "translator_type": "none",
+        "url": "https://t.co/0PhJZkm4ar",
+        "utc_offset": 0,
+        "want_retweets": false,
+        "withheld_description": "",
+        "withheld_scope": ""
+      },
+      "location": {
+        "location": "United States"
+      },
+      "media_permissions": {
+        "can_media_tag": true
+      },
+      "parody_commentary_fan_label": "None",
+      "privacy": {
+        "protected": false
+      },
+      "professional": {
+        "category": [
+          {
+            "icon_name": "IconBriefcaseStroke",
+            "id": 580,
+            "name": "Media & News Company"
+          }
+        ],
+        "professional_type": "Business",
+        "rest_id": "1649577634316304385"
+      },
+      "profile_bio": {
+        "description": "Fake news you can trust 🐝"
+      },
+      "profile_description_language": "en",
+      "profile_image_shape": "Square",
+      "relationship_perspectives": {
+        "blocked_by": false,
+        "blocking": false,
+        "followed_by": false,
+        "following": false,
+        "muting": false
+      },
+      "rest_id": "4914384040",
+      "super_follow_eligible": true,
+      "super_followed_by": false,
+      "super_following": false,
+      "verification": {
+        "verified": false,
+        "verified_type": "Business"
+      }
+    }
+  },
+  {
+    "type": "followers",
+    "target": {
+      "raw": "elonmusk",
+      "source": "users",
+      "user_id": "",
+      "username": "elonmusk",
+      "profile_url": ""
+    },
+    "user_id": "18166778",
+    "username": "Jim_Jordan",
+    "name": "Rep. Jim Jordan",
+    "description": "Proudly serving Ohio's beautiful Fourth District. Chairman @JudiciaryGOP. Fighting to #DoWhatWeSaid",
+    "location": "Washington, D.C.",
+    "created_at": "Tue Dec 16 17:20:24 +0000 2008",
+    "followers_count": 6840168,
+    "following_count": 3620,
+    "statuses_count": 17161,
+    "favourites_count": 5414,
+    "media_count": 2436,
+    "listed_count": 11929,
+    "verified": false,
+    "blue_verified": true,
+    "protected": false,
+    "profile_image_url": "https://pbs.twimg.com/profile_images/596012379231617025/TtrAXbnA_normal.jpg",
+    "profile_banner_url": "https://pbs.twimg.com/profile_banners/18166778/1406042839",
+    "url": "https://t.co/nCZphybp79",
+    "raw": {
+      "__typename": "User",
+      "affiliates_highlighted_label": {
+        "label": {
+          "badge": {
+            "url": "https://pbs.twimg.com/profile_images/2067343819058601984/8U6Ih1-d_bigger.jpg"
+          },
+          "description": "House Republicans",
+          "url": {
+            "url": "https://twitter.com/HouseGOP",
+            "urlType": "DeepLink"
+          },
+          "userLabelDisplayType": "Badge",
+          "userLabelType": "BusinessLabel"
+        }
+      },
+      "avatar": {
+        "image_url": "https://pbs.twimg.com/profile_images/596012379231617025/TtrAXbnA_normal.jpg"
+      },
+      "core": {
+        "created_at": "Tue Dec 16 17:20:24 +0000 2008",
+        "name": "Rep. Jim Jordan",
+        "screen_name": "Jim_Jordan"
+      },
+      "dm_permissions": {
+        "can_dm": false
+      },
+      "follow_request_sent": false,
+      "has_graduated_access": true,
+      "id": "VXNlcjoxODE2Njc3OA==",
+      "is_blue_verified": true,
+      "legacy": {
+        "default_profile": false,
+        "default_profile_image": false,
+        "description": "Proudly serving Ohio's beautiful Fourth District. Chairman @JudiciaryGOP. Fighting to #DoWhatWeSaid",
+        "entities": {
+          "description": {},
+          "url": {
+            "urls": [
+              {
+                "display_url": "linktr.ee/chairmanjimjor…",
+                "expanded_url": "https://linktr.ee/chairmanjimjordan",
+                "indices": [
+                  0,
+                  23
+                ],
+                "url": "https://t.co/nCZphybp79"
+              }
+            ]
+          }
+        },
+        "fast_followers_count": 0,
+        "favourites_count": 5414,
+        "follow_request_sent": false,
+        "followers_count": 6840168,
+        "friends_count": 3620,
+        "has_custom_timelines": true,
+        "is_translator": false,
+        "listed_count": 11929,
+        "media_count": 2436,
+        "needs_phone_verification": false,
+        "normal_followers_count": 6840168,
+        "notifications": false,
+        "possibly_sensitive": false,
+        "profile_banner_url": "https://pbs.twimg.com/profile_banners/18166778/1406042839",
+        "profile_interstitial_type": "",
+        "statuses_count": 17161,
+        "time_zone": "",
+        "translator_type": "none",
+        "url": "https://t.co/nCZphybp79",
+        "utc_offset": 0,
+        "want_retweets": false,
+        "withheld_description": "",
+        "withheld_scope": ""
+      },
+      "location": {
+        "location": "Washington, D.C. "
+      },
+      "media_permissions": {
+        "can_media_tag": true
+      },
+      "parody_commentary_fan_label": "None",
+      "privacy": {
+        "protected": false
+      },
+      "profile_bio": {
+        "description": "Proudly serving Ohio's beautiful Fourth District. Chairman @JudiciaryGOP. Fighting to #DoWhatWeSaid"
+      },
+      "profile_description_language": "en",
+      "profile_image_shape": "Circle",
+      "relationship_perspectives": {
+        "blocked_by": false,
+        "blocking": false,
+        "followed_by": false,
+        "following": false,
+        "muting": false
+      },
+      "rest_id": "18166778",
+      "super_follow_eligible": false,
+      "super_followed_by": false,
+      "super_following": false,
+      "verification": {
+        "verified": false,
+        "verified_type": "Government"
+      }
+    }
+  },
+  {
+    "type": "followers",
+    "target": {
+      "raw": "elonmusk",
+      "source": "users",
+      "user_id": "",
+      "username": "elonmusk",
+      "profile_url": ""
+    },
+    "user_id": "232901331",
+    "username": "dbongino",
+    "name": "Dan Bongino",
+    "description": "Just here for the comments. \n1776 Live Club: No purch nec. Must be 18+. See rules at https://t.co/cRq5LmJIRF.",
+    "location": null,
+    "created_at": "Sat Jan 01 17:50:03 +0000 2011",
+    "followers_count": 7467227,
+    "following_count": 2615,
+    "statuses_count": 53511,
+    "favourites_count": 82583,
+    "media_count": 1983,
+    "listed_count": 11907,
+    "verified": false,
+    "blue_verified": true,
+    "protected": false,
+    "profile_image_url": "https://pbs.twimg.com/profile_images/1901949643828625408/cIoDpRVb_normal.jpg",
+    "profile_banner_url": "https://pbs.twimg.com/profile_banners/232901331/1742295117",
+    "url": "https://t.co/h3Y3otPRPF",
+    "raw": {
+      "__typename": "User",
+      "affiliates_highlighted_label": {
+        "label": {
+          "badge": {
+            "url": "https://pbs.twimg.com/profile_images/1202232456612593664/1l2BLKK5_bigger.jpg"
+          },
+          "description": "Bongino Report",
+          "url": {
+            "url": "https://twitter.com/BonginoReport",
+            "urlType": "DeepLink"
+          },
+          "userLabelDisplayType": "Badge",
+          "userLabelType": "BusinessLabel"
+        }
+      },
+      "avatar": {
+        "image_url": "https://pbs.twimg.com/profile_images/1901949643828625408/cIoDpRVb_normal.jpg"
+      },
+      "core": {
+        "created_at": "Sat Jan 01 17:50:03 +0000 2011",
+        "name": "Dan Bongino",
+        "screen_name": "dbongino"
+      },
+      "dm_permissions": {
+        "can_dm": false
+      },
+      "follow_request_sent": false,
+      "has_graduated_access": true,
+      "id": "VXNlcjoyMzI5MDEzMzE=",
+      "is_blue_verified": true,
+      "legacy": {
+        "default_profile": false,
+        "default_profile_image": false,
+        "description": "Just here for the comments. \n1776 Live Club: No purch nec. Must be 18+. See rules at https://t.co/cRq5LmJIRF.",
+        "entities": {
+          "description": {
+            "urls": [
+              {
+                "display_url": "Bongino.com/1776",
+                "expanded_url": "https://Bongino.com/1776",
+                "indices": [
+                  85,
+                  108
+                ],
+                "url": "https://t.co/cRq5LmJIRF"
+              }
+            ]
+          },
+          "url": {
+            "urls": [
+              {
+                "display_url": "bongino.com",
+                "expanded_url": "http://www.bongino.com",
+                "indices": [
+                  0,
+                  23
+                ],
+                "url": "https://t.co/h3Y3otPRPF"
+              }
+            ]
+          }
+        },
+        "fast_followers_count": 0,
+        "favourites_count": 82583,
+        "follow_request_sent": false,
+        "followers_count": 7467227,
+        "friends_count": 2615,
+        "has_custom_timelines": true,
+        "is_translator": false,
+        "listed_count": 11907,
+        "media_count": 1983,
+        "needs_phone_verification": false,
+        "normal_followers_count": 7467227,
+        "notifications": false,
+        "pinned_tweet_ids_str": [
+          "2084979608080777222"
+        ],
+        "possibly_sensitive": false,
+        "profile_banner_url": "https://pbs.twimg.com/profile_banners/232901331/1742295117",
+        "profile_interstitial_type": "",
+        "statuses_count": 53511,
+        "time_zone": "",
+        "translator_type": "none",
+        "url": "https://t.co/h3Y3otPRPF",
+        "utc_offset": 0,
+        "want_retweets": false,
+        "withheld_description": "",
+        "withheld_scope": ""
+      },
+      "location": {
+        "location": ""
+      },
+      "media_permissions": {
+        "can_media_tag": true
+      },
+      "parody_commentary_fan_label": "None",
+      "privacy": {
+        "protected": false
+      },
+      "profile_bio": {
+        "description": "Just here for the comments. \n1776 Live Club: No purch nec. Must be 18+. See rules at https://t.co/cRq5LmJIRF."
+      },
+      "profile_description_language": "en",
+      "profile_image_shape": "Circle",
+      "relationship_perspectives": {
+        "blocked_by": false,
+        "blocking": false,
+        "followed_by": false,
+        "following": false,
+        "muting": false
+      },
+      "rest_id": "232901331",
+      "super_follow_eligible": false,
+      "super_followed_by": false,
+      "super_following": false,
+      "verification": {
+        "verified": false
+      }
+    }
+  },
+  {
+    "type": "followers",
+    "target": {
+      "raw": "elonmusk",
+      "source": "users",
+      "user_id": "",
+      "username": "elonmusk",
+      "profile_url": ""
+    },
+    "user_id": "427089628",
+    "username": "lexfridman",
+    "name": "Lex Fridman",
+    "description": "Host of Lex Fridman Podcast.\nInterested in robots and humans.",
+    "location": "Austin and Boston",
+    "created_at": "Sat Dec 03 03:06:19 +0000 2011",
+    "followers_count": 5269282,
+    "following_count": 688,
+    "statuses_count": 4014,
+    "favourites_count": 8240,
+    "media_count": 1255,
+    "listed_count": 13786,
+    "verified": false,
+    "blue_verified": true,
+    "protected": false,
+    "profile_image_url": "https://pbs.twimg.com/profile_images/1854713863817646088/nTmsz7jR_normal.jpg",
+    "profile_banner_url": "https://pbs.twimg.com/profile_banners/427089628/1763664435",
+    "url": "https://t.co/eBRkEqtwUb",
+    "raw": {
+      "__typename": "User",
+      "affiliates_highlighted_label": {},
+      "avatar": {
+        "image_url": "https://pbs.twimg.com/profile_images/1854713863817646088/nTmsz7jR_normal.jpg"
+      },
+      "core": {
+        "created_at": "Sat Dec 03 03:06:19 +0000 2011",
+        "name": "Lex Fridman",
+        "screen_name": "lexfridman"
+      },
+      "dm_permissions": {
+        "can_dm": false
+      },
+      "follow_request_sent": false,
+      "has_graduated_access": true,
+      "id": "VXNlcjo0MjcwODk2Mjg=",
+      "is_blue_verified": true,
+      "legacy": {
+        "default_profile": false,
+        "default_profile_image": false,
+        "description": "Host of Lex Fridman Podcast.\nInterested in robots and humans.",
+        "entities": {
+          "description": {},
+          "url": {
+            "urls": [
+              {
+                "display_url": "youtube.com/lexfridman",
+                "expanded_url": "https://youtube.com/lexfridman",
+                "indices": [
+                  0,
+                  23
+                ],
+                "url": "https://t.co/eBRkEqtwUb"
+              }
+            ]
+          }
+        },
+        "fast_followers_count": 0,
+        "favourites_count": 8240,
+        "follow_request_sent": false,
+        "followers_count": 5269282,
+        "friends_count": 688,
+        "has_custom_timelines": true,
+        "is_translator": false,
+        "listed_count": 13786,
+        "media_count": 1255,
+        "needs_phone_verification": false,
+        "normal_followers_count": 5269282,
+        "notifications": false,
+        "pinned_tweet_ids_str": [
+          "2082587115947176102"
+        ],
+        "possibly_sensitive": false,
+        "profile_banner_url": "https://pbs.twimg.com/profile_banners/427089628/1763664435",
+        "profile_interstitial_type": "",
+        "statuses_count": 4014,
+        "time_zone": "",
+        "translator_type": "none",
+        "url": "https://t.co/eBRkEqtwUb",
+        "utc_offset": 0,
+        "want_retweets": false,
+        "withheld_description": "",
+        "withheld_scope": ""
+      },
+      "location": {
+        "location": "Austin and Boston"
+      },
+      "media_permissions": {
+        "can_media_tag": false
+      },
+      "parody_commentary_fan_label": "None",
+      "privacy": {
+        "protected": false
+      },
+      "profile_bio": {
+        "description": "Host of Lex Fridman Podcast.\nInterested in robots and humans."
+      },
+      "profile_description_language": "en",
+      "profile_image_shape": "Circle",
+      "relationship_perspectives": {
+        "blocked_by": false,
+        "blocking": false,
+        "followed_by": false,
+        "following": false,
+        "muting": false
+      },
+      "rest_id": "427089628",
+      "super_follow_eligible": false,
+      "super_followed_by": false,
+      "super_following": false,
+      "verification": {
+        "verified": false
+      }
+    }
+  },
+  {
+    "type": "followers",
+    "target": {
+      "raw": "elonmusk",
+      "source": "users",
+      "user_id": "",
+      "username": "elonmusk",
+      "profile_url": ""
+    },
+    "user_id": "1201670995435646976",
+    "username": "laurenboebert",
+    "name": "Lauren Boebert",
+    "description": "Lauren Boebert for Congress: CO-04 Congresswoman, Mom & Gigi with a fierce love for liberty. Sent to DRAIN THE SWAMP drier than a CO irrigation ditch in July.",
+    "location": "Colorado, USA",
+    "created_at": "Tue Dec 03 01:14:36 +0000 2019",
+    "followers_count": 5178764,
+    "following_count": 1997,
+    "statuses_count": 11533,
+    "favourites_count": 11167,
+    "media_count": 1245,
+    "listed_count": 5956,
+    "verified": false,
+    "blue_verified": true,
+    "protected": false,
+    "profile_image_url": "https://pbs.twimg.com/profile_images/1498803395578236934/vGGuE9-k_normal.jpg",
+    "profile_banner_url": "https://pbs.twimg.com/profile_banners/1201670995435646976/1690219799",
+    "url": "https://t.co/Fja3lXlS8M",
+    "raw": {
+      "__typename": "User",
+      "affiliates_highlighted_label": {},
+      "avatar": {
+        "image_url": "https://pbs.twimg.com/profile_images/1498803395578236934/vGGuE9-k_normal.jpg"
+      },
+      "core": {
+        "created_at": "Tue Dec 03 01:14:36 +0000 2019",
+        "name": "Lauren Boebert",
+        "screen_name": "laurenboebert"
+      },
+      "dm_permissions": {
+        "can_dm": true
+      },
+      "follow_request_sent": false,
+      "has_graduated_access": true,
+      "id": "VXNlcjoxMjAxNjcwOTk1NDM1NjQ2OTc2",
+      "is_blue_verified": true,
+      "legacy": {
+        "default_profile": true,
+        "default_profile_image": false,
+        "description": "Lauren Boebert for Congress: CO-04 Congresswoman, Mom & Gigi with a fierce love for liberty. Sent to DRAIN THE SWAMP drier than a CO irrigation ditch in July.",
+        "entities": {
+          "description": {},
+          "url": {
+            "urls": [
+              {
+                "display_url": "secure.winred.com/lauren-boebert…",
+                "expanded_url": "https://secure.winred.com/lauren-boebert-for-congress/tw23",
+                "indices": [
+                  0,
+                  23
+                ],
+                "url": "https://t.co/Fja3lXlS8M"
+              }
+            ]
+          }
+        },
+        "fast_followers_count": 0,
+        "favourites_count": 11167,
+        "follow_request_sent": false,
+        "followers_count": 5178764,
+        "friends_count": 1997,
+        "has_custom_timelines": true,
+        "is_translator": false,
+        "listed_count": 5956,
+        "media_count": 1245,
+        "needs_phone_verification": false,
+        "normal_followers_count": 5178764,
+        "notifications": false,
+        "pinned_tweet_ids_str": [
+          "1769823824030192127"
+        ],
+        "possibly_sensitive": false,
+        "profile_banner_url": "https://pbs.twimg.com/profile_banners/1201670995435646976/1690219799",
+        "profile_interstitial_type": "",
+        "statuses_count": 11533,
+        "time_zone": "",
+        "translator_type": "none",
+        "url": "https://t.co/Fja3lXlS8M",
+        "utc_offset": 0,
+        "want_retweets": false,
+        "withheld_description": "",
+        "withheld_scope": ""
+      },
+      "location": {
+        "location": "Colorado, USA"
+      },
+      "media_permissions": {
+        "can_media_tag": false
+      },
+      "parody_commentary_fan_label": "None",
+      "privacy": {
+        "protected": false
+      },
+      "professional": {
+        "category": [],
+        "professional_type": "Creator",
+        "rest_id": "1633209344757059584"
+      },
+      "profile_bio": {
+        "description": "Lauren Boebert for Congress: CO-04 Congresswoman, Mom & Gigi with a fierce love for liberty. Sent to DRAIN THE SWAMP drier than a CO irrigation ditch in July."
+      },
+      "profile_description_language": "en",
+      "profile_image_shape": "Circle",
+      "relationship_perspectives": {
+        "blocked_by": false,
+        "blocking": false,
+        "followed_by": false,
+        "following": false,
+        "muting": false
+      },
+      "rest_id": "1201670995435646976",
+      "super_follow_eligible": false,
+      "super_followed_by": false,
+      "super_following": false,
+      "verification": {
+        "verified": false
+      }
+    }
+  },
+  {
+    "type": "followers",
+    "target": {
+      "raw": "elonmusk",
+      "source": "users",
+      "user_id": "",
+      "username": "elonmusk",
+      "profile_url": ""
+    },
+    "user_id": "91882544",
+    "username": "DineshDSouza",
+    "name": "Dinesh D'Souza",
+    "description": "Author, Filmmaker, Host of Dinesh Podcast. Read my investigative work on Substack:   https://t.co/e9jgDYkZ6c",
+    "location": "United States",
+    "created_at": "Sun Nov 22 22:32:41 +0000 2009",
+    "followers_count": 5451678,
+    "following_count": 10506,
+    "statuses_count": 179181,
+    "favourites_count": 30057,
+    "media_count": 17077,
+    "listed_count": 10534,
+    "verified": false,
+    "blue_verified": true,
+    "protected": false,
+    "profile_image_url": "https://pbs.twimg.com/profile_images/1969139625995497472/oIr7LrHF_normal.jpg",
+    "profile_banner_url": "https://pbs.twimg.com/profile_banners/91882544/1773684290",
+    "url": "https://t.co/9pvC7J918S",
+    "raw": {
+      "__typename": "User",
+      "affiliates_highlighted_label": {},
+      "avatar": {
+        "image_url": "https://pbs.twimg.com/profile_images/1969139625995497472/oIr7LrHF_normal.jpg"
+      },
+      "core": {
+        "created_at": "Sun Nov 22 22:32:41 +0000 2009",
+        "name": "Dinesh D'Souza",
+        "screen_name": "DineshDSouza"
+      },
+      "dm_permissions": {
+        "can_dm": false
+      },
+      "follow_request_sent": false,
+      "has_graduated_access": true,
+      "id": "VXNlcjo5MTg4MjU0NA==",
+      "is_blue_verified": true,
+      "legacy": {
+        "default_profile": false,
+        "default_profile_image": false,
+        "description": "Author, Filmmaker, Host of Dinesh Podcast. Read my investigative work on Substack:   https://t.co/e9jgDYkZ6c",
+        "entities": {
+          "description": {
+            "urls": [
+              {
+                "display_url": "dineshdsouza.substack.com",
+                "expanded_url": "https://dineshdsouza.substack.com",
+                "indices": [
+                  85,
+                  108
+                ],
+                "url": "https://t.co/e9jgDYkZ6c"
+              }
+            ]
+          },
+          "url": {
+            "urls": [
+              {
+                "display_url": "youtube.com/@dineshdsouza?…",
+                "expanded_url": "https://youtube.com/@dineshdsouza?si=2pDycK2dEDCTtm25",
+                "indices": [
+                  0,
+                  23
+                ],
+                "url": "https://t.co/9pvC7J918S"
+              }
+            ]
+          }
+        },
+        "fast_followers_count": 0,
+        "favourites_count": 30057,
+        "follow_request_sent": false,
+        "followers_count": 5451678,
+        "friends_count": 10506,
+        "has_custom_timelines": true,
+        "is_translator": false,
+        "listed_count": 10534,
+        "media_count": 17077,
+        "needs_phone_verification": false,
+        "normal_followers_count": 5451678,
+        "notifications": false,
+        "pinned_tweet_ids_str": [
+          "2084414363889434848"
+        ],
+        "possibly_sensitive": false,
+        "profile_banner_url": "https://pbs.twimg.com/profile_banners/91882544/1773684290",
+        "profile_interstitial_type": "",
+        "statuses_count": 179181,
+        "time_zone": "",
+        "translator_type": "none",
+        "url": "https://t.co/9pvC7J918S",
+        "utc_offset": 0,
+        "want_retweets": false,
+        "withheld_description": "",
+        "withheld_scope": ""
+      },
+      "location": {
+        "location": "United States"
+      },
+      "media_permissions": {
+        "can_media_tag": true
+      },
+      "parody_commentary_fan_label": "None",
+      "privacy": {
+        "protected": false
+      },
+      "professional": {
+        "category": [
+          {
+            "icon_name": "IconBriefcaseStroke",
+            "id": 933,
+            "name": "Media Personality"
+          }
+        ],
+        "professional_type": "Creator",
+        "rest_id": "1797747077482442943"
+      },
+      "profile_bio": {
+        "description": "Author, Filmmaker, Host of Dinesh Podcast. Read my investigative work on Substack:   https://t.co/e9jgDYkZ6c"
+      },
+      "profile_description_language": "en",
+      "profile_image_shape": "Circle",
+      "relationship_perspectives": {
+        "blocked_by": false,
+        "blocking": false,
+        "followed_by": false,
+        "following": false,
+        "muting": false
+      },
+      "rest_id": "91882544",
+      "super_follow_eligible": false,
+      "super_followed_by": false,
+      "super_following": false,
+      "verification": {
+        "verified": false
+      }
+    }
+  },
+  {
+    "type": "followers",
+    "target": {
+      "raw": "elonmusk",
+      "source": "users",
+      "user_id": "",
+      "username": "elonmusk",
+      "profile_url": ""
+    },
+    "user_id": "1344356576786866176",
+    "username": "FmrRepMTG",
+    "name": "Former Congresswoman Marjorie Taylor Greene🇺🇸",
+    "description": "Christian, Mother, Business Owner, and Former Congresswoman of Georgia’s 14th District |AMERICA FIRST AMERICA ONLY 🇺🇸",
+    "location": "Rome, GA",
+    "created_at": "Wed Dec 30 18:57:01 +0000 2020",
+    "followers_count": 5459230,
+    "following_count": 959,
+    "statuses_count": 10186,
+    "favourites_count": 10024,
+    "media_count": 3123,
+    "listed_count": 8219,
+    "verified": false,
+    "blue_verified": true,
+    "protected": false,
+    "profile_image_url": "https://pbs.twimg.com/profile_images/1867641239685713920/7jTW4Eag_normal.jpg",
+    "profile_banner_url": "https://pbs.twimg.com/profile_banners/1344356576786866176/1661804538",
+    "url": null,
+    "raw": {
+      "__typename": "User",
+      "affiliates_highlighted_label": {},
+      "avatar": {
+        "image_url": "https://pbs.twimg.com/profile_images/1867641239685713920/7jTW4Eag_normal.jpg"
+      },
+      "core": {
+        "created_at": "Wed Dec 30 18:57:01 +0000 2020",
+        "name": "Former Congresswoman Marjorie Taylor Greene🇺🇸",
+        "screen_name": "FmrRepMTG"
+      },
+      "dm_permissions": {
+        "can_dm": true
+      },
+      "follow_request_sent": false,
+      "has_graduated_access": true,
+      "id": "VXNlcjoxMzQ0MzU2NTc2Nzg2ODY2MTc2",
+      "is_blue_verified": true,
+      "legacy": {
+        "default_profile": true,
+        "default_profile_image": false,
+        "description": "Christian, Mother, Business Owner, and Former Congresswoman of Georgia’s 14th District |AMERICA FIRST AMERICA ONLY 🇺🇸",
+        "entities": {
+          "description": {}
+        },
+        "fast_followers_count": 0,
+        "favourites_count": 10024,
+        "follow_request_sent": false,
+        "followers_count": 5459230,
+        "friends_count": 959,
+        "has_custom_timelines": true,
+        "is_translator": false,
+        "listed_count": 8219,
+        "media_count": 3123,
+        "needs_phone_verification": false,
+        "normal_followers_count": 5459230,
+        "notifications": false,
+        "pinned_tweet_ids_str": [
+          "1517852261963243521"
+        ],
+        "possibly_sensitive": false,
+        "profile_banner_url": "https://pbs.twimg.com/profile_banners/1344356576786866176/1661804538",
+        "profile_interstitial_type": "",
+        "statuses_count": 10186,
+        "time_zone": "",
+        "translator_type": "none",
+        "url": "",
+        "utc_offset": 0,
+        "want_retweets": false,
+        "withheld_description": "",
+        "withheld_scope": ""
+      },
+      "location": {
+        "location": "Rome, GA"
+      },
+      "media_permissions": {
+        "can_media_tag": true
+      },
+      "parody_commentary_fan_label": "None",
+      "privacy": {
+        "protected": false
+      },
+      "professional": {
+        "category": [],
+        "professional_type": "Creator",
+        "rest_id": "1530021716252041226"
+      },
+      "profile_bio": {
+        "description": "Christian, Mother, Business Owner, and Former Congresswoman of Georgia’s 14th District |AMERICA FIRST AMERICA ONLY 🇺🇸"
+      },
+      "profile_description_language": "en",
+      "profile_image_shape": "Circle",
+      "relationship_perspectives": {
+        "blocked_by": false,
+        "blocking": false,
+        "followed_by": false,
+        "following": false,
+        "muting": false
+      },
+      "rest_id": "1344356576786866176",
+      "super_follow_eligible": false,
+      "super_followed_by": false,
+      "super_following": false,
+      "verification": {
+        "verified": false
+      }
+    }
+  },
+  {
+    "type": "followers",
+    "target": {
+      "raw": "elonmusk",
+      "source": "users",
+      "user_id": "",
+      "username": "elonmusk",
+      "profile_url": ""
+    },
+    "user_id": "17995040",
+    "username": "benshapiro",
+    "name": "Ben Shapiro",
+    "description": "Daily Wire co-founder, host of @benshapiroshow, #1 NYT bestselling author, America’s #1 ex-rapper. Order my new book, Lions and Scavengers below",
+    "location": null,
+    "created_at": "Tue Dec 09 16:40:22 +0000 2008",
+    "followers_count": 8779861,
+    "following_count": 517,
+    "statuses_count": 204503,
+    "favourites_count": 52,
+    "media_count": 8731,
+    "listed_count": 19124,
+    "verified": false,
+    "blue_verified": true,
+    "protected": false,
+    "profile_image_url": "https://pbs.twimg.com/profile_images/1791135695567740928/nrRmsfkZ_normal.jpg",
+    "profile_banner_url": "https://pbs.twimg.com/profile_banners/17995040/1773694556",
+    "url": "https://t.co/kvSlznhNsM",
+    "raw": {
+      "__typename": "User",
+      "affiliates_highlighted_label": {},
+      "avatar": {
+        "image_url": "https://pbs.twimg.com/profile_images/1791135695567740928/nrRmsfkZ_normal.jpg"
+      },
+      "core": {
+        "created_at": "Tue Dec 09 16:40:22 +0000 2008",
+        "name": "Ben Shapiro",
+        "screen_name": "benshapiro"
+      },
+      "dm_permissions": {
+        "can_dm": false
+      },
+      "follow_request_sent": false,
+      "has_graduated_access": true,
+      "id": "VXNlcjoxNzk5NTA0MA==",
+      "is_blue_verified": true,
+      "legacy": {
+        "default_profile": false,
+        "default_profile_image": false,
+        "description": "Daily Wire co-founder, host of @benshapiroshow, #1 NYT bestselling author, America’s #1 ex-rapper. Order my new book, Lions and Scavengers below",
+        "entities": {
+          "description": {},
+          "url": {
+            "urls": [
+              {
+                "display_url": "a.co/d/3AyvDBX",
+                "expanded_url": "https://a.co/d/3AyvDBX",
+                "indices": [
+                  0,
+                  23
+                ],
+                "url": "https://t.co/kvSlznhNsM"
+              }
+            ]
+          }
+        },
+        "fast_followers_count": 0,
+        "favourites_count": 52,
+        "follow_request_sent": false,
+        "followers_count": 8779861,
+        "friends_count": 517,
+        "has_custom_timelines": true,
+        "is_translator": false,
+        "listed_count": 19124,
+        "media_count": 8731,
+        "needs_phone_verification": false,
+        "normal_followers_count": 8779861,
+        "notifications": false,
+        "possibly_sensitive": false,
+        "profile_banner_url": "https://pbs.twimg.com/profile_banners/17995040/1773694556",
+        "profile_interstitial_type": "",
+        "statuses_count": 204503,
+        "time_zone": "",
+        "translator_type": "none",
+        "url": "https://t.co/kvSlznhNsM",
+        "utc_offset": 0,
+        "want_retweets": false,
+        "withheld_description": "",
+        "withheld_scope": ""
+      },
+      "location": {
+        "location": ""
+      },
+      "media_permissions": {
+        "can_media_tag": true
+      },
+      "parody_commentary_fan_label": "None",
+      "privacy": {
+        "protected": false
+      },
+      "profile_bio": {
+        "description": "Daily Wire co-founder, host of @benshapiroshow, #1 NYT bestselling author, America’s #1 ex-rapper. Order my new book, Lions and Scavengers below"
+      },
+      "profile_description_language": "en",
+      "profile_image_shape": "Circle",
+      "relationship_perspectives": {
+        "blocked_by": false,
+        "blocking": false,
+        "followed_by": false,
+        "following": false,
+        "muting": false
+      },
+      "rest_id": "17995040",
+      "super_follow_eligible": false,
+      "super_followed_by": false,
+      "super_following": false,
+      "verification": {
+        "verified": false
+      }
+    }
+  },
+  {
+    "type": "followers",
+    "target": {
+      "raw": "elonmusk",
+      "source": "users",
+      "user_id": "",
+      "username": "elonmusk",
+      "profile_url": ""
+    },
+    "user_id": "34743251",
+    "username": "SpaceX",
+    "name": "SpaceX",
+    "description": "SpaceX designs, manufactures and launches the world’s most advanced rockets and spacecraft",
+    "location": "Earth",
+    "created_at": "Thu Apr 23 21:53:30 +0000 2009",
+    "followers_count": 41898909,
+    "following_count": 124,
+    "statuses_count": 11622,
+    "favourites_count": 525,
+    "media_count": 4576,
+    "listed_count": 45565,
+    "verified": false,
+    "blue_verified": true,
+    "protected": false,
+    "profile_image_url": "https://pbs.twimg.com/profile_images/1697749409851985920/HbrI04tM_normal.jpg",
+    "profile_banner_url": "https://pbs.twimg.com/profile_banners/34743251/1681251194",
+    "url": "https://t.co/VOJ6qEctND",
+    "raw": {
+      "__typename": "User",
+      "affiliates_highlighted_label": {},
+      "avatar": {
+        "image_url": "https://pbs.twimg.com/profile_images/1697749409851985920/HbrI04tM_normal.jpg"
+      },
+      "core": {
+        "created_at": "Thu Apr 23 21:53:30 +0000 2009",
+        "name": "SpaceX",
+        "screen_name": "SpaceX"
+      },
+      "dm_permissions": {
+        "can_dm": false
+      },
+      "follow_request_sent": false,
+      "has_graduated_access": true,
+      "id": "VXNlcjozNDc0MzI1MQ==",
+      "is_blue_verified": true,
+      "legacy": {
+        "default_profile": false,
+        "default_profile_image": false,
+        "description": "SpaceX designs, manufactures and launches the world’s most advanced rockets and spacecraft",
+        "entities": {
+          "description": {},
+          "url": {
+            "urls": [
+              {
+                "display_url": "spacex.com",
+                "expanded_url": "http://spacex.com",
+                "indices": [
+                  0,
+                  23
+                ],
+                "url": "https://t.co/VOJ6qEctND"
+              }
+            ]
+          }
+        },
+        "fast_followers_count": 0,
+        "favourites_count": 525,
+        "follow_request_sent": false,
+        "followers_count": 41898909,
+        "friends_count": 124,
+        "has_custom_timelines": true,
+        "is_translator": false,
+        "listed_count": 45565,
+        "media_count": 4576,
+        "needs_phone_verification": false,
+        "normal_followers_count": 41898909,
+        "notifications": false,
+        "pinned_tweet_ids_str": [
+          "2084737732732186903"
+        ],
+        "possibly_sensitive": false,
+        "profile_banner_url": "https://pbs.twimg.com/profile_banners/34743251/1681251194",
+        "profile_interstitial_type": "",
+        "statuses_count": 11622,
+        "time_zone": "",
+        "translator_type": "none",
+        "url": "https://t.co/VOJ6qEctND",
+        "utc_offset": 0,
+        "want_retweets": false,
+        "withheld_description": "",
+        "withheld_scope": ""
+      },
+      "location": {
+        "location": "Earth"
+      },
+      "media_permissions": {
+        "can_media_tag": true
+      },
+      "parody_commentary_fan_label": "None",
+      "privacy": {
+        "protected": false
+      },
+      "professional": {
+        "category": [],
+        "professional_type": "Business",
+        "rest_id": "1681839322029502464"
+      },
+      "profile_bio": {
+        "description": "SpaceX designs, manufactures and launches the world’s most advanced rockets and spacecraft"
+      },
+      "profile_description_language": "en",
+      "profile_image_shape": "Square",
+      "relationship_perspectives": {
+        "blocked_by": false,
+        "blocking": false,
+        "followed_by": false,
+        "following": false,
+        "muting": false
+      },
+      "rest_id": "34743251",
+      "super_follow_eligible": false,
+      "super_followed_by": false,
+      "super_following": false,
+      "verification": {
+        "verified": false,
+        "verified_type": "Business"
+      }
+    }
+  },
+  {
+    "type": "followers",
+    "target": {
+      "raw": "elonmusk",
+      "source": "users",
+      "user_id": "",
+      "username": "elonmusk",
+      "profile_url": ""
+    },
+    "user_id": "33608041",
+    "username": "ksorbs",
+    "name": "Kevin Sorbo",
+    "description": "Actor, director, producer, author.",
+    "location": "Florida, USA",
+    "created_at": "Mon Apr 20 18:21:04 +0000 2009",
+    "followers_count": 2626739,
+    "following_count": 683,
+    "statuses_count": 31049,
+    "favourites_count": 16853,
+    "media_count": 3605,
+    "listed_count": 4529,
+    "verified": false,
+    "blue_verified": true,
+    "protected": false,
+    "profile_image_url": "https://pbs.twimg.com/profile_images/1874633227001823232/dYuQ8VPx_normal.jpg",
+    "profile_banner_url": "https://pbs.twimg.com/profile_banners/33608041/1764246510",
+    "url": "https://t.co/jWZFoCxGsb",
+    "raw": {
+      "__typename": "User",
+      "affiliates_highlighted_label": {},
+      "avatar": {
+        "image_url": "https://pbs.twimg.com/profile_images/1874633227001823232/dYuQ8VPx_normal.jpg"
+      },
+      "core": {
+        "created_at": "Mon Apr 20 18:21:04 +0000 2009",
+        "name": "Kevin Sorbo",
+        "screen_name": "ksorbs"
+      },
+      "dm_permissions": {
+        "can_dm": false
+      },
+      "follow_request_sent": false,
+      "has_graduated_access": true,
+      "id": "VXNlcjozMzYwODA0MQ==",
+      "is_blue_verified": true,
+      "legacy": {
+        "default_profile": false,
+        "default_profile_image": false,
+        "description": "Actor, director, producer, author.",
+        "entities": {
+          "description": {},
+          "url": {
+            "urls": [
+              {
+                "display_url": "linktr.ee/ksorbs",
+                "expanded_url": "https://linktr.ee/ksorbs",
+                "indices": [
+                  0,
+                  23
+                ],
+                "url": "https://t.co/jWZFoCxGsb"
+              }
+            ]
+          }
+        },
+        "fast_followers_count": 0,
+        "favourites_count": 16853,
+        "follow_request_sent": false,
+        "followers_count": 2626739,
+        "friends_count": 683,
+        "has_custom_timelines": true,
+        "is_translator": false,
+        "listed_count": 4529,
+        "media_count": 3605,
+        "needs_phone_verification": false,
+        "normal_followers_count": 2626739,
+        "notifications": false,
+        "pinned_tweet_ids_str": [
+          "2018492003592335862"
+        ],
+        "possibly_sensitive": false,
+        "profile_banner_url": "https://pbs.twimg.com/profile_banners/33608041/1764246510",
+        "profile_interstitial_type": "",
+        "statuses_count": 31049,
+        "time_zone": "",
+        "translator_type": "none",
+        "url": "https://t.co/jWZFoCxGsb",
+        "utc_offset": 0,
+        "want_retweets": false,
+        "withheld_description": "",
+        "withheld_scope": ""
+      },
+      "location": {
+        "location": "Florida, USA"
+      },
+      "media_permissions": {
+        "can_media_tag": true
+      },
+      "parody_commentary_fan_label": "None",
+      "privacy": {
+        "protected": false
+      },
+      "professional": {
+        "category": [
+          {
+            "icon_name": "IconBriefcaseStroke",
+            "id": 948,
+            "name": "Actor"
+          }
+        ],
+        "professional_type": "Creator",
+        "rest_id": "1491878084949295106"
+      },
+      "profile_bio": {
+        "description": "Actor, director, producer, author."
+      },
+      "profile_image_shape": "Circle",
+      "relationship_perspectives": {
+        "blocked_by": false,
+        "blocking": false,
+        "followed_by": false,
+        "following": false,
+        "muting": false
+      },
+      "rest_id": "33608041",
+      "super_follow_eligible": true,
+      "super_followed_by": false,
+      "super_following": false,
+      "verification": {
+        "verified": false
+      }
+    }
+  },
+  {
+    "type": "followers",
+    "target": {
+      "raw": "elonmusk",
+      "source": "users",
+      "user_id": "",
+      "username": "elonmusk",
+      "profile_url": ""
+    },
+    "user_id": "1467931973616386052",
+    "username": "GunRightsPrez",
+    "name": "Dudley Brown",
+    "description": "President of @GunRights & @RMGOColorado | \n3-decade Gun Lobbyist | Weapons Expert | Real Conservative",
+    "location": "United States",
+    "created_at": "Mon Dec 06 19:00:41 +0000 2021",
+    "followers_count": 1702794,
+    "following_count": 1008,
+    "statuses_count": 5642,
+    "favourites_count": 6724,
+    "media_count": 800,
+    "listed_count": 1325,
+    "verified": false,
+    "blue_verified": true,
+    "protected": false,
+    "profile_image_url": "https://pbs.twimg.com/profile_images/1983627066798116864/7WsebhRV_normal.jpg",
+    "profile_banner_url": "https://pbs.twimg.com/profile_banners/1467931973616386052/1761768522",
+    "url": "https://t.co/b2eg3VDrHj",
+    "raw": {
+      "__typename": "User",
+      "affiliates_highlighted_label": {
+        "label": {
+          "badge": {
+            "url": "https://pbs.twimg.com/profile_images/1828826000412524544/gNsaAZHS_bigger.jpg"
+          },
+          "description": "National Association for Gun Rights",
+          "url": {
+            "url": "https://twitter.com/gunrights",
+            "urlType": "DeepLink"
+          },
+          "userLabelDisplayType": "Badge",
+          "userLabelType": "BusinessLabel"
+        }
+      },
+      "avatar": {
+        "image_url": "https://pbs.twimg.com/profile_images/1983627066798116864/7WsebhRV_normal.jpg"
+      },
+      "core": {
+        "created_at": "Mon Dec 06 19:00:41 +0000 2021",
+        "name": "Dudley Brown",
+        "screen_name": "GunRightsPrez"
+      },
+      "dm_permissions": {
+        "can_dm": false
+      },
+      "follow_request_sent": false,
+      "has_graduated_access": true,
+      "id": "VXNlcjoxNDY3OTMxOTczNjE2Mzg2MDUy",
+      "is_blue_verified": true,
+      "legacy": {
+        "default_profile": true,
+        "default_profile_image": false,
+        "description": "President of @GunRights & @RMGOColorado | \n3-decade Gun Lobbyist | Weapons Expert | Real Conservative",
+        "entities": {
+          "description": {},
+          "url": {
+            "urls": [
+              {
+                "display_url": "gunrights.org",
+                "expanded_url": "https://gunrights.org/",
+                "indices": [
+                  0,
+                  23
+                ],
+                "url": "https://t.co/b2eg3VDrHj"
+              }
+            ]
+          }
+        },
+        "fast_followers_count": 0,
+        "favourites_count": 6724,
+        "follow_request_sent": false,
+        "followers_count": 1702794,
+        "friends_count": 1008,
+        "has_custom_timelines": true,
+        "is_translator": false,
+        "listed_count": 1325,
+        "media_count": 800,
+        "needs_phone_verification": false,
+        "normal_followers_count": 1702794,
+        "notifications": false,
+        "pinned_tweet_ids_str": [
+          "2061172621048504741"
+        ],
+        "possibly_sensitive": false,
+        "profile_banner_url": "https://pbs.twimg.com/profile_banners/1467931973616386052/1761768522",
+        "profile_interstitial_type": "",
+        "statuses_count": 5642,
+        "time_zone": "",
+        "translator_type": "none",
+        "url": "https://t.co/b2eg3VDrHj",
+        "utc_offset": 0,
+        "want_retweets": false,
+        "withheld_description": "",
+        "withheld_scope": ""
+      },
+      "location": {
+        "location": "United States"
+      },
+      "media_permissions": {
+        "can_media_tag": true
+      },
+      "parody_commentary_fan_label": "None",
+      "privacy": {
+        "protected": false
+      },
+      "professional": {
+        "category": [],
+        "professional_type": "Business",
+        "rest_id": "1589138162273566720"
+      },
+      "profile_bio": {
+        "description": "President of @GunRights & @RMGOColorado | \n3-decade Gun Lobbyist | Weapons Expert | Real Conservative"
+      },
+      "profile_image_shape": "Circle",
+      "relationship_perspectives": {
+        "blocked_by": false,
+        "blocking": false,
+        "followed_by": false,
+        "following": false,
+        "muting": false
+      },
+      "rest_id": "1467931973616386052",
+      "super_follow_eligible": true,
+      "super_followed_by": false,
+      "super_following": false,
+      "verification": {
+        "verified": false
+      }
+    }
+  },
+  {
+    "type": "followers",
+    "target": {
+      "raw": "elonmusk",
+      "source": "users",
+      "user_id": "",
+      "username": "elonmusk",
+      "profile_url": ""
+    },
+    "user_id": "18266688",
+    "username": "TomFitton",
+    "name": "Tom Fitton",
+    "description": "President, Judicial Watch. Fact checker. \"Expert\" (These are my personal views only!)  NEW BOOK: RIGHTS AND FREEDOMS IN PERIL -- https://t.co/HilDvVzCNg!",
+    "location": "Washington, DC",
+    "created_at": "Sat Dec 20 14:32:44 +0000 2008",
+    "followers_count": 3274758,
+    "following_count": 5148,
+    "statuses_count": 97705,
+    "favourites_count": 5286,
+    "media_count": 10755,
+    "listed_count": 6692,
+    "verified": false,
+    "blue_verified": true,
+    "protected": false,
+    "profile_image_url": "https://pbs.twimg.com/profile_images/964235516794171392/ktAX5u2i_normal.jpg",
+    "profile_banner_url": "https://pbs.twimg.com/profile_banners/18266688/1527968436",
+    "url": "https://t.co/KfcU3LJZH5",
+    "raw": {
+      "__typename": "User",
+      "affiliates_highlighted_label": {},
+      "avatar": {
+        "image_url": "https://pbs.twimg.com/profile_images/964235516794171392/ktAX5u2i_normal.jpg"
+      },
+      "core": {
+        "created_at": "Sat Dec 20 14:32:44 +0000 2008",
+        "name": "Tom Fitton",
+        "screen_name": "TomFitton"
+      },
+      "dm_permissions": {
+        "can_dm": false
+      },
+      "follow_request_sent": false,
+      "has_graduated_access": true,
+      "id": "VXNlcjoxODI2NjY4OA==",
+      "is_blue_verified": true,
+      "legacy": {
+        "default_profile": false,
+        "default_profile_image": false,
+        "description": "President, Judicial Watch. Fact checker. \"Expert\" (These are my personal views only!)  NEW BOOK: RIGHTS AND FREEDOMS IN PERIL -- https://t.co/HilDvVzCNg!",
+        "entities": {
+          "description": {
+            "urls": [
+              {
+                "display_url": "JUDICIALWATCHBOOK.COM",
+                "expanded_url": "http://JUDICIALWATCHBOOK.COM",
+                "indices": [
+                  129,
+                  152
+                ],
+                "url": "https://t.co/HilDvVzCNg"
+              }
+            ]
+          },
+          "url": {
+            "urls": [
+              {
+                "display_url": "JudicialWatch.org",
+                "expanded_url": "http://www.JudicialWatch.org",
+                "indices": [
+                  0,
+                  23
+                ],
+                "url": "https://t.co/KfcU3LJZH5"
+              }
+            ]
+          }
+        },
+        "fast_followers_count": 0,
+        "favourites_count": 5286,
+        "follow_request_sent": false,
+        "followers_count": 3274758,
+        "friends_count": 5148,
+        "has_custom_timelines": true,
+        "is_translator": false,
+        "listed_count": 6692,
+        "media_count": 10755,
+        "needs_phone_verification": false,
+        "normal_followers_count": 3274758,
+        "notifications": false,
+        "pinned_tweet_ids_str": [
+          "2083210079738777656"
+        ],
+        "possibly_sensitive": false,
+        "profile_banner_url": "https://pbs.twimg.com/profile_banners/18266688/1527968436",
+        "profile_interstitial_type": "",
+        "statuses_count": 97705,
+        "time_zone": "",
+        "translator_type": "regular",
+        "url": "https://t.co/KfcU3LJZH5",
+        "utc_offset": 0,
+        "want_retweets": false,
+        "withheld_description": "",
+        "withheld_scope": ""
+      },
+      "location": {
+        "location": "Washington, DC"
+      },
+      "media_permissions": {
+        "can_media_tag": true
+      },
+      "parody_commentary_fan_label": "None",
+      "privacy": {
+        "protected": false
+      },
+      "professional": {
+        "category": [],
+        "professional_type": "Creator",
+        "rest_id": "1461329162304643073"
+      },
+      "profile_bio": {
+        "description": "President, Judicial Watch. Fact checker. \"Expert\" (These are my personal views only!)  NEW BOOK: RIGHTS AND FREEDOMS IN PERIL -- https://t.co/HilDvVzCNg!"
+      },
+      "profile_description_language": "en",
+      "profile_image_shape": "Circle",
+      "relationship_perspectives": {
+        "blocked_by": false,
+        "blocking": false,
+        "followed_by": false,
+        "following": false,
+        "muting": false
+      },
+      "rest_id": "18266688",
+      "super_follow_eligible": true,
+      "super_followed_by": false,
+      "super_following": false,
+      "verification": {
+        "verified": false
+      }
+    }
+  },
+  {
+    "type": "followers",
+    "target": {
+      "raw": "elonmusk",
+      "source": "users",
+      "user_id": "",
+      "username": "elonmusk",
+      "profile_url": ""
+    },
+    "user_id": "216881337",
+    "username": "RandPaul",
+    "name": "Rand Paul",
+    "description": "U.S. Senator for Kentucky | I fight for the Constitution, individual liberty and the freedoms that make this country great.",
+    "location": "Bowling Green, KY",
+    "created_at": "Wed Nov 17 23:52:35 +0000 2010",
+    "followers_count": 5969235,
+    "following_count": 812,
+    "statuses_count": 21083,
+    "favourites_count": 933,
+    "media_count": 4202,
+    "listed_count": 17253,
+    "verified": false,
+    "blue_verified": true,
+    "protected": false,
+    "profile_image_url": "https://pbs.twimg.com/profile_images/681152691461042177/_PrgDgFA_normal.jpg",
+    "profile_banner_url": "https://pbs.twimg.com/profile_banners/216881337/1628188173",
+    "url": "https://t.co/DUHX2tAy71",
+    "raw": {
+      "__typename": "User",
+      "affiliates_highlighted_label": {},
+      "avatar": {
+        "image_url": "https://pbs.twimg.com/profile_images/681152691461042177/_PrgDgFA_normal.jpg"
+      },
+      "core": {
+        "created_at": "Wed Nov 17 23:52:35 +0000 2010",
+        "name": "Rand Paul",
+        "screen_name": "RandPaul"
+      },
+      "dm_permissions": {
+        "can_dm": false
+      },
+      "follow_request_sent": false,
+      "has_graduated_access": true,
+      "id": "VXNlcjoyMTY4ODEzMzc=",
+      "is_blue_verified": true,
+      "legacy": {
+        "default_profile": false,
+        "default_profile_image": false,
+        "description": "U.S. Senator for Kentucky | I fight for the Constitution, individual liberty and the freedoms that make this country great.",
+        "entities": {
+          "description": {},
+          "url": {
+            "urls": [
+              {
+                "display_url": "randpaul.com",
+                "expanded_url": "http://randpaul.com",
+                "indices": [
+                  0,
+                  23
+                ],
+                "url": "https://t.co/DUHX2tAy71"
+              }
+            ]
+          }
+        },
+        "fast_followers_count": 0,
+        "favourites_count": 933,
+        "follow_request_sent": false,
+        "followers_count": 5969235,
+        "friends_count": 812,
+        "has_custom_timelines": true,
+        "is_translator": false,
+        "listed_count": 17253,
+        "media_count": 4202,
+        "needs_phone_verification": false,
+        "normal_followers_count": 5969235,
+        "notifications": false,
+        "possibly_sensitive": false,
+        "profile_banner_url": "https://pbs.twimg.com/profile_banners/216881337/1628188173",
+        "profile_interstitial_type": "",
+        "statuses_count": 21083,
+        "time_zone": "",
+        "translator_type": "none",
+        "url": "https://t.co/DUHX2tAy71",
+        "utc_offset": 0,
+        "want_retweets": false,
+        "withheld_description": "",
+        "withheld_scope": ""
+      },
+      "location": {
+        "location": "Bowling Green, KY"
+      },
+      "media_permissions": {
+        "can_media_tag": false
+      },
+      "parody_commentary_fan_label": "None",
+      "privacy": {
+        "protected": false
+      },
+      "profile_bio": {
+        "description": "U.S. Senator for Kentucky | I fight for the Constitution, individual liberty and the freedoms that make this country great."
+      },
+      "profile_description_language": "en",
+      "profile_image_shape": "Circle",
+      "relationship_perspectives": {
+        "blocked_by": false,
+        "blocking": false,
+        "followed_by": false,
+        "following": false,
+        "muting": false
+      },
+      "rest_id": "216881337",
+      "super_follow_eligible": false,
+      "super_followed_by": false,
+      "super_following": false,
+      "verification": {
+        "verified": false,
+        "verified_type": "Government"
+      }
+    }
+  },
+  {
+    "type": "followers",
+    "target": {
+      "raw": "elonmusk",
+      "source": "users",
+      "user_id": "",
+      "username": "elonmusk",
+      "profile_url": ""
+    },
+    "user_id": "23022687",
+    "username": "tedcruz",
+    "name": "Ted Cruz",
+    "description": "Father of two, @heidiscruz's husband, fighter for liberty. Representing the great state of Texas in the U.S. Senate.\n\nGOING FURTHER out 8/25.",
+    "location": "Houston, Texas",
+    "created_at": "Fri Mar 06 03:20:20 +0000 2009",
+    "followers_count": 7084222,
+    "following_count": 5419,
+    "statuses_count": 60759,
+    "favourites_count": 1533,
+    "media_count": 9626,
+    "listed_count": 18352,
+    "verified": false,
+    "blue_verified": true,
+    "protected": false,
+    "profile_image_url": "https://pbs.twimg.com/profile_images/1798342969218510849/JaIsGsam_normal.jpg",
+    "profile_banner_url": "https://pbs.twimg.com/profile_banners/23022687/1757610880",
+    "url": "https://t.co/wsSCJDbFKr",
+    "raw": {
+      "__typename": "User",
+      "affiliates_highlighted_label": {},
+      "avatar": {
+        "image_url": "https://pbs.twimg.com/profile_images/1798342969218510849/JaIsGsam_normal.jpg"
+      },
+      "core": {
+        "created_at": "Fri Mar 06 03:20:20 +0000 2009",
+        "name": "Ted Cruz",
+        "screen_name": "tedcruz"
+      },
+      "dm_permissions": {
+        "can_dm": false
+      },
+      "follow_request_sent": false,
+      "has_graduated_access": true,
+      "id": "VXNlcjoyMzAyMjY4Nw==",
+      "is_blue_verified": true,
+      "legacy": {
+        "default_profile": false,
+        "default_profile_image": false,
+        "description": "Father of two, @heidiscruz's husband, fighter for liberty. Representing the great state of Texas in the U.S. Senate.\n\nGOING FURTHER out 8/25.",
+        "entities": {
+          "description": {},
+          "url": {
+            "urls": [
+              {
+                "display_url": "Tedcruz.org",
+                "expanded_url": "http://Tedcruz.org",
+                "indices": [
+                  0,
+                  23
+                ],
+                "url": "https://t.co/wsSCJDbFKr"
+              }
+            ]
+          }
+        },
+        "fast_followers_count": 0,
+        "favourites_count": 1533,
+        "follow_request_sent": false,
+        "followers_count": 7084222,
+        "friends_count": 5419,
+        "has_custom_timelines": true,
+        "is_translator": false,
+        "listed_count": 18352,
+        "media_count": 9626,
+        "needs_phone_verification": false,
+        "normal_followers_count": 7084222,
+        "notifications": false,
+        "pinned_tweet_ids_str": [
+          "2082551683402584345"
+        ],
+        "possibly_sensitive": false,
+        "profile_banner_url": "https://pbs.twimg.com/profile_banners/23022687/1757610880",
+        "profile_interstitial_type": "",
+        "statuses_count": 60759,
+        "time_zone": "",
+        "translator_type": "none",
+        "url": "https://t.co/wsSCJDbFKr",
+        "utc_offset": 0,
+        "want_retweets": false,
+        "withheld_description": "",
+        "withheld_scope": ""
+      },
+      "location": {
+        "location": "Houston, Texas"
+      },
+      "media_permissions": {
+        "can_media_tag": true
+      },
+      "parody_commentary_fan_label": "None",
+      "privacy": {
+        "protected": false
+      },
+      "profile_bio": {
+        "description": "Father of two, @heidiscruz's husband, fighter for liberty. Representing the great state of Texas in the U.S. Senate.\n\nGOING FURTHER out 8/25."
+      },
+      "profile_description_language": "en",
+      "profile_image_shape": "Circle",
+      "relationship_perspectives": {
+        "blocked_by": false,
+        "blocking": false,
+        "followed_by": false,
+        "following": false,
+        "muting": false
+      },
+      "rest_id": "23022687",
+      "super_follow_eligible": false,
+      "super_followed_by": false,
+      "super_following": false,
+      "verification": {
+        "verified": false,
+        "verified_type": "Government"
+      }
+    }
+  },
+  {
+    "type": "followers",
+    "target": {
+      "raw": "elonmusk",
+      "source": "users",
+      "user_id": "",
+      "username": "elonmusk",
+      "profile_url": ""
+    },
+    "user_id": "13298072",
+    "username": "Tesla",
+    "name": "Tesla",
+    "description": "Electric vehicles, giant batteries & solar, AI & robotics",
+    "location": null,
+    "created_at": "Sun Feb 10 01:12:32 +0000 2008",
+    "followers_count": 24782920,
+    "following_count": 56,
+    "statuses_count": 10497,
+    "favourites_count": 8057,
+    "media_count": 2021,
+    "listed_count": 28674,
+    "verified": false,
+    "blue_verified": true,
+    "protected": false,
+    "profile_image_url": "https://pbs.twimg.com/profile_images/1337607516008501250/6Ggc4S5n_normal.png",
+    "profile_banner_url": "https://pbs.twimg.com/profile_banners/13298072/1762567360",
+    "url": "https://t.co/EJC6qVEJnC",
+    "raw": {
+      "__typename": "User",
+      "affiliates_highlighted_label": {},
+      "avatar": {
+        "image_url": "https://pbs.twimg.com/profile_images/1337607516008501250/6Ggc4S5n_normal.png"
+      },
+      "core": {
+        "created_at": "Sun Feb 10 01:12:32 +0000 2008",
+        "name": "Tesla",
+        "screen_name": "Tesla"
+      },
+      "dm_permissions": {
+        "can_dm": true
+      },
+      "follow_request_sent": false,
+      "has_graduated_access": true,
+      "id": "VXNlcjoxMzI5ODA3Mg==",
+      "is_blue_verified": true,
+      "legacy": {
+        "default_profile": false,
+        "default_profile_image": false,
+        "description": "Electric vehicles, giant batteries & solar, AI & robotics",
+        "entities": {
+          "description": {},
+          "url": {
+            "urls": [
+              {
+                "display_url": "tesla.com",
+                "expanded_url": "https://www.tesla.com",
+                "indices": [
+                  0,
+                  23
+                ],
+                "url": "https://t.co/EJC6qVEJnC"
+              }
+            ]
+          }
+        },
+        "fast_followers_count": 0,
+        "favourites_count": 8057,
+        "follow_request_sent": false,
+        "followers_count": 24782920,
+        "friends_count": 56,
+        "has_custom_timelines": true,
+        "is_translator": false,
+        "listed_count": 28674,
+        "media_count": 2021,
+        "needs_phone_verification": false,
+        "normal_followers_count": 24782920,
+        "notifications": false,
+        "pinned_tweet_ids_str": [
+          "2080087667119898780"
+        ],
+        "possibly_sensitive": false,
+        "profile_banner_url": "https://pbs.twimg.com/profile_banners/13298072/1762567360",
+        "profile_interstitial_type": "",
+        "statuses_count": 10497,
+        "time_zone": "",
+        "translator_type": "none",
+        "url": "https://t.co/EJC6qVEJnC",
+        "utc_offset": 0,
+        "want_retweets": false,
+        "withheld_description": "",
+        "withheld_scope": ""
+      },
+      "location": {
+        "location": ""
+      },
+      "media_permissions": {
+        "can_media_tag": true
+      },
+      "parody_commentary_fan_label": "None",
+      "privacy": {
+        "protected": false
+      },
+      "professional": {
+        "category": [],
+        "professional_type": "Business",
+        "rest_id": "1590468365159636997"
+      },
+      "profile_bio": {
+        "description": "Electric vehicles, giant batteries & solar, AI & robotics"
+      },
+      "profile_image_shape": "Square",
+      "relationship_perspectives": {
+        "blocked_by": false,
+        "blocking": false,
+        "followed_by": false,
+        "following": false,
+        "muting": false
+      },
+      "rest_id": "13298072",
+      "super_follow_eligible": false,
+      "super_followed_by": false,
+      "super_following": false,
+      "verification": {
+        "verified": false,
+        "verified_type": "Business"
+      }
+    }
+  },
+  {
+    "type": "followers",
+    "target": {
+      "raw": "elonmusk",
+      "source": "users",
+      "user_id": "",
+      "username": "elonmusk",
+      "profile_url": ""
+    },
+    "user_id": "259001548",
+    "username": "kayleighmcenany",
+    "name": "Kayleigh McEnany",
+    "description": "Host of @SatAmericaFNC @FoxNews. Co-host @OutnumberedFNC. Fmr. White House Press Secretary. Harvard Law. Georgetown SFS.",
+    "location": null,
+    "created_at": "Mon Feb 28 23:33:33 +0000 2011",
+    "followers_count": 4040105,
+    "following_count": 2943,
+    "statuses_count": 27189,
+    "favourites_count": 21329,
+    "media_count": 3134,
+    "listed_count": 7490,
+    "verified": false,
+    "blue_verified": true,
+    "protected": false,
+    "profile_image_url": "https://pbs.twimg.com/profile_images/2001806985759698944/IjjsiBBW_normal.jpg",
+    "profile_banner_url": "https://pbs.twimg.com/profile_banners/259001548/1766102964",
+    "url": null,
+    "raw": {
+      "__typename": "User",
+      "affiliates_highlighted_label": {},
+      "avatar": {
+        "image_url": "https://pbs.twimg.com/profile_images/2001806985759698944/IjjsiBBW_normal.jpg"
+      },
+      "core": {
+        "created_at": "Mon Feb 28 23:33:33 +0000 2011",
+        "name": "Kayleigh McEnany",
+        "screen_name": "kayleighmcenany"
+      },
+      "dm_permissions": {
+        "can_dm": false
+      },
+      "follow_request_sent": false,
+      "has_graduated_access": true,
+      "id": "VXNlcjoyNTkwMDE1NDg=",
+      "is_blue_verified": true,
+      "legacy": {
+        "default_profile": false,
+        "default_profile_image": false,
+        "description": "Host of @SatAmericaFNC @FoxNews. Co-host @OutnumberedFNC. Fmr. White House Press Secretary. Harvard Law. Georgetown SFS.",
+        "entities": {
+          "description": {}
+        },
+        "fast_followers_count": 0,
+        "favourites_count": 21329,
+        "follow_request_sent": false,
+        "followers_count": 4040105,
+        "friends_count": 2943,
+        "has_custom_timelines": true,
+        "is_translator": false,
+        "listed_count": 7490,
+        "media_count": 3134,
+        "needs_phone_verification": false,
+        "normal_followers_count": 4040105,
+        "notifications": false,
+        "possibly_sensitive": false,
+        "profile_banner_url": "https://pbs.twimg.com/profile_banners/259001548/1766102964",
+        "profile_interstitial_type": "",
+        "statuses_count": 27189,
+        "time_zone": "",
+        "translator_type": "none",
+        "url": "",
+        "utc_offset": 0,
+        "want_retweets": false,
+        "withheld_description": "",
+        "withheld_scope": ""
+      },
+      "location": {
+        "location": ""
+      },
+      "media_permissions": {
+        "can_media_tag": false
+      },
+      "parody_commentary_fan_label": "None",
+      "privacy": {
+        "protected": false
+      },
+      "profile_bio": {
+        "description": "Host of @SatAmericaFNC @FoxNews. Co-host @OutnumberedFNC. Fmr. White House Press Secretary. Harvard Law. Georgetown SFS."
+      },
+      "profile_description_language": "en",
+      "profile_image_shape": "Circle",
+      "relationship_perspectives": {
+        "blocked_by": false,
+        "blocking": false,
+        "followed_by": false,
+        "following": false,
+        "muting": false
+      },
+      "rest_id": "259001548",
+      "super_follow_eligible": false,
+      "super_followed_by": false,
+      "super_following": false,
+      "verification": {
+        "verified": false
+      }
+    }
+  },
+  {
+    "type": "followers",
+    "target": {
+      "raw": "elonmusk",
+      "source": "users",
+      "user_id": "",
+      "username": "elonmusk",
+      "profile_url": ""
+    },
+    "user_id": "20545835",
+    "username": "NEWSMAX",
+    "name": "NEWSMAX",
+    "description": "Real News for Real People. \n\nWatch NEWSMAX, an independent news network with a conservative perspective, available in 100M+ U.S. homes: https://t.co/rs8XZDalW3  $NMAX",
+    "location": "United States",
+    "created_at": "Tue Feb 10 21:04:49 +0000 2009",
+    "followers_count": 3665112,
+    "following_count": 842,
+    "statuses_count": 272812,
+    "favourites_count": 7972,
+    "media_count": 84306,
+    "listed_count": 8623,
+    "verified": false,
+    "blue_verified": true,
+    "protected": false,
+    "profile_image_url": "https://pbs.twimg.com/profile_images/1394735604269817857/AXKKo6XT_normal.jpg",
+    "profile_banner_url": "https://pbs.twimg.com/profile_banners/20545835/1621263045",
+    "url": "https://t.co/mEKjDDH0HC",
+    "raw": {
+      "__typename": "User",
+      "affiliates_highlighted_label": {},
+      "avatar": {
+        "image_url": "https://pbs.twimg.com/profile_images/1394735604269817857/AXKKo6XT_normal.jpg"
+      },
+      "core": {
+        "created_at": "Tue Feb 10 21:04:49 +0000 2009",
+        "name": "NEWSMAX",
+        "screen_name": "NEWSMAX"
+      },
+      "dm_permissions": {
+        "can_dm": true
+      },
+      "follow_request_sent": false,
+      "has_graduated_access": true,
+      "id": "VXNlcjoyMDU0NTgzNQ==",
+      "is_blue_verified": true,
+      "legacy": {
+        "default_profile": false,
+        "default_profile_image": false,
+        "description": "Real News for Real People. \n\nWatch NEWSMAX, an independent news network with a conservative perspective, available in 100M+ U.S. homes: https://t.co/rs8XZDalW3  $NMAX",
+        "entities": {
+          "description": {
+            "urls": [
+              {
+                "display_url": "nws.mx/tv",
+                "expanded_url": "http://nws.mx/tv",
+                "indices": [
+                  136,
+                  159
+                ],
+                "url": "https://t.co/rs8XZDalW3"
+              }
+            ]
+          },
+          "url": {
+            "urls": [
+              {
+                "display_url": "newsmax.com",
+                "expanded_url": "http://www.newsmax.com",
+                "indices": [
+                  0,
+                  23
+                ],
+                "url": "https://t.co/mEKjDDH0HC"
+              }
+            ]
+          }
+        },
+        "fast_followers_count": 0,
+        "favourites_count": 7972,
+        "follow_request_sent": false,
+        "followers_count": 3665112,
+        "friends_count": 842,
+        "has_custom_timelines": true,
+        "is_translator": false,
+        "listed_count": 8623,
+        "media_count": 84306,
+        "needs_phone_verification": false,
+        "normal_followers_count": 3665112,
+        "notifications": false,
+        "possibly_sensitive": false,
+        "profile_banner_url": "https://pbs.twimg.com/profile_banners/20545835/1621263045",
+        "profile_interstitial_type": "",
+        "statuses_count": 272812,
+        "time_zone": "",
+        "translator_type": "none",
+        "url": "https://t.co/mEKjDDH0HC",
+        "utc_offset": 0,
+        "want_retweets": false,
+        "withheld_description": "",
+        "withheld_scope": ""
+      },
+      "location": {
+        "location": "United States"
+      },
+      "media_permissions": {
+        "can_media_tag": true
+      },
+      "parody_commentary_fan_label": "None",
+      "privacy": {
+        "protected": false
+      },
+      "professional": {
+        "category": [
+          {
+            "icon_name": "IconBriefcaseStroke",
+            "id": 580,
+            "name": "Media & News Company"
+          }
+        ],
+        "professional_type": "Business",
+        "rest_id": "1447515653112487939"
+      },
+      "profile_bio": {
+        "description": "Real News for Real People. \n\nWatch NEWSMAX, an independent news network with a conservative perspective, available in 100M+ U.S. homes: https://t.co/rs8XZDalW3  $NMAX"
+      },
+      "profile_description_language": "en",
+      "profile_image_shape": "Square",
+      "relationship_perspectives": {
+        "blocked_by": false,
+        "blocking": false,
+        "followed_by": false,
+        "following": false,
+        "muting": false
+      },
+      "rest_id": "20545835",
+      "super_follow_eligible": false,
+      "super_followed_by": false,
+      "super_following": false,
+      "verification": {
+        "verified": false,
+        "verified_type": "Business"
+      }
+    }
+  },
+  {
+    "type": "followers",
+    "target": {
+      "raw": "elonmusk",
+      "source": "users",
+      "user_id": "",
+      "username": "elonmusk",
+      "profile_url": ""
+    },
+    "user_id": "2084995816226537472",
+    "username": "TYHknnn",
+    "name": "Trung Le",
+    "description": null,
+    "location": null,
+    "created_at": "Wed Aug 05 13:33:58 +0000 2026",
+    "followers_count": 0,
+    "following_count": 11,
+    "statuses_count": 0,
+    "favourites_count": 0,
+    "media_count": 0,
+    "listed_count": 0,
+    "verified": false,
+    "blue_verified": false,
+    "protected": false,
+    "profile_image_url": "https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png",
+    "profile_banner_url": null,
+    "url": null,
+    "raw": {
+      "__typename": "User",
+      "affiliates_highlighted_label": {},
+      "avatar": {
+        "image_url": "https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png"
+      },
+      "core": {
+        "created_at": "Wed Aug 05 13:33:58 +0000 2026",
+        "name": "Trung Le",
+        "screen_name": "TYHknnn"
+      },
+      "dm_permissions": {
+        "can_dm": false
+      },
+      "follow_request_sent": false,
+      "has_graduated_access": false,
+      "id": "VXNlcjoyMDg0OTk1ODE2MjI2NTM3NDcy",
+      "is_blue_verified": false,
+      "legacy": {
+        "default_profile": true,
+        "default_profile_image": true,
+        "description": "",
+        "entities": {
+          "description": {}
+        },
+        "fast_followers_count": 0,
+        "favourites_count": 0,
+        "follow_request_sent": false,
+        "followers_count": 0,
+        "friends_count": 11,
+        "has_custom_timelines": false,
+        "is_translator": false,
+        "listed_count": 0,
+        "media_count": 0,
+        "needs_phone_verification": false,
+        "normal_followers_count": 0,
+        "notifications": false,
+        "possibly_sensitive": false,
+        "profile_banner_url": "",
+        "profile_interstitial_type": "",
+        "statuses_count": 0,
+        "time_zone": "",
+        "translator_type": "none",
+        "url": "",
+        "utc_offset": 0,
+        "want_retweets": false,
+        "withheld_description": "",
+        "withheld_scope": ""
+      },
+      "location": {
+        "location": ""
+      },
+      "media_permissions": {
+        "can_media_tag": true
+      },
+      "parody_commentary_fan_label": "None",
+      "privacy": {
+        "protected": false
+      },
+      "profile_bio": {
+        "description": ""
+      },
+      "profile_image_shape": "Circle",
+      "relationship_perspectives": {
+        "blocked_by": false,
+        "blocking": false,
+        "followed_by": false,
+        "following": false,
+        "muting": false
+      },
+      "rest_id": "2084995816226537472",
+      "super_follow_eligible": false,
+      "super_followed_by": false,
+      "super_following": false,
+      "verification": {
+        "verified": false
+      }
+    }
+  },
+  {
+    "type": "followers",
+    "target": {
+      "raw": "elonmusk",
+      "source": "users",
+      "user_id": "",
+      "username": "elonmusk",
+      "profile_url": ""
+    },
+    "user_id": "2084996180950274048",
+    "username": "cjon241091",
+    "name": "Hector Hernandez",
+    "description": null,
+    "location": null,
+    "created_at": "Wed Aug 05 13:34:08 +0000 2026",
+    "followers_count": 0,
+    "following_count": 39,
+    "statuses_count": 0,
+    "favourites_count": 0,
+    "media_count": 0,
+    "listed_count": 0,
+    "verified": false,
+    "blue_verified": false,
+    "protected": false,
+    "profile_image_url": "https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png",
+    "profile_banner_url": null,
+    "url": null,
+    "raw": {
+      "__typename": "User",
+      "affiliates_highlighted_label": {},
+      "avatar": {
+        "image_url": "https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png"
+      },
+      "core": {
+        "created_at": "Wed Aug 05 13:34:08 +0000 2026",
+        "name": "Hector Hernandez",
+        "screen_name": "cjon241091"
+      },
+      "dm_permissions": {
+        "can_dm": false
+      },
+      "follow_request_sent": false,
+      "has_graduated_access": false,
+      "id": "VXNlcjoyMDg0OTk2MTgwOTUwMjc0MDQ4",
+      "is_blue_verified": false,
+      "legacy": {
+        "default_profile": true,
+        "default_profile_image": true,
+        "description": "",
+        "entities": {
+          "description": {}
+        },
+        "fast_followers_count": 0,
+        "favourites_count": 0,
+        "follow_request_sent": false,
+        "followers_count": 0,
+        "friends_count": 39,
+        "has_custom_timelines": false,
+        "is_translator": false,
+        "listed_count": 0,
+        "media_count": 0,
+        "needs_phone_verification": false,
+        "normal_followers_count": 0,
+        "notifications": false,
+        "possibly_sensitive": false,
+        "profile_banner_url": "",
+        "profile_interstitial_type": "",
+        "statuses_count": 0,
+        "time_zone": "",
+        "translator_type": "none",
+        "url": "",
+        "utc_offset": 0,
+        "want_retweets": false,
+        "withheld_description": "",
+        "withheld_scope": ""
+      },
+      "location": {
+        "location": ""
+      },
+      "media_permissions": {
+        "can_media_tag": true
+      },
+      "parody_commentary_fan_label": "None",
+      "privacy": {
+        "protected": false
+      },
+      "profile_bio": {
+        "description": ""
+      },
+      "profile_image_shape": "Circle",
+      "relationship_perspectives": {
+        "blocked_by": false,
+        "blocking": false,
+        "followed_by": false,
+        "following": false,
+        "muting": false
+      },
+      "rest_id": "2084996180950274048",
+      "super_follow_eligible": false,
+      "super_followed_by": false,
+      "super_following": false,
+      "verification": {
+        "verified": false
+      }
+    }
+  },
+  {
+    "type": "followers",
+    "target": {
+      "raw": "elonmusk",
+      "source": "users",
+      "user_id": "",
+      "username": "elonmusk",
+      "profile_url": ""
+    },
+    "user_id": "2084996396588072960",
+    "username": "tvcrcvjkl",
+    "name": "Vuvyvtf",
+    "description": null,
+    "location": null,
+    "created_at": "Wed Aug 05 13:34:29 +0000 2026",
+    "followers_count": 0,
+    "following_count": 11,
+    "statuses_count": 0,
+    "favourites_count": 0,
+    "media_count": 0,
+    "listed_count": 0,
+    "verified": false,
+    "blue_verified": false,
+    "protected": false,
+    "profile_image_url": "https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png",
+    "profile_banner_url": null,
+    "url": null,
+    "raw": {
+      "__typename": "User",
+      "affiliates_highlighted_label": {},
+      "avatar": {
+        "image_url": "https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png"
+      },
+      "core": {
+        "created_at": "Wed Aug 05 13:34:29 +0000 2026",
+        "name": "Vuvyvtf",
+        "screen_name": "tvcrcvjkl"
+      },
+      "dm_permissions": {
+        "can_dm": false
+      },
+      "follow_request_sent": false,
+      "has_graduated_access": false,
+      "id": "VXNlcjoyMDg0OTk2Mzk2NTg4MDcyOTYw",
+      "is_blue_verified": false,
+      "legacy": {
+        "default_profile": true,
+        "default_profile_image": true,
+        "description": "",
+        "entities": {
+          "description": {}
+        },
+        "fast_followers_count": 0,
+        "favourites_count": 0,
+        "follow_request_sent": false,
+        "followers_count": 0,
+        "friends_count": 11,
+        "has_custom_timelines": false,
+        "is_translator": false,
+        "listed_count": 0,
+        "media_count": 0,
+        "needs_phone_verification": false,
+        "normal_followers_count": 0,
+        "notifications": false,
+        "possibly_sensitive": false,
+        "profile_banner_url": "",
+        "profile_interstitial_type": "",
+        "statuses_count": 0,
+        "time_zone": "",
+        "translator_type": "none",
+        "url": "",
+        "utc_offset": 0,
+        "want_retweets": false,
+        "withheld_description": "",
+        "withheld_scope": ""
+      },
+      "location": {
+        "location": ""
+      },
+      "media_permissions": {
+        "can_media_tag": true
+      },
+      "parody_commentary_fan_label": "None",
+      "privacy": {
+        "protected": false
+      },
+      "profile_bio": {
+        "description": ""
+      },
+      "profile_image_shape": "Circle",
+      "relationship_perspectives": {
+        "blocked_by": false,
+        "blocking": false,
+        "followed_by": false,
+        "following": false,
+        "muting": false
+      },
+      "rest_id": "2084996396588072960",
+      "super_follow_eligible": false,
+      "super_followed_by": false,
+      "super_following": false,
+      "verification": {
+        "verified": false
+      }
+    }
+  },
+  {
+    "type": "followers",
+    "target": {
+      "raw": "elonmusk",
+      "source": "users",
+      "user_id": "",
+      "username": "elonmusk",
+      "profile_url": ""
+    },
+    "user_id": "2084995319914434562",
+    "username": "RuchikaBhatm",
+    "name": "Ruchika Bhatnagar",
+    "description": null,
+    "location": null,
+    "created_at": "Wed Aug 05 13:31:51 +0000 2026",
+    "followers_count": 0,
+    "following_count": 12,
+    "statuses_count": 0,
+    "favourites_count": 0,
+    "media_count": 0,
+    "listed_count": 0,
+    "verified": false,
+    "blue_verified": false,
+    "protected": false,
+    "profile_image_url": "https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png",
+    "profile_banner_url": null,
+    "url": null,
+    "raw": {
+      "__typename": "User",
+      "affiliates_highlighted_label": {},
+      "avatar": {
+        "image_url": "https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png"
+      },
+      "core": {
+        "created_at": "Wed Aug 05 13:31:51 +0000 2026",
+        "name": "Ruchika Bhatnagar",
+        "screen_name": "RuchikaBhatm"
+      },
+      "dm_permissions": {
+        "can_dm": false
+      },
+      "follow_request_sent": false,
+      "has_graduated_access": false,
+      "id": "VXNlcjoyMDg0OTk1MzE5OTE0NDM0NTYy",
+      "is_blue_verified": false,
+      "legacy": {
+        "default_profile": true,
+        "default_profile_image": true,
+        "description": "",
+        "entities": {
+          "description": {}
+        },
+        "fast_followers_count": 0,
+        "favourites_count": 0,
+        "follow_request_sent": false,
+        "followers_count": 0,
+        "friends_count": 12,
+        "has_custom_timelines": false,
+        "is_translator": false,
+        "listed_count": 0,
+        "media_count": 0,
+        "needs_phone_verification": false,
+        "normal_followers_count": 0,
+        "notifications": false,
+        "possibly_sensitive": false,
+        "profile_banner_url": "",
+        "profile_interstitial_type": "",
+        "statuses_count": 0,
+        "time_zone": "",
+        "translator_type": "none",
+        "url": "",
+        "utc_offset": 0,
+        "want_retweets": false,
+        "withheld_description": "",
+        "withheld_scope": ""
+      },
+      "location": {
+        "location": ""
+      },
+      "media_permissions": {
+        "can_media_tag": true
+      },
+      "parody_commentary_fan_label": "None",
+      "privacy": {
+        "protected": false
+      },
+      "profile_bio": {
+        "description": ""
+      },
+      "profile_image_shape": "Circle",
+      "relationship_perspectives": {
+        "blocked_by": false,
+        "blocking": false,
+        "followed_by": false,
+        "following": false,
+        "muting": false
+      },
+      "rest_id": "2084995319914434562",
+      "super_follow_eligible": false,
+      "super_followed_by": false,
+      "super_following": false,
+      "verification": {
+        "verified": false
+      }
+    }
+  },
+  {
+    "type": "followers",
+    "target": {
+      "raw": "elonmusk",
+      "source": "users",
+      "user_id": "",
+      "username": "elonmusk",
+      "profile_url": ""
+    },
+    "user_id": "2084995830004482048",
+    "username": "KorimLszlq4o",
+    "name": "Korim László",
+    "description": null,
+    "location": null,
+    "created_at": "Wed Aug 05 13:33:32 +0000 2026",
+    "followers_count": 0,
+    "following_count": 11,
+    "statuses_count": 0,
+    "favourites_count": 0,
+    "media_count": 0,
+    "listed_count": 0,
+    "verified": false,
+    "blue_verified": false,
+    "protected": false,
+    "profile_image_url": "https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png",
+    "profile_banner_url": null,
+    "url": null,
+    "raw": {
+      "__typename": "User",
+      "affiliates_highlighted_label": {},
+      "avatar": {
+        "image_url": "https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png"
+      },
+      "core": {
+        "created_at": "Wed Aug 05 13:33:32 +0000 2026",
+        "name": "Korim László",
+        "screen_name": "KorimLszlq4o"
+      },
+      "dm_permissions": {
+        "can_dm": false
+      },
+      "follow_request_sent": false,
+      "has_graduated_access": false,
+      "id": "VXNlcjoyMDg0OTk1ODMwMDA0NDgyMDQ4",
+      "is_blue_verified": false,
+      "legacy": {
+        "default_profile": true,
+        "default_profile_image": true,
+        "description": "",
+        "entities": {
+          "description": {}
+        },
+        "fast_followers_count": 0,
+        "favourites_count": 0,
+        "follow_request_sent": false,
+        "followers_count": 0,
+        "friends_count": 11,
+        "has_custom_timelines": false,
+        "is_translator": false,
+        "listed_count": 0,
+        "media_count": 0,
+        "needs_phone_verification": false,
+        "normal_followers_count": 0,
+        "notifications": false,
+        "possibly_sensitive": false,
+        "profile_banner_url": "",
+        "profile_interstitial_type": "",
+        "statuses_count": 0,
+        "time_zone": "",
+        "translator_type": "none",
+        "url": "",
+        "utc_offset": 0,
+        "want_retweets": false,
+        "withheld_description": "",
+        "withheld_scope": ""
+      },
+      "location": {
+        "location": ""
+      },
+      "media_permissions": {
+        "can_media_tag": true
+      },
+      "parody_commentary_fan_label": "None",
+      "privacy": {
+        "protected": false
+      },
+      "profile_bio": {
+        "description": ""
+      },
+      "profile_image_shape": "Circle",
+      "relationship_perspectives": {
+        "blocked_by": false,
+        "blocking": false,
+        "followed_by": false,
+        "following": false,
+        "muting": false
+      },
+      "rest_id": "2084995830004482048",
+      "super_follow_eligible": false,
+      "super_followed_by": false,
+      "super_following": false,
+      "verification": {
+        "verified": false
+      }
+    }
+  },
+  {
+    "type": "followers",
+    "target": {
+      "raw": "elonmusk",
+      "source": "users",
+      "user_id": "",
+      "username": "elonmusk",
+      "profile_url": ""
+    },
+    "user_id": "2084996130853842944",
+    "username": "GuJasonqfmb",
+    "name": "Gu Jason",
+    "description": null,
+    "location": null,
+    "created_at": "Wed Aug 05 13:33:45 +0000 2026",
+    "followers_count": 0,
+    "following_count": 41,
+    "statuses_count": 0,
+    "favourites_count": 0,
+    "media_count": 0,
+    "listed_count": 0,
+    "verified": false,
+    "blue_verified": false,
+    "protected": false,
+    "profile_image_url": "https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png",
+    "profile_banner_url": null,
+    "url": null,
+    "raw": {
+      "__typename": "User",
+      "affiliates_highlighted_label": {},
+      "avatar": {
+        "image_url": "https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png"
+      },
+      "core": {
+        "created_at": "Wed Aug 05 13:33:45 +0000 2026",
+        "name": "Gu Jason",
+        "screen_name": "GuJasonqfmb"
+      },
+      "dm_permissions": {
+        "can_dm": false
+      },
+      "follow_request_sent": false,
+      "has_graduated_access": false,
+      "id": "VXNlcjoyMDg0OTk2MTMwODUzODQyOTQ0",
+      "is_blue_verified": false,
+      "legacy": {
+        "default_profile": true,
+        "default_profile_image": true,
+        "description": "",
+        "entities": {
+          "description": {}
+        },
+        "fast_followers_count": 0,
+        "favourites_count": 0,
+        "follow_request_sent": false,
+        "followers_count": 0,
+        "friends_count": 41,
+        "has_custom_timelines": false,
+        "is_translator": false,
+        "listed_count": 0,
+        "media_count": 0,
+        "needs_phone_verification": false,
+        "normal_followers_count": 0,
+        "notifications": false,
+        "possibly_sensitive": false,
+        "profile_banner_url": "",
+        "profile_interstitial_type": "",
+        "statuses_count": 0,
+        "time_zone": "",
+        "translator_type": "none",
+        "url": "",
+        "utc_offset": 0,
+        "want_retweets": false,
+        "withheld_description": "",
+        "withheld_scope": ""
+      },
+      "location": {
+        "location": ""
+      },
+      "media_permissions": {
+        "can_media_tag": true
+      },
+      "parody_commentary_fan_label": "None",
+      "privacy": {
+        "protected": false
+      },
+      "profile_bio": {
+        "description": ""
+      },
+      "profile_image_shape": "Circle",
+      "relationship_perspectives": {
+        "blocked_by": false,
+        "blocking": false,
+        "followed_by": false,
+        "following": false,
+        "muting": false
+      },
+      "rest_id": "2084996130853842944",
+      "super_follow_eligible": false,
+      "super_followed_by": false,
+      "super_following": false,
+      "verification": {
+        "verified": false
+      }
+    }
+  },
+  {
+    "type": "followers",
+    "target": {
+      "raw": "elonmusk",
+      "source": "users",
+      "user_id": "",
+      "username": "elonmusk",
+      "profile_url": ""
+    },
+    "user_id": "2084995158173741056",
+    "username": "TiexiongLijbft",
+    "name": "Tie xiong Li",
+    "description": null,
+    "location": null,
+    "created_at": "Wed Aug 05 13:32:44 +0000 2026",
+    "followers_count": 0,
+    "following_count": 25,
+    "statuses_count": 0,
+    "favourites_count": 0,
+    "media_count": 0,
+    "listed_count": 0,
+    "verified": false,
+    "blue_verified": false,
+    "protected": false,
+    "profile_image_url": "https://pbs.twimg.com/profile_images/2084996342926229504/3vX0D_13_normal.jpg",
+    "profile_banner_url": null,
+    "url": null,
+    "raw": {
+      "__typename": "User",
+      "affiliates_highlighted_label": {},
+      "avatar": {
+        "image_url": "https://pbs.twimg.com/profile_images/2084996342926229504/3vX0D_13_normal.jpg"
+      },
+      "core": {
+        "created_at": "Wed Aug 05 13:32:44 +0000 2026",
+        "name": "Tie xiong Li",
+        "screen_name": "TiexiongLijbft"
+      },
+      "dm_permissions": {
+        "can_dm": false
+      },
+      "follow_request_sent": false,
+      "has_graduated_access": false,
+      "id": "VXNlcjoyMDg0OTk1MTU4MTczNzQxMDU2",
+      "is_blue_verified": false,
+      "legacy": {
+        "default_profile": true,
+        "default_profile_image": false,
+        "description": "",
+        "entities": {
+          "description": {}
+        },
+        "fast_followers_count": 0,
+        "favourites_count": 0,
+        "follow_request_sent": false,
+        "followers_count": 0,
+        "friends_count": 25,
+        "has_custom_timelines": false,
+        "is_translator": false,
+        "listed_count": 0,
+        "media_count": 0,
+        "needs_phone_verification": false,
+        "normal_followers_count": 0,
+        "notifications": false,
+        "possibly_sensitive": false,
+        "profile_banner_url": "",
+        "profile_interstitial_type": "",
+        "statuses_count": 0,
+        "time_zone": "",
+        "translator_type": "none",
+        "url": "",
+        "utc_offset": 0,
+        "want_retweets": false,
+        "withheld_description": "",
+        "withheld_scope": ""
+      },
+      "location": {
+        "location": ""
+      },
+      "media_permissions": {
+        "can_media_tag": true
+      },
+      "parody_commentary_fan_label": "None",
+      "privacy": {
+        "protected": false
+      },
+      "profile_bio": {
+        "description": ""
+      },
+      "profile_image_shape": "Circle",
+      "relationship_perspectives": {
+        "blocked_by": false,
+        "blocking": false,
+        "followed_by": false,
+        "following": false,
+        "muting": false
+      },
+      "rest_id": "2084995158173741056",
+      "super_follow_eligible": false,
+      "super_followed_by": false,
+      "super_following": false,
+      "verification": {
+        "verified": false
+      }
+    }
+  },
+  {
+    "type": "followers",
+    "target": {
+      "raw": "elonmusk",
+      "source": "users",
+      "user_id": "",
+      "username": "elonmusk",
+      "profile_url": ""
+    },
+    "user_id": "2084994955756683264",
+    "username": "BrenLynqVA",
+    "name": "Brenda Mendoza",
+    "description": null,
+    "location": null,
+    "created_at": "Wed Aug 05 13:32:52 +0000 2026",
+    "followers_count": 0,
+    "following_count": 16,
+    "statuses_count": 0,
+    "favourites_count": 0,
+    "media_count": 0,
+    "listed_count": 0,
+    "verified": false,
+    "blue_verified": false,
+    "protected": false,
+    "profile_image_url": "https://pbs.twimg.com/profile_images/2084996487902371840/eIDTC8pq_normal.jpg",
+    "profile_banner_url": null,
+    "url": null,
+    "raw": {
+      "__typename": "User",
+      "affiliates_highlighted_label": {},
+      "avatar": {
+        "image_url": "https://pbs.twimg.com/profile_images/2084996487902371840/eIDTC8pq_normal.jpg"
+      },
+      "core": {
+        "created_at": "Wed Aug 05 13:32:52 +0000 2026",
+        "name": "Brenda Mendoza",
+        "screen_name": "BrenLynqVA"
+      },
+      "dm_permissions": {
+        "can_dm": false
+      },
+      "follow_request_sent": false,
+      "has_graduated_access": false,
+      "id": "VXNlcjoyMDg0OTk0OTU1NzU2NjgzMjY0",
+      "is_blue_verified": false,
+      "legacy": {
+        "default_profile": true,
+        "default_profile_image": false,
+        "description": "",
+        "entities": {
+          "description": {}
+        },
+        "fast_followers_count": 0,
+        "favourites_count": 0,
+        "follow_request_sent": false,
+        "followers_count": 0,
+        "friends_count": 16,
+        "has_custom_timelines": false,
+        "is_translator": false,
+        "listed_count": 0,
+        "media_count": 0,
+        "needs_phone_verification": false,
+        "normal_followers_count": 0,
+        "notifications": false,
+        "possibly_sensitive": false,
+        "profile_banner_url": "",
+        "profile_interstitial_type": "",
+        "statuses_count": 0,
+        "time_zone": "",
+        "translator_type": "none",
+        "url": "",
+        "utc_offset": 0,
+        "want_retweets": false,
+        "withheld_description": "",
+        "withheld_scope": ""
+      },
+      "location": {
+        "location": ""
+      },
+      "media_permissions": {
+        "can_media_tag": true
+      },
+      "parody_commentary_fan_label": "None",
+      "privacy": {
+        "protected": false
+      },
+      "profile_bio": {
+        "description": ""
+      },
+      "profile_image_shape": "Circle",
+      "relationship_perspectives": {
+        "blocked_by": false,
+        "blocking": false,
+        "followed_by": false,
+        "following": false,
+        "muting": false
+      },
+      "rest_id": "2084994955756683264",
+      "super_follow_eligible": false,
+      "super_followed_by": false,
+      "super_following": false,
+      "verification": {
+        "verified": false
+      }
+    }
+  },
+  {
+    "type": "followers",
+    "target": {
+      "raw": "elonmusk",
+      "source": "users",
+      "user_id": "",
+      "username": "elonmusk",
+      "profile_url": ""
+    },
+    "user_id": "2084996007822331905",
+    "username": "MDDANISHAL9d5",
+    "name": "MD DANISH ALAM",
+    "description": null,
+    "location": null,
+    "created_at": "Wed Aug 05 13:33:58 +0000 2026",
+    "followers_count": 0,
+    "following_count": 50,
+    "statuses_count": 0,
+    "favourites_count": 0,
+    "media_count": 0,
+    "listed_count": 0,
+    "verified": false,
+    "blue_verified": false,
+    "protected": false,
+    "profile_image_url": "https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png",
+    "profile_banner_url": null,
+    "url": null,
+    "raw": {
+      "__typename": "User",
+      "affiliates_highlighted_label": {},
+      "avatar": {
+        "image_url": "https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png"
+      },
+      "core": {
+        "created_at": "Wed Aug 05 13:33:58 +0000 2026",
+        "name": "MD DANISH ALAM",
+        "screen_name": "MDDANISHAL9d5"
+      },
+      "dm_permissions": {
+        "can_dm": false
+      },
+      "follow_request_sent": false,
+      "has_graduated_access": false,
+      "id": "VXNlcjoyMDg0OTk2MDA3ODIyMzMxOTA1",
+      "is_blue_verified": false,
+      "legacy": {
+        "default_profile": true,
+        "default_profile_image": true,
+        "description": "",
+        "entities": {
+          "description": {}
+        },
+        "fast_followers_count": 0,
+        "favourites_count": 0,
+        "follow_request_sent": false,
+        "followers_count": 0,
+        "friends_count": 50,
+        "has_custom_timelines": false,
+        "is_translator": false,
+        "listed_count": 0,
+        "media_count": 0,
+        "needs_phone_verification": false,
+        "normal_followers_count": 0,
+        "notifications": false,
+        "possibly_sensitive": false,
+        "profile_banner_url": "",
+        "profile_interstitial_type": "",
+        "statuses_count": 0,
+        "time_zone": "",
+        "translator_type": "none",
+        "url": "",
+        "utc_offset": 0,
+        "want_retweets": false,
+        "withheld_description": "",
+        "withheld_scope": ""
+      },
+      "location": {
+        "location": ""
+      },
+      "media_permissions": {
+        "can_media_tag": true
+      },
+      "parody_commentary_fan_label": "None",
+      "privacy": {
+        "protected": false
+      },
+      "profile_bio": {
+        "description": ""
+      },
+      "profile_image_shape": "Circle",
+      "relationship_perspectives": {
+        "blocked_by": false,
+        "blocking": false,
+        "followed_by": false,
+        "following": false,
+        "muting": false
+      },
+      "rest_id": "2084996007822331905",
+      "super_follow_eligible": false,
+      "super_followed_by": false,
+      "super_following": false,
+      "verification": {
+        "verified": false
+      }
+    }
+  },
+  {
+    "type": "followers",
+    "target": {
+      "raw": "elonmusk",
+      "source": "users",
+      "user_id": "",
+      "username": "elonmusk",
+      "profile_url": ""
+    },
+    "user_id": "2084996227675103233",
+    "username": "jimmytanko9de",
+    "name": "jimmy tank",
+    "description": null,
+    "location": null,
+    "created_at": "Wed Aug 05 13:34:19 +0000 2026",
+    "followers_count": 0,
+    "following_count": 22,
+    "statuses_count": 0,
+    "favourites_count": 0,
+    "media_count": 0,
+    "listed_count": 0,
+    "verified": false,
+    "blue_verified": false,
+    "protected": false,
+    "profile_image_url": "https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png",
+    "profile_banner_url": null,
+    "url": null,
+    "raw": {
+      "__typename": "User",
+      "affiliates_highlighted_label": {},
+      "avatar": {
+        "image_url": "https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png"
+      },
+      "core": {
+        "created_at": "Wed Aug 05 13:34:19 +0000 2026",
+        "name": "jimmy tank",
+        "screen_name": "jimmytanko9de"
+      },
+      "dm_permissions": {
+        "can_dm": false
+      },
+      "follow_request_sent": false,
+      "has_graduated_access": false,
+      "id": "VXNlcjoyMDg0OTk2MjI3Njc1MTAzMjMz",
+      "is_blue_verified": false,
+      "legacy": {
+        "default_profile": true,
+        "default_profile_image": true,
+        "description": "",
+        "entities": {
+          "description": {}
+        },
+        "fast_followers_count": 0,
+        "favourites_count": 0,
+        "follow_request_sent": false,
+        "followers_count": 0,
+        "friends_count": 22,
+        "has_custom_timelines": false,
+        "is_translator": false,
+        "listed_count": 0,
+        "media_count": 0,
+        "needs_phone_verification": false,
+        "normal_followers_count": 0,
+        "notifications": false,
+        "possibly_sensitive": false,
+        "profile_banner_url": "",
+        "profile_interstitial_type": "",
+        "statuses_count": 0,
+        "time_zone": "",
+        "translator_type": "none",
+        "url": "",
+        "utc_offset": 0,
+        "want_retweets": false,
+        "withheld_description": "",
+        "withheld_scope": ""
+      },
+      "location": {
+        "location": ""
+      },
+      "media_permissions": {
+        "can_media_tag": true
+      },
+      "parody_commentary_fan_label": "None",
+      "privacy": {
+        "protected": false
+      },
+      "profile_bio": {
+        "description": ""
+      },
+      "profile_image_shape": "Circle",
+      "relationship_perspectives": {
+        "blocked_by": false,
+        "blocking": false,
+        "followed_by": false,
+        "following": false,
+        "muting": false
+      },
+      "rest_id": "2084996227675103233",
+      "super_follow_eligible": false,
+      "super_followed_by": false,
+      "super_following": false,
+      "verification": {
+        "verified": false
+      }
+    }
+  },
+  {
+    "type": "followers",
+    "target": {
+      "raw": "elonmusk",
+      "source": "users",
+      "user_id": "",
+      "username": "elonmusk",
+      "profile_url": ""
+    },
+    "user_id": "2084995179245649920",
+    "username": "ItsBradM_",
+    "name": "Brad M",
+    "description": null,
+    "location": null,
+    "created_at": "Wed Aug 05 13:32:53 +0000 2026",
+    "followers_count": 0,
+    "following_count": 26,
+    "statuses_count": 0,
+    "favourites_count": 0,
+    "media_count": 0,
+    "listed_count": 0,
+    "verified": false,
+    "blue_verified": false,
+    "protected": false,
+    "profile_image_url": "https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png",
+    "profile_banner_url": null,
+    "url": null,
+    "raw": {
+      "__typename": "User",
+      "affiliates_highlighted_label": {},
+      "avatar": {
+        "image_url": "https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png"
+      },
+      "core": {
+        "created_at": "Wed Aug 05 13:32:53 +0000 2026",
+        "name": "Brad M",
+        "screen_name": "ItsBradM_"
+      },
+      "dm_permissions": {
+        "can_dm": false
+      },
+      "follow_request_sent": false,
+      "has_graduated_access": false,
+      "id": "VXNlcjoyMDg0OTk1MTc5MjQ1NjQ5OTIw",
+      "is_blue_verified": false,
+      "legacy": {
+        "default_profile": true,
+        "default_profile_image": true,
+        "description": "",
+        "entities": {
+          "description": {}
+        },
+        "fast_followers_count": 0,
+        "favourites_count": 0,
+        "follow_request_sent": false,
+        "followers_count": 0,
+        "friends_count": 26,
+        "has_custom_timelines": false,
+        "is_translator": false,
+        "listed_count": 0,
+        "media_count": 0,
+        "needs_phone_verification": false,
+        "normal_followers_count": 0,
+        "notifications": false,
+        "possibly_sensitive": false,
+        "profile_banner_url": "",
+        "profile_interstitial_type": "",
+        "statuses_count": 0,
+        "time_zone": "",
+        "translator_type": "none",
+        "url": "",
+        "utc_offset": 0,
+        "want_retweets": false,
+        "withheld_description": "",
+        "withheld_scope": ""
+      },
+      "location": {
+        "location": ""
+      },
+      "media_permissions": {
+        "can_media_tag": true
+      },
+      "parody_commentary_fan_label": "None",
+      "privacy": {
+        "protected": false
+      },
+      "profile_bio": {
+        "description": ""
+      },
+      "profile_image_shape": "Circle",
+      "relationship_perspectives": {
+        "blocked_by": false,
+        "blocking": false,
+        "followed_by": false,
+        "following": false,
+        "muting": false
+      },
+      "rest_id": "2084995179245649920",
+      "super_follow_eligible": false,
+      "super_followed_by": false,
+      "super_following": false,
+      "verification": {
+        "verified": false
+      }
+    }
+  },
+  {
+    "type": "followers",
+    "target": {
+      "raw": "elonmusk",
+      "source": "users",
+      "user_id": "",
+      "username": "elonmusk",
+      "profile_url": ""
+    },
+    "user_id": "2084439185016913921",
+    "username": "x2_986",
+    "name": "Mathys",
+    "description": null,
+    "location": null,
+    "created_at": "Tue Aug 04 00:40:03 +0000 2026",
+    "followers_count": 1,
+    "following_count": 5,
+    "statuses_count": 0,
+    "favourites_count": 2,
+    "media_count": 0,
+    "listed_count": 0,
+    "verified": false,
+    "blue_verified": false,
+    "protected": false,
+    "profile_image_url": "https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png",
+    "profile_banner_url": null,
+    "url": null,
+    "raw": {
+      "__typename": "User",
+      "affiliates_highlighted_label": {},
+      "avatar": {
+        "image_url": "https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png"
+      },
+      "core": {
+        "created_at": "Tue Aug 04 00:40:03 +0000 2026",
+        "name": "Mathys",
+        "screen_name": "x2_986"
+      },
+      "dm_permissions": {
+        "can_dm": false
+      },
+      "follow_request_sent": false,
+      "has_graduated_access": false,
+      "id": "VXNlcjoyMDg0NDM5MTg1MDE2OTEzOTIx",
+      "is_blue_verified": false,
+      "legacy": {
+        "default_profile": true,
+        "default_profile_image": true,
+        "description": "",
+        "entities": {
+          "description": {}
+        },
+        "fast_followers_count": 0,
+        "favourites_count": 2,
+        "follow_request_sent": false,
+        "followers_count": 1,
+        "friends_count": 5,
+        "has_custom_timelines": false,
+        "is_translator": false,
+        "listed_count": 0,
+        "media_count": 0,
+        "needs_phone_verification": false,
+        "normal_followers_count": 1,
+        "notifications": false,
+        "possibly_sensitive": false,
+        "profile_banner_url": "",
+        "profile_interstitial_type": "",
+        "statuses_count": 0,
+        "time_zone": "",
+        "translator_type": "none",
+        "url": "",
+        "utc_offset": 0,
+        "want_retweets": false,
+        "withheld_description": "",
+        "withheld_scope": ""
+      },
+      "location": {
+        "location": ""
+      },
+      "media_permissions": {
+        "can_media_tag": true
+      },
+      "parody_commentary_fan_label": "None",
+      "privacy": {
+        "protected": false
+      },
+      "profile_bio": {
+        "description": ""
+      },
+      "profile_image_shape": "Circle",
+      "relationship_perspectives": {
+        "blocked_by": false,
+        "blocking": false,
+        "followed_by": false,
+        "following": false,
+        "muting": false
+      },
+      "rest_id": "2084439185016913921",
+      "super_follow_eligible": false,
+      "super_followed_by": false,
+      "super_following": false,
+      "verification": {
+        "verified": false
+      }
+    }
+  },
+  {
+    "type": "followers",
+    "target": {
+      "raw": "elonmusk",
+      "source": "users",
+      "user_id": "",
+      "username": "elonmusk",
+      "profile_url": ""
+    },
+    "user_id": "2084995734437535745",
+    "username": "LY8D28",
+    "name": "L",
+    "description": null,
+    "location": null,
+    "created_at": "Wed Aug 05 13:32:57 +0000 2026",
+    "followers_count": 0,
+    "following_count": 14,
+    "statuses_count": 0,
+    "favourites_count": 0,
+    "media_count": 0,
+    "listed_count": 0,
+    "verified": false,
+    "blue_verified": false,
+    "protected": false,
+    "profile_image_url": "https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png",
+    "profile_banner_url": null,
+    "url": null,
+    "raw": {
+      "__typename": "User",
+      "affiliates_highlighted_label": {},
+      "avatar": {
+        "image_url": "https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png"
+      },
+      "core": {
+        "created_at": "Wed Aug 05 13:32:57 +0000 2026",
+        "name": "L",
+        "screen_name": "LY8D28"
+      },
+      "dm_permissions": {
+        "can_dm": false
+      },
+      "follow_request_sent": false,
+      "has_graduated_access": false,
+      "id": "VXNlcjoyMDg0OTk1NzM0NDM3NTM1NzQ1",
+      "is_blue_verified": false,
+      "legacy": {
+        "default_profile": true,
+        "default_profile_image": true,
+        "description": "",
+        "entities": {
+          "description": {}
+        },
+        "fast_followers_count": 0,
+        "favourites_count": 0,
+        "follow_request_sent": false,
+        "followers_count": 0,
+        "friends_count": 14,
+        "has_custom_timelines": false,
+        "is_translator": false,
+        "listed_count": 0,
+        "media_count": 0,
+        "needs_phone_verification": false,
+        "normal_followers_count": 0,
+        "notifications": false,
+        "possibly_sensitive": false,
+        "profile_banner_url": "",
+        "profile_interstitial_type": "",
+        "statuses_count": 0,
+        "time_zone": "",
+        "translator_type": "none",
+        "url": "",
+        "utc_offset": 0,
+        "want_retweets": false,
+        "withheld_description": "",
+        "withheld_scope": ""
+      },
+      "location": {
+        "location": ""
+      },
+      "media_permissions": {
+        "can_media_tag": true
+      },
+      "parody_commentary_fan_label": "None",
+      "privacy": {
+        "protected": false
+      },
+      "profile_bio": {
+        "description": ""
+      },
+      "profile_image_shape": "Circle",
+      "relationship_perspectives": {
+        "blocked_by": false,
+        "blocking": false,
+        "followed_by": false,
+        "following": false,
+        "muting": false
+      },
+      "rest_id": "2084995734437535745",
+      "super_follow_eligible": false,
+      "super_followed_by": false,
+      "super_following": false,
+      "verification": {
+        "verified": false
+      }
+    }
+  },
+  {
+    "type": "followers",
+    "target": {
+      "raw": "elonmusk",
+      "source": "users",
+      "user_id": "",
+      "username": "elonmusk",
+      "profile_url": ""
+    },
+    "user_id": "1661049409444904961",
+    "username": "CooperPro012",
+    "name": "Cooper 012",
+    "description": null,
+    "location": null,
+    "created_at": "Tue May 23 16:40:36 +0000 2023",
+    "followers_count": 45,
+    "following_count": 285,
+    "statuses_count": 12,
+    "favourites_count": 11,
+    "media_count": 1,
+    "listed_count": 0,
+    "verified": false,
+    "blue_verified": false,
+    "protected": false,
+    "profile_image_url": "https://pbs.twimg.com/profile_images/2070153682910367744/i2Za90Y8_normal.jpg",
+    "profile_banner_url": "https://pbs.twimg.com/profile_banners/1661049409444904961/1782397980",
+    "url": null,
+    "raw": {
+      "__typename": "User",
+      "affiliates_highlighted_label": {},
+      "avatar": {
+        "image_url": "https://pbs.twimg.com/profile_images/2070153682910367744/i2Za90Y8_normal.jpg"
+      },
+      "core": {
+        "created_at": "Tue May 23 16:40:36 +0000 2023",
+        "name": "Cooper 012",
+        "screen_name": "CooperPro012"
+      },
+      "dm_permissions": {
+        "can_dm": false
+      },
+      "follow_request_sent": false,
+      "has_graduated_access": true,
+      "id": "VXNlcjoxNjYxMDQ5NDA5NDQ0OTA0OTYx",
+      "is_blue_verified": false,
+      "legacy": {
+        "default_profile": true,
+        "default_profile_image": false,
+        "description": "",
+        "entities": {
+          "description": {}
+        },
+        "fast_followers_count": 0,
+        "favourites_count": 11,
+        "follow_request_sent": false,
+        "followers_count": 45,
+        "friends_count": 285,
+        "has_custom_timelines": false,
+        "is_translator": false,
+        "listed_count": 0,
+        "media_count": 1,
+        "needs_phone_verification": false,
+        "normal_followers_count": 45,
+        "notifications": false,
+        "possibly_sensitive": false,
+        "profile_banner_url": "https://pbs.twimg.com/profile_banners/1661049409444904961/1782397980",
+        "profile_interstitial_type": "",
+        "statuses_count": 12,
+        "time_zone": "",
+        "translator_type": "none",
+        "url": "",
+        "utc_offset": 0,
+        "want_retweets": false,
+        "withheld_description": "",
+        "withheld_scope": ""
+      },
+      "location": {
+        "location": ""
+      },
+      "media_permissions": {
+        "can_media_tag": true
+      },
+      "parody_commentary_fan_label": "None",
+      "privacy": {
+        "protected": false
+      },
+      "professional": {
+        "category": [
+          {
+            "icon_name": "IconBriefcaseStroke",
+            "id": 941,
+            "name": "Music Producer"
+          }
+        ],
+        "professional_type": "Creator",
+        "rest_id": "1868765010635505886"
+      },
+      "profile_bio": {
+        "description": ""
+      },
+      "profile_image_shape": "Circle",
+      "relationship_perspectives": {
+        "blocked_by": false,
+        "blocking": false,
+        "followed_by": false,
+        "following": false,
+        "muting": false
+      },
+      "rest_id": "1661049409444904961",
+      "super_follow_eligible": false,
+      "super_followed_by": false,
+      "super_following": false,
+      "verification": {
+        "verified": false
+      }
+    }
+  },
+  {
+    "type": "followers",
+    "target": {
+      "raw": "elonmusk",
+      "source": "users",
+      "user_id": "",
+      "username": "elonmusk",
+      "profile_url": ""
+    },
+    "user_id": "2084996298323972096",
+    "username": "jjjhgrev",
+    "name": "jjjhgrev",
+    "description": null,
+    "location": null,
+    "created_at": "Wed Aug 05 13:34:14 +0000 2026",
+    "followers_count": 0,
+    "following_count": 11,
+    "statuses_count": 0,
+    "favourites_count": 0,
+    "media_count": 0,
+    "listed_count": 0,
+    "verified": false,
+    "blue_verified": false,
+    "protected": false,
+    "profile_image_url": "https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png",
+    "profile_banner_url": null,
+    "url": null,
+    "raw": {
+      "__typename": "User",
+      "affiliates_highlighted_label": {},
+      "avatar": {
+        "image_url": "https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png"
+      },
+      "core": {
+        "created_at": "Wed Aug 05 13:34:14 +0000 2026",
+        "name": "jjjhgrev",
+        "screen_name": "jjjhgrev"
+      },
+      "dm_permissions": {
+        "can_dm": false
+      },
+      "follow_request_sent": false,
+      "has_graduated_access": false,
+      "id": "VXNlcjoyMDg0OTk2Mjk4MzIzOTcyMDk2",
+      "is_blue_verified": false,
+      "legacy": {
+        "default_profile": true,
+        "default_profile_image": true,
+        "description": "",
+        "entities": {
+          "description": {}
+        },
+        "fast_followers_count": 0,
+        "favourites_count": 0,
+        "follow_request_sent": false,
+        "followers_count": 0,
+        "friends_count": 11,
+        "has_custom_timelines": false,
+        "is_translator": false,
+        "listed_count": 0,
+        "media_count": 0,
+        "needs_phone_verification": false,
+        "normal_followers_count": 0,
+        "notifications": false,
+        "possibly_sensitive": false,
+        "profile_banner_url": "",
+        "profile_interstitial_type": "",
+        "statuses_count": 0,
+        "time_zone": "",
+        "translator_type": "none",
+        "url": "",
+        "utc_offset": 0,
+        "want_retweets": false,
+        "withheld_description": "",
+        "withheld_scope": ""
+      },
+      "location": {
+        "location": ""
+      },
+      "media_permissions": {
+        "can_media_tag": true
+      },
+      "parody_commentary_fan_label": "None",
+      "privacy": {
+        "protected": false
+      },
+      "profile_bio": {
+        "description": ""
+      },
+      "profile_image_shape": "Circle",
+      "relationship_perspectives": {
+        "blocked_by": false,
+        "blocking": false,
+        "followed_by": false,
+        "following": false,
+        "muting": false
+      },
+      "rest_id": "2084996298323972096",
+      "super_follow_eligible": false,
+      "super_followed_by": false,
+      "super_following": false,
+      "verification": {
+        "verified": false
+      }
+    }
+  },
+  {
+    "type": "followers",
+    "target": {
+      "raw": "elonmusk",
+      "source": "users",
+      "user_id": "",
+      "username": "elonmusk",
+      "profile_url": ""
+    },
+    "user_id": "2084994985712324609",
+    "username": "nirbhayatx",
+    "name": "Nirbhay Singh Gurjar",
+    "description": null,
+    "location": null,
+    "created_at": "Wed Aug 05 13:28:36 +0000 2026",
+    "followers_count": 0,
+    "following_count": 4,
+    "statuses_count": 0,
+    "favourites_count": 0,
+    "media_count": 0,
+    "listed_count": 0,
+    "verified": false,
+    "blue_verified": false,
+    "protected": false,
+    "profile_image_url": "https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png",
+    "profile_banner_url": null,
+    "url": null,
+    "raw": {
+      "__typename": "User",
+      "affiliates_highlighted_label": {},
+      "avatar": {
+        "image_url": "https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png"
+      },
+      "core": {
+        "created_at": "Wed Aug 05 13:28:36 +0000 2026",
+        "name": "Nirbhay Singh Gurjar",
+        "screen_name": "nirbhayatx"
+      },
+      "dm_permissions": {
+        "can_dm": false
+      },
+      "follow_request_sent": false,
+      "has_graduated_access": false,
+      "id": "VXNlcjoyMDg0OTk0OTg1NzEyMzI0NjA5",
+      "is_blue_verified": false,
+      "legacy": {
+        "default_profile": true,
+        "default_profile_image": true,
+        "description": "",
+        "entities": {
+          "description": {}
+        },
+        "fast_followers_count": 0,
+        "favourites_count": 0,
+        "follow_request_sent": false,
+        "followers_count": 0,
+        "friends_count": 4,
+        "has_custom_timelines": false,
+        "is_translator": false,
+        "listed_count": 0,
+        "media_count": 0,
+        "needs_phone_verification": false,
+        "normal_followers_count": 0,
+        "notifications": false,
+        "possibly_sensitive": false,
+        "profile_banner_url": "",
+        "profile_interstitial_type": "",
+        "statuses_count": 0,
+        "time_zone": "",
+        "translator_type": "none",
+        "url": "",
+        "utc_offset": 0,
+        "want_retweets": false,
+        "withheld_description": "",
+        "withheld_scope": ""
+      },
+      "location": {
+        "location": ""
+      },
+      "media_permissions": {
+        "can_media_tag": true
+      },
+      "parody_commentary_fan_label": "None",
+      "privacy": {
+        "protected": false
+      },
+      "profile_bio": {
+        "description": ""
+      },
+      "profile_image_shape": "Circle",
+      "relationship_perspectives": {
+        "blocked_by": false,
+        "blocking": false,
+        "followed_by": false,
+        "following": false,
+        "muting": false
+      },
+      "rest_id": "2084994985712324609",
+      "super_follow_eligible": false,
+      "super_followed_by": false,
+      "super_following": false,
+      "verification": {
+        "verified": false
+      }
+    }
+  },
+  {
+    "type": "followers",
+    "target": {
+      "raw": "elonmusk",
+      "source": "users",
+      "user_id": "",
+      "username": "elonmusk",
+      "profile_url": ""
+    },
+    "user_id": "2084996215671021569",
+    "username": "SatyadityaRao",
+    "name": "Satyaditya Rao",
+    "description": null,
+    "location": null,
+    "created_at": "Wed Aug 05 13:34:10 +0000 2026",
+    "followers_count": 0,
+    "following_count": 28,
+    "statuses_count": 0,
+    "favourites_count": 0,
+    "media_count": 0,
+    "listed_count": 0,
+    "verified": false,
+    "blue_verified": false,
+    "protected": false,
+    "profile_image_url": "https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png",
+    "profile_banner_url": null,
+    "url": null,
+    "raw": {
+      "__typename": "User",
+      "affiliates_highlighted_label": {},
+      "avatar": {
+        "image_url": "https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png"
+      },
+      "core": {
+        "created_at": "Wed Aug 05 13:34:10 +0000 2026",
+        "name": "Satyaditya Rao",
+        "screen_name": "SatyadityaRao"
+      },
+      "dm_permissions": {
+        "can_dm": false
+      },
+      "follow_request_sent": false,
+      "has_graduated_access": false,
+      "id": "VXNlcjoyMDg0OTk2MjE1NjcxMDIxNTY5",
+      "is_blue_verified": false,
+      "legacy": {
+        "default_profile": true,
+        "default_profile_image": true,
+        "description": "",
+        "entities": {
+          "description": {}
+        },
+        "fast_followers_count": 0,
+        "favourites_count": 0,
+        "follow_request_sent": false,
+        "followers_count": 0,
+        "friends_count": 28,
+        "has_custom_timelines": false,
+        "is_translator": false,
+        "listed_count": 0,
+        "media_count": 0,
+        "needs_phone_verification": false,
+        "normal_followers_count": 0,
+        "notifications": false,
+        "possibly_sensitive": false,
+        "profile_banner_url": "",
+        "profile_interstitial_type": "",
+        "statuses_count": 0,
+        "time_zone": "",
+        "translator_type": "none",
+        "url": "",
+        "utc_offset": 0,
+        "want_retweets": false,
+        "withheld_description": "",
+        "withheld_scope": ""
+      },
+      "location": {
+        "location": ""
+      },
+      "media_permissions": {
+        "can_media_tag": true
+      },
+      "parody_commentary_fan_label": "None",
+      "privacy": {
+        "protected": false
+      },
+      "profile_bio": {
+        "description": ""
+      },
+      "profile_image_shape": "Circle",
+      "relationship_perspectives": {
+        "blocked_by": false,
+        "blocking": false,
+        "followed_by": false,
+        "following": false,
+        "muting": false
+      },
+      "rest_id": "2084996215671021569",
+      "super_follow_eligible": false,
+      "super_followed_by": false,
+      "super_following": false,
+      "verification": {
+        "verified": false
+      }
+    }
+  },
+  {
+    "type": "followers",
+    "target": {
+      "raw": "elonmusk",
+      "source": "users",
+      "user_id": "",
+      "username": "elonmusk",
+      "profile_url": ""
+    },
+    "user_id": "2084995659241857024",
+    "username": "GloireAssan",
+    "name": "Gloire Assan",
+    "description": null,
+    "location": null,
+    "created_at": "Wed Aug 05 13:32:51 +0000 2026",
+    "followers_count": 0,
+    "following_count": 49,
+    "statuses_count": 0,
+    "favourites_count": 0,
+    "media_count": 0,
+    "listed_count": 0,
+    "verified": false,
+    "blue_verified": false,
+    "protected": false,
+    "profile_image_url": "https://pbs.twimg.com/profile_images/2084996277201199104/FyMENktx_normal.jpg",
+    "profile_banner_url": null,
+    "url": null,
+    "raw": {
+      "__typename": "User",
+      "affiliates_highlighted_label": {},
+      "avatar": {
+        "image_url": "https://pbs.twimg.com/profile_images/2084996277201199104/FyMENktx_normal.jpg"
+      },
+      "core": {
+        "created_at": "Wed Aug 05 13:32:51 +0000 2026",
+        "name": "Gloire Assan",
+        "screen_name": "GloireAssan"
+      },
+      "dm_permissions": {
+        "can_dm": false
+      },
+      "follow_request_sent": false,
+      "has_graduated_access": false,
+      "id": "VXNlcjoyMDg0OTk1NjU5MjQxODU3MDI0",
+      "is_blue_verified": false,
+      "legacy": {
+        "default_profile": true,
+        "default_profile_image": false,
+        "description": "",
+        "entities": {
+          "description": {}
+        },
+        "fast_followers_count": 0,
+        "favourites_count": 0,
+        "follow_request_sent": false,
+        "followers_count": 0,
+        "friends_count": 49,
+        "has_custom_timelines": false,
+        "is_translator": false,
+        "listed_count": 0,
+        "media_count": 0,
+        "needs_phone_verification": false,
+        "normal_followers_count": 0,
+        "notifications": false,
+        "possibly_sensitive": false,
+        "profile_banner_url": "",
+        "profile_interstitial_type": "",
+        "statuses_count": 0,
+        "time_zone": "",
+        "translator_type": "none",
+        "url": "",
+        "utc_offset": 0,
+        "want_retweets": false,
+        "withheld_description": "",
+        "withheld_scope": ""
+      },
+      "location": {
+        "location": ""
+      },
+      "media_permissions": {
+        "can_media_tag": true
+      },
+      "parody_commentary_fan_label": "None",
+      "privacy": {
+        "protected": false
+      },
+      "profile_bio": {
+        "description": ""
+      },
+      "profile_image_shape": "Circle",
+      "relationship_perspectives": {
+        "blocked_by": false,
+        "blocking": false,
+        "followed_by": false,
+        "following": false,
+        "muting": false
+      },
+      "rest_id": "2084995659241857024",
+      "super_follow_eligible": false,
+      "super_followed_by": false,
+      "super_following": false,
+      "verification": {
+        "verified": false
+      }
+    }
+  },
+  {
+    "type": "followers",
+    "target": {
+      "raw": "elonmusk",
+      "source": "users",
+      "user_id": "",
+      "username": "elonmusk",
+      "profile_url": ""
+    },
+    "user_id": "2084995817652326400",
+    "username": "NilitaNilita",
+    "name": "Nilita",
+    "description": null,
+    "location": null,
+    "created_at": "Wed Aug 05 13:33:32 +0000 2026",
+    "followers_count": 0,
+    "following_count": 51,
+    "statuses_count": 0,
+    "favourites_count": 0,
+    "media_count": 0,
+    "listed_count": 0,
+    "verified": false,
+    "blue_verified": false,
+    "protected": false,
+    "profile_image_url": "https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png",
+    "profile_banner_url": null,
+    "url": null,
+    "raw": {
+      "__typename": "User",
+      "affiliates_highlighted_label": {},
+      "avatar": {
+        "image_url": "https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png"
+      },
+      "core": {
+        "created_at": "Wed Aug 05 13:33:32 +0000 2026",
+        "name": "Nilita",
+        "screen_name": "NilitaNilita"
+      },
+      "dm_permissions": {
+        "can_dm": false
+      },
+      "follow_request_sent": false,
+      "has_graduated_access": false,
+      "id": "VXNlcjoyMDg0OTk1ODE3NjUyMzI2NDAw",
+      "is_blue_verified": false,
+      "legacy": {
+        "default_profile": true,
+        "default_profile_image": true,
+        "description": "",
+        "entities": {
+          "description": {}
+        },
+        "fast_followers_count": 0,
+        "favourites_count": 0,
+        "follow_request_sent": false,
+        "followers_count": 0,
+        "friends_count": 51,
+        "has_custom_timelines": false,
+        "is_translator": false,
+        "listed_count": 0,
+        "media_count": 0,
+        "needs_phone_verification": false,
+        "normal_followers_count": 0,
+        "notifications": false,
+        "possibly_sensitive": false,
+        "profile_banner_url": "",
+        "profile_interstitial_type": "",
+        "statuses_count": 0,
+        "time_zone": "",
+        "translator_type": "none",
+        "url": "",
+        "utc_offset": 0,
+        "want_retweets": false,
+        "withheld_description": "",
+        "withheld_scope": ""
+      },
+      "location": {
+        "location": ""
+      },
+      "media_permissions": {
+        "can_media_tag": true
+      },
+      "parody_commentary_fan_label": "None",
+      "privacy": {
+        "protected": false
+      },
+      "profile_bio": {
+        "description": ""
+      },
+      "profile_image_shape": "Circle",
+      "relationship_perspectives": {
+        "blocked_by": false,
+        "blocking": false,
+        "followed_by": false,
+        "following": false,
+        "muting": false
+      },
+      "rest_id": "2084995817652326400",
+      "super_follow_eligible": false,
+      "super_followed_by": false,
+      "super_following": false,
+      "verification": {
+        "verified": false
+      }
+    }
+  },
+  {
+    "type": "followers",
+    "target": {
+      "raw": "elonmusk",
+      "source": "users",
+      "user_id": "",
+      "username": "elonmusk",
+      "profile_url": ""
+    },
+    "user_id": "2084995197973176320",
+    "username": "Khalid_ALzbidi",
+    "name": "خالد الزبيدي",
+    "description": null,
+    "location": null,
+    "created_at": "Wed Aug 05 13:33:58 +0000 2026",
+    "followers_count": 0,
+    "following_count": 19,
+    "statuses_count": 0,
+    "favourites_count": 0,
+    "media_count": 0,
+    "listed_count": 0,
+    "verified": false,
+    "blue_verified": false,
+    "protected": false,
+    "profile_image_url": "https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png",
+    "profile_banner_url": null,
+    "url": null,
+    "raw": {
+      "__typename": "User",
+      "affiliates_highlighted_label": {},
+      "avatar": {
+        "image_url": "https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png"
+      },
+      "core": {
+        "created_at": "Wed Aug 05 13:33:58 +0000 2026",
+        "name": "خالد الزبيدي",
+        "screen_name": "Khalid_ALzbidi"
+      },
+      "dm_permissions": {
+        "can_dm": false
+      },
+      "follow_request_sent": false,
+      "has_graduated_access": false,
+      "id": "VXNlcjoyMDg0OTk1MTk3OTczMTc2MzIw",
+      "is_blue_verified": false,
+      "legacy": {
+        "default_profile": true,
+        "default_profile_image": true,
+        "description": "",
+        "entities": {
+          "description": {}
+        },
+        "fast_followers_count": 0,
+        "favourites_count": 0,
+        "follow_request_sent": false,
+        "followers_count": 0,
+        "friends_count": 19,
+        "has_custom_timelines": false,
+        "is_translator": false,
+        "listed_count": 0,
+        "media_count": 0,
+        "needs_phone_verification": false,
+        "normal_followers_count": 0,
+        "notifications": false,
+        "possibly_sensitive": false,
+        "profile_banner_url": "",
+        "profile_interstitial_type": "",
+        "statuses_count": 0,
+        "time_zone": "",
+        "translator_type": "none",
+        "url": "",
+        "utc_offset": 0,
+        "want_retweets": false,
+        "withheld_description": "",
+        "withheld_scope": ""
+      },
+      "location": {
+        "location": ""
+      },
+      "media_permissions": {
+        "can_media_tag": true
+      },
+      "parody_commentary_fan_label": "None",
+      "privacy": {
+        "protected": false
+      },
+      "profile_bio": {
+        "description": ""
+      },
+      "profile_image_shape": "Circle",
+      "relationship_perspectives": {
+        "blocked_by": false,
+        "blocking": false,
+        "followed_by": false,
+        "following": false,
+        "muting": false
+      },
+      "rest_id": "2084995197973176320",
+      "super_follow_eligible": false,
+      "super_followed_by": false,
+      "super_following": false,
+      "verification": {
+        "verified": false
+      }
+    }
+  },
+  {
+    "type": "followers",
+    "target": {
+      "raw": "elonmusk",
+      "source": "users",
+      "user_id": "",
+      "username": "elonmusk",
+      "profile_url": ""
+    },
+    "user_id": "2084994626763870208",
+    "username": "SunilKrishsb",
+    "name": "Sunil Krishna",
+    "description": null,
+    "location": null,
+    "created_at": "Wed Aug 05 13:31:08 +0000 2026",
+    "followers_count": 0,
+    "following_count": 51,
+    "statuses_count": 0,
+    "favourites_count": 0,
+    "media_count": 0,
+    "listed_count": 0,
+    "verified": false,
+    "blue_verified": false,
+    "protected": false,
+    "profile_image_url": "https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png",
+    "profile_banner_url": null,
+    "url": null,
+    "raw": {
+      "__typename": "User",
+      "affiliates_highlighted_label": {},
+      "avatar": {
+        "image_url": "https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png"
+      },
+      "core": {
+        "created_at": "Wed Aug 05 13:31:08 +0000 2026",
+        "name": "Sunil Krishna",
+        "screen_name": "SunilKrishsb"
+      },
+      "dm_permissions": {
+        "can_dm": false
+      },
+      "follow_request_sent": false,
+      "has_graduated_access": false,
+      "id": "VXNlcjoyMDg0OTk0NjI2NzYzODcwMjA4",
+      "is_blue_verified": false,
+      "legacy": {
+        "default_profile": true,
+        "default_profile_image": true,
+        "description": "",
+        "entities": {
+          "description": {}
+        },
+        "fast_followers_count": 0,
+        "favourites_count": 0,
+        "follow_request_sent": false,
+        "followers_count": 0,
+        "friends_count": 51,
+        "has_custom_timelines": false,
+        "is_translator": false,
+        "listed_count": 0,
+        "media_count": 0,
+        "needs_phone_verification": false,
+        "normal_followers_count": 0,
+        "notifications": false,
+        "possibly_sensitive": false,
+        "profile_banner_url": "",
+        "profile_interstitial_type": "",
+        "statuses_count": 0,
+        "time_zone": "",
+        "translator_type": "none",
+        "url": "",
+        "utc_offset": 0,
+        "want_retweets": false,
+        "withheld_description": "",
+        "withheld_scope": ""
+      },
+      "location": {
+        "location": ""
+      },
+      "media_permissions": {
+        "can_media_tag": true
+      },
+      "parody_commentary_fan_label": "None",
+      "privacy": {
+        "protected": false
+      },
+      "profile_bio": {
+        "description": ""
+      },
+      "profile_image_shape": "Circle",
+      "relationship_perspectives": {
+        "blocked_by": false,
+        "blocking": false,
+        "followed_by": false,
+        "following": false,
+        "muting": false
+      },
+      "rest_id": "2084994626763870208",
+      "super_follow_eligible": false,
+      "super_followed_by": false,
+      "super_following": false,
+      "verification": {
+        "verified": false
+      }
+    }
+  },
+  {
+    "type": "followers",
+    "target": {
+      "raw": "elonmusk",
+      "source": "users",
+      "user_id": "",
+      "username": "elonmusk",
+      "profile_url": ""
+    },
+    "user_id": "2084995976738349056",
+    "username": "FrybeadX",
+    "name": "Frybread",
+    "description": null,
+    "location": null,
+    "created_at": "Wed Aug 05 13:33:25 +0000 2026",
+    "followers_count": 0,
+    "following_count": 11,
+    "statuses_count": 0,
+    "favourites_count": 0,
+    "media_count": 0,
+    "listed_count": 0,
+    "verified": false,
+    "blue_verified": false,
+    "protected": false,
+    "profile_image_url": "https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png",
+    "profile_banner_url": null,
+    "url": null,
+    "raw": {
+      "__typename": "User",
+      "affiliates_highlighted_label": {},
+      "avatar": {
+        "image_url": "https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png"
+      },
+      "core": {
+        "created_at": "Wed Aug 05 13:33:25 +0000 2026",
+        "name": "Frybread",
+        "screen_name": "FrybeadX"
+      },
+      "dm_permissions": {
+        "can_dm": false
+      },
+      "follow_request_sent": false,
+      "has_graduated_access": false,
+      "id": "VXNlcjoyMDg0OTk1OTc2NzM4MzQ5MDU2",
+      "is_blue_verified": false,
+      "legacy": {
+        "default_profile": true,
+        "default_profile_image": true,
+        "description": "",
+        "entities": {
+          "description": {}
+        },
+        "fast_followers_count": 0,
+        "favourites_count": 0,
+        "follow_request_sent": false,
+        "followers_count": 0,
+        "friends_count": 11,
+        "has_custom_timelines": false,
+        "is_translator": false,
+        "listed_count": 0,
+        "media_count": 0,
+        "needs_phone_verification": false,
+        "normal_followers_count": 0,
+        "notifications": false,
+        "possibly_sensitive": false,
+        "profile_banner_url": "",
+        "profile_interstitial_type": "",
+        "statuses_count": 0,
+        "time_zone": "",
+        "translator_type": "none",
+        "url": "",
+        "utc_offset": 0,
+        "want_retweets": false,
+        "withheld_description": "",
+        "withheld_scope": ""
+      },
+      "location": {
+        "location": ""
+      },
+      "media_permissions": {
+        "can_media_tag": true
+      },
+      "parody_commentary_fan_label": "None",
+      "privacy": {
+        "protected": false
+      },
+      "profile_bio": {
+        "description": ""
+      },
+      "profile_image_shape": "Circle",
+      "relationship_perspectives": {
+        "blocked_by": false,
+        "blocking": false,
+        "followed_by": false,
+        "following": false,
+        "muting": false
+      },
+      "rest_id": "2084995976738349056",
+      "super_follow_eligible": false,
+      "super_followed_by": false,
+      "super_following": false,
+      "verification": {
+        "verified": false
+      }
+    }
+  },
+  {
+    "type": "followers",
+    "target": {
+      "raw": "elonmusk",
+      "source": "users",
+      "user_id": "",
+      "username": "elonmusk",
+      "profile_url": ""
+    },
+    "user_id": "2084995710169096193",
+    "username": "getStoreVisuals",
+    "name": "StoreVisuals",
+    "description": null,
+    "location": null,
+    "created_at": "Wed Aug 05 13:33:57 +0000 2026",
+    "followers_count": 0,
+    "following_count": 43,
+    "statuses_count": 0,
+    "favourites_count": 0,
+    "media_count": 0,
+    "listed_count": 0,
+    "verified": false,
+    "blue_verified": false,
+    "protected": false,
+    "profile_image_url": "https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png",
+    "profile_banner_url": null,
+    "url": null,
+    "raw": {
+      "__typename": "User",
+      "affiliates_highlighted_label": {},
+      "avatar": {
+        "image_url": "https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png"
+      },
+      "core": {
+        "created_at": "Wed Aug 05 13:33:57 +0000 2026",
+        "name": "StoreVisuals",
+        "screen_name": "getStoreVisuals"
+      },
+      "dm_permissions": {
+        "can_dm": false
+      },
+      "follow_request_sent": false,
+      "has_graduated_access": false,
+      "id": "VXNlcjoyMDg0OTk1NzEwMTY5MDk2MTkz",
+      "is_blue_verified": false,
+      "legacy": {
+        "default_profile": true,
+        "default_profile_image": true,
+        "description": "",
+        "entities": {
+          "description": {}
+        },
+        "fast_followers_count": 0,
+        "favourites_count": 0,
+        "follow_request_sent": false,
+        "followers_count": 0,
+        "friends_count": 43,
+        "has_custom_timelines": false,
+        "is_translator": false,
+        "listed_count": 0,
+        "media_count": 0,
+        "needs_phone_verification": false,
+        "normal_followers_count": 0,
+        "notifications": false,
+        "possibly_sensitive": false,
+        "profile_banner_url": "",
+        "profile_interstitial_type": "",
+        "statuses_count": 0,
+        "time_zone": "",
+        "translator_type": "none",
+        "url": "",
+        "utc_offset": 0,
+        "want_retweets": false,
+        "withheld_description": "",
+        "withheld_scope": ""
+      },
+      "location": {
+        "location": ""
+      },
+      "media_permissions": {
+        "can_media_tag": true
+      },
+      "parody_commentary_fan_label": "None",
+      "privacy": {
+        "protected": false
+      },
+      "profile_bio": {
+        "description": ""
+      },
+      "profile_image_shape": "Circle",
+      "relationship_perspectives": {
+        "blocked_by": false,
+        "blocking": false,
+        "followed_by": false,
+        "following": false,
+        "muting": false
+      },
+      "rest_id": "2084995710169096193",
+      "super_follow_eligible": false,
+      "super_followed_by": false,
+      "super_following": false,
+      "verification": {
+        "verified": false
+      }
+    }
+  },
+  {
+    "type": "followers",
+    "target": {
+      "raw": "elonmusk",
+      "source": "users",
+      "user_id": "",
+      "username": "elonmusk",
+      "profile_url": ""
+    },
+    "user_id": "2084525925215907840",
+    "username": "YairGarciawdzc",
+    "name": "Yair Garcia",
+    "description": null,
+    "location": null,
+    "created_at": "Tue Aug 04 06:28:08 +0000 2026",
+    "followers_count": 0,
+    "following_count": 46,
+    "statuses_count": 0,
+    "favourites_count": 0,
+    "media_count": 0,
+    "listed_count": 0,
+    "verified": false,
+    "blue_verified": false,
+    "protected": false,
+    "profile_image_url": "https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png",
+    "profile_banner_url": null,
+    "url": null,
+    "raw": {
+      "__typename": "User",
+      "affiliates_highlighted_label": {},
+      "avatar": {
+        "image_url": "https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png"
+      },
+      "core": {
+        "created_at": "Tue Aug 04 06:28:08 +0000 2026",
+        "name": "Yair Garcia",
+        "screen_name": "YairGarciawdzc"
+      },
+      "dm_permissions": {
+        "can_dm": false
+      },
+      "follow_request_sent": false,
+      "has_graduated_access": false,
+      "id": "VXNlcjoyMDg0NTI1OTI1MjE1OTA3ODQw",
+      "is_blue_verified": false,
+      "legacy": {
+        "default_profile": true,
+        "default_profile_image": true,
+        "description": "",
+        "entities": {
+          "description": {}
+        },
+        "fast_followers_count": 0,
+        "favourites_count": 0,
+        "follow_request_sent": false,
+        "followers_count": 0,
+        "friends_count": 46,
+        "has_custom_timelines": false,
+        "is_translator": false,
+        "listed_count": 0,
+        "media_count": 0,
+        "needs_phone_verification": false,
+        "normal_followers_count": 0,
+        "notifications": false,
+        "possibly_sensitive": false,
+        "profile_banner_url": "",
+        "profile_interstitial_type": "",
+        "statuses_count": 0,
+        "time_zone": "",
+        "translator_type": "none",
+        "url": "",
+        "utc_offset": 0,
+        "want_retweets": false,
+        "withheld_description": "",
+        "withheld_scope": ""
+      },
+      "location": {
+        "location": ""
+      },
+      "media_permissions": {
+        "can_media_tag": true
+      },
+      "parody_commentary_fan_label": "None",
+      "privacy": {
+        "protected": false
+      },
+      "profile_bio": {
+        "description": ""
+      },
+      "profile_image_shape": "Circle",
+      "relationship_perspectives": {
+        "blocked_by": false,
+        "blocking": false,
+        "followed_by": false,
+        "following": false,
+        "muting": false
+      },
+      "rest_id": "2084525925215907840",
+      "super_follow_eligible": false,
+      "super_followed_by": false,
+      "super_following": false,
+      "verification": {
+        "verified": false
+      }
+    }
+  },
+  {
+    "type": "followers",
+    "target": {
+      "raw": "elonmusk",
+      "source": "users",
+      "user_id": "",
+      "username": "elonmusk",
+      "profile_url": ""
+    },
+    "user_id": "2084996089367736320",
+    "username": "badboyg0rf",
+    "name": "badboy",
+    "description": null,
+    "location": null,
+    "created_at": "Wed Aug 05 13:33:48 +0000 2026",
+    "followers_count": 0,
+    "following_count": 12,
+    "statuses_count": 0,
+    "favourites_count": 0,
+    "media_count": 0,
+    "listed_count": 0,
+    "verified": false,
+    "blue_verified": false,
+    "protected": false,
+    "profile_image_url": "https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png",
+    "profile_banner_url": null,
+    "url": null,
+    "raw": {
+      "__typename": "User",
+      "affiliates_highlighted_label": {},
+      "avatar": {
+        "image_url": "https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png"
+      },
+      "core": {
+        "created_at": "Wed Aug 05 13:33:48 +0000 2026",
+        "name": "badboy",
+        "screen_name": "badboyg0rf"
+      },
+      "dm_permissions": {
+        "can_dm": false
+      },
+      "follow_request_sent": false,
+      "has_graduated_access": false,
+      "id": "VXNlcjoyMDg0OTk2MDg5MzY3NzM2MzIw",
+      "is_blue_verified": false,
+      "legacy": {
+        "default_profile": true,
+        "default_profile_image": true,
+        "description": "",
+        "entities": {
+          "description": {}
+        },
+        "fast_followers_count": 0,
+        "favourites_count": 0,
+        "follow_request_sent": false,
+        "followers_count": 0,
+        "friends_count": 12,
+        "has_custom_timelines": false,
+        "is_translator": false,
+        "listed_count": 0,
+        "media_count": 0,
+        "needs_phone_verification": false,
+        "normal_followers_count": 0,
+        "notifications": false,
+        "possibly_sensitive": false,
+        "profile_banner_url": "",
+        "profile_interstitial_type": "",
+        "statuses_count": 0,
+        "time_zone": "",
+        "translator_type": "none",
+        "url": "",
+        "utc_offset": 0,
+        "want_retweets": false,
+        "withheld_description": "",
+        "withheld_scope": ""
+      },
+      "location": {
+        "location": ""
+      },
+      "media_permissions": {
+        "can_media_tag": true
+      },
+      "parody_commentary_fan_label": "None",
+      "privacy": {
+        "protected": false
+      },
+      "profile_bio": {
+        "description": ""
+      },
+      "profile_image_shape": "Circle",
+      "relationship_perspectives": {
+        "blocked_by": false,
+        "blocking": false,
+        "followed_by": false,
+        "following": false,
+        "muting": false
+      },
+      "rest_id": "2084996089367736320",
+      "super_follow_eligible": false,
+      "super_followed_by": false,
+      "super_following": false,
+      "verification": {
+        "verified": false
+      }
+    }
+  },
+  {
+    "type": "followers",
+    "target": {
+      "raw": "elonmusk",
+      "source": "users",
+      "user_id": "",
+      "username": "elonmusk",
+      "profile_url": ""
+    },
+    "user_id": "2084996115657609216",
+    "username": "johtf5eqcty",
+    "name": "joht",
+    "description": null,
+    "location": null,
+    "created_at": "Wed Aug 05 13:33:50 +0000 2026",
+    "followers_count": 0,
+    "following_count": 22,
+    "statuses_count": 0,
+    "favourites_count": 0,
+    "media_count": 0,
+    "listed_count": 0,
+    "verified": false,
+    "blue_verified": false,
+    "protected": true,
+    "profile_image_url": "https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png",
+    "profile_banner_url": null,
+    "url": null,
+    "raw": {
+      "__typename": "User",
+      "affiliates_highlighted_label": {},
+      "avatar": {
+        "image_url": "https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png"
+      },
+      "core": {
+        "created_at": "Wed Aug 05 13:33:50 +0000 2026",
+        "name": "joht",
+        "screen_name": "johtf5eqcty"
+      },
+      "dm_permissions": {
+        "can_dm": false
+      },
+      "follow_request_sent": false,
+      "has_graduated_access": false,
+      "id": "VXNlcjoyMDg0OTk2MTE1NjU3NjA5MjE2",
+      "is_blue_verified": false,
+      "legacy": {
+        "default_profile": true,
+        "default_profile_image": true,
+        "description": "",
+        "entities": {
+          "description": {}
+        },
+        "fast_followers_count": 0,
+        "favourites_count": 0,
+        "follow_request_sent": false,
+        "followers_count": 0,
+        "friends_count": 22,
+        "has_custom_timelines": false,
+        "is_translator": false,
+        "listed_count": 0,
+        "media_count": 0,
+        "needs_phone_verification": false,
+        "normal_followers_count": 0,
+        "notifications": false,
+        "possibly_sensitive": false,
+        "profile_banner_url": "",
+        "profile_interstitial_type": "",
+        "statuses_count": 0,
+        "time_zone": "",
+        "translator_type": "none",
+        "url": "",
+        "utc_offset": 0,
+        "want_retweets": false,
+        "withheld_description": "",
+        "withheld_scope": ""
+      },
+      "location": {
+        "location": ""
+      },
+      "media_permissions": {
+        "can_media_tag": false
+      },
+      "parody_commentary_fan_label": "None",
+      "privacy": {
+        "protected": true
+      },
+      "profile_bio": {
+        "description": ""
+      },
+      "profile_image_shape": "Circle",
+      "relationship_perspectives": {
+        "blocked_by": false,
+        "blocking": false,
+        "followed_by": false,
+        "following": false,
+        "muting": false
+      },
+      "rest_id": "2084996115657609216",
+      "super_follow_eligible": false,
+      "super_followed_by": false,
+      "super_following": false,
+      "verification": {
+        "verified": false
+      }
+    }
+  },
+  {
+    "type": "followers",
+    "target": {
+      "raw": "elonmusk",
+      "source": "users",
+      "user_id": "",
+      "username": "elonmusk",
+      "profile_url": ""
+    },
+    "user_id": "2063542577983623168",
+    "username": "CheerFlux",
+    "name": "Chee Wong",
+    "description": null,
+    "location": null,
+    "created_at": "Sun Jun 07 08:46:25 +0000 2026",
+    "followers_count": 0,
+    "following_count": 7,
+    "statuses_count": 0,
+    "favourites_count": 0,
+    "media_count": 0,
+    "listed_count": 0,
+    "verified": false,
+    "blue_verified": false,
+    "protected": false,
+    "profile_image_url": "https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png",
+    "profile_banner_url": null,
+    "url": null,
+    "raw": {
+      "__typename": "User",
+      "affiliates_highlighted_label": {},
+      "avatar": {
+        "image_url": "https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png"
+      },
+      "core": {
+        "created_at": "Sun Jun 07 08:46:25 +0000 2026",
+        "name": "Chee Wong",
+        "screen_name": "CheerFlux"
+      },
+      "dm_permissions": {
+        "can_dm": false
+      },
+      "follow_request_sent": false,
+      "has_graduated_access": true,
+      "id": "VXNlcjoyMDYzNTQyNTc3OTgzNjIzMTY4",
+      "is_blue_verified": false,
+      "legacy": {
+        "default_profile": true,
+        "default_profile_image": true,
+        "description": "",
+        "entities": {
+          "description": {}
+        },
+        "fast_followers_count": 0,
+        "favourites_count": 0,
+        "follow_request_sent": false,
+        "followers_count": 0,
+        "friends_count": 7,
+        "has_custom_timelines": false,
+        "is_translator": false,
+        "listed_count": 0,
+        "media_count": 0,
+        "needs_phone_verification": false,
+        "normal_followers_count": 0,
+        "notifications": false,
+        "possibly_sensitive": false,
+        "profile_banner_url": "",
+        "profile_interstitial_type": "",
+        "statuses_count": 0,
+        "time_zone": "",
+        "translator_type": "none",
+        "url": "",
+        "utc_offset": 0,
+        "want_retweets": false,
+        "withheld_description": "",
+        "withheld_scope": ""
+      },
+      "location": {
+        "location": ""
+      },
+      "media_permissions": {
+        "can_media_tag": true
+      },
+      "parody_commentary_fan_label": "None",
+      "privacy": {
+        "protected": false
+      },
+      "profile_bio": {
+        "description": ""
+      },
+      "profile_image_shape": "Circle",
+      "relationship_perspectives": {
+        "blocked_by": false,
+        "blocking": false,
+        "followed_by": false,
+        "following": false,
+        "muting": false
+      },
+      "rest_id": "2063542577983623168",
+      "super_follow_eligible": false,
+      "super_followed_by": false,
+      "super_following": false,
+      "verification": {
+        "verified": false
+      }
+    }
+  },
+  {
+    "type": "followers",
+    "target": {
+      "raw": "elonmusk",
+      "source": "users",
+      "user_id": "",
+      "username": "elonmusk",
+      "profile_url": ""
+    },
+    "user_id": "2084995231561502720",
+    "username": "kanhailne",
+    "name": "kanha",
+    "description": null,
+    "location": null,
+    "created_at": "Wed Aug 05 13:31:19 +0000 2026",
+    "followers_count": 0,
+    "following_count": 55,
+    "statuses_count": 0,
+    "favourites_count": 0,
+    "media_count": 0,
+    "listed_count": 0,
+    "verified": false,
+    "blue_verified": false,
+    "protected": false,
+    "profile_image_url": "https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png",
+    "profile_banner_url": null,
+    "url": null,
+    "raw": {
+      "__typename": "User",
+      "affiliates_highlighted_label": {},
+      "avatar": {
+        "image_url": "https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png"
+      },
+      "core": {
+        "created_at": "Wed Aug 05 13:31:19 +0000 2026",
+        "name": "kanha",
+        "screen_name": "kanhailne"
+      },
+      "dm_permissions": {
+        "can_dm": false
+      },
+      "follow_request_sent": false,
+      "has_graduated_access": false,
+      "id": "VXNlcjoyMDg0OTk1MjMxNTYxNTAyNzIw",
+      "is_blue_verified": false,
+      "legacy": {
+        "default_profile": true,
+        "default_profile_image": true,
+        "description": "",
+        "entities": {
+          "description": {}
+        },
+        "fast_followers_count": 0,
+        "favourites_count": 0,
+        "follow_request_sent": false,
+        "followers_count": 0,
+        "friends_count": 55,
+        "has_custom_timelines": false,
+        "is_translator": false,
+        "listed_count": 0,
+        "media_count": 0,
+        "needs_phone_verification": false,
+        "normal_followers_count": 0,
+        "notifications": false,
+        "possibly_sensitive": false,
+        "profile_banner_url": "",
+        "profile_interstitial_type": "",
+        "statuses_count": 0,
+        "time_zone": "",
+        "translator_type": "none",
+        "url": "",
+        "utc_offset": 0,
+        "want_retweets": false,
+        "withheld_description": "",
+        "withheld_scope": ""
+      },
+      "location": {
+        "location": ""
+      },
+      "media_permissions": {
+        "can_media_tag": true
+      },
+      "parody_commentary_fan_label": "None",
+      "privacy": {
+        "protected": false
+      },
+      "profile_bio": {
+        "description": ""
+      },
+      "profile_image_shape": "Circle",
+      "relationship_perspectives": {
+        "blocked_by": false,
+        "blocking": false,
+        "followed_by": false,
+        "following": false,
+        "muting": false
+      },
+      "rest_id": "2084995231561502720",
+      "super_follow_eligible": false,
+      "super_followed_by": false,
+      "super_following": false,
+      "verification": {
+        "verified": false
+      }
+    }
+  },
+  {
+    "type": "followers",
+    "target": {
+      "raw": "elonmusk",
+      "source": "users",
+      "user_id": "",
+      "username": "elonmusk",
+      "profile_url": ""
+    },
+    "user_id": "2084995260816523265",
+    "username": "solexrank1",
+    "name": "solexrank",
+    "description": null,
+    "location": null,
+    "created_at": "Wed Aug 05 13:32:16 +0000 2026",
+    "followers_count": 0,
+    "following_count": 48,
+    "statuses_count": 0,
+    "favourites_count": 0,
+    "media_count": 0,
+    "listed_count": 0,
+    "verified": false,
+    "blue_verified": false,
+    "protected": false,
+    "profile_image_url": "https://pbs.twimg.com/profile_images/2084996479358238720/EXQmWkmd_normal.jpg",
+    "profile_banner_url": null,
+    "url": null,
+    "raw": {
+      "__typename": "User",
+      "affiliates_highlighted_label": {},
+      "avatar": {
+        "image_url": "https://pbs.twimg.com/profile_images/2084996479358238720/EXQmWkmd_normal.jpg"
+      },
+      "core": {
+        "created_at": "Wed Aug 05 13:32:16 +0000 2026",
+        "name": "solexrank",
+        "screen_name": "solexrank1"
+      },
+      "dm_permissions": {
+        "can_dm": false
+      },
+      "follow_request_sent": false,
+      "has_graduated_access": false,
+      "id": "VXNlcjoyMDg0OTk1MjYwODE2NTIzMjY1",
+      "is_blue_verified": false,
+      "legacy": {
+        "default_profile": true,
+        "default_profile_image": false,
+        "description": "",
+        "entities": {
+          "description": {}
+        },
+        "fast_followers_count": 0,
+        "favourites_count": 0,
+        "follow_request_sent": false,
+        "followers_count": 0,
+        "friends_count": 48,
+        "has_custom_timelines": false,
+        "is_translator": false,
+        "listed_count": 0,
+        "media_count": 0,
+        "needs_phone_verification": false,
+        "normal_followers_count": 0,
+        "notifications": false,
+        "possibly_sensitive": false,
+        "profile_banner_url": "",
+        "profile_interstitial_type": "",
+        "statuses_count": 0,
+        "time_zone": "",
+        "translator_type": "none",
+        "url": "",
+        "utc_offset": 0,
+        "want_retweets": false,
+        "withheld_description": "",
+        "withheld_scope": ""
+      },
+      "location": {
+        "location": ""
+      },
+      "media_permissions": {
+        "can_media_tag": true
+      },
+      "parody_commentary_fan_label": "None",
+      "privacy": {
+        "protected": false
+      },
+      "profile_bio": {
+        "description": ""
+      },
+      "profile_image_shape": "Circle",
+      "relationship_perspectives": {
+        "blocked_by": false,
+        "blocking": false,
+        "followed_by": false,
+        "following": false,
+        "muting": false
+      },
+      "rest_id": "2084995260816523265",
+      "super_follow_eligible": false,
+      "super_followed_by": false,
+      "super_following": false,
+      "verification": {
+        "verified": false
+      }
+    }
+  },
+  {
+    "type": "followers",
+    "target": {
+      "raw": "elonmusk",
+      "source": "users",
+      "user_id": "",
+      "username": "elonmusk",
+      "profile_url": ""
+    },
+    "user_id": "1585288012409151490",
+    "username": "notyourhonee",
+    "name": "honee gaduang",
+    "description": null,
+    "location": null,
+    "created_at": "Wed Oct 26 15:11:42 +0000 2022",
+    "followers_count": 3,
+    "following_count": 67,
+    "statuses_count": 0,
+    "favourites_count": 1,
+    "media_count": 0,
+    "listed_count": 0,
+    "verified": false,
+    "blue_verified": false,
+    "protected": false,
+    "profile_image_url": "https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png",
+    "profile_banner_url": null,
+    "url": null,
+    "raw": {
+      "__typename": "User",
+      "affiliates_highlighted_label": {},
+      "avatar": {
+        "image_url": "https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png"
+      },
+      "core": {
+        "created_at": "Wed Oct 26 15:11:42 +0000 2022",
+        "name": "honee gaduang",
+        "screen_name": "notyourhonee"
+      },
+      "dm_permissions": {
+        "can_dm": false
+      },
+      "follow_request_sent": false,
+      "has_graduated_access": true,
+      "id": "VXNlcjoxNTg1Mjg4MDEyNDA5MTUxNDkw",
+      "is_blue_verified": false,
+      "legacy": {
+        "default_profile": true,
+        "default_profile_image": true,
+        "description": "",
+        "entities": {
+          "description": {}
+        },
+        "fast_followers_count": 0,
+        "favourites_count": 1,
+        "follow_request_sent": false,
+        "followers_count": 3,
+        "friends_count": 67,
+        "has_custom_timelines": false,
+        "is_translator": false,
+        "listed_count": 0,
+        "media_count": 0,
+        "needs_phone_verification": false,
+        "normal_followers_count": 3,
+        "notifications": false,
+        "possibly_sensitive": false,
+        "profile_banner_url": "",
+        "profile_interstitial_type": "",
+        "statuses_count": 0,
+        "time_zone": "",
+        "translator_type": "none",
+        "url": "",
+        "utc_offset": 0,
+        "want_retweets": false,
+        "withheld_description": "",
+        "withheld_scope": ""
+      },
+      "location": {
+        "location": ""
+      },
+      "media_permissions": {
+        "can_media_tag": true
+      },
+      "parody_commentary_fan_label": "None",
+      "privacy": {
+        "protected": false
+      },
+      "profile_bio": {
+        "description": ""
+      },
+      "profile_image_shape": "Circle",
+      "relationship_perspectives": {
+        "blocked_by": false,
+        "blocking": false,
+        "followed_by": false,
+        "following": false,
+        "muting": false
+      },
+      "rest_id": "1585288012409151490",
+      "super_follow_eligible": false,
+      "super_followed_by": false,
+      "super_following": false,
+      "verification": {
+        "verified": false
+      }
+    }
+  }
+]
