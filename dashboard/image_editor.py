@@ -31,21 +31,31 @@ ICON_GREY       = (113, 118, 123, 255)
 BORDER_DARK     = (38, 42, 45, 255)
 
 
-# ── Font loading ───────────────────────────────────────────────────────────────
 def _load_font(size: int, bold: bool = False) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
-    """Load best available system font with good Unicode coverage."""
+    """Load best available font across Linux (Render/VPS), Windows, and bundled assets."""
+    base_dir = os.path.dirname(os.path.abspath(__file__))
     candidates = []
     if bold:
         candidates = [
+            os.path.join(base_dir, "assets", "fonts", "segoeuib.ttf"),
+            os.path.join(base_dir, "assets", "fonts", "arialbd.ttf"),
+            os.path.join(base_dir, "..", "assets", "fonts", "segoeuib.ttf"),
+            os.path.join(base_dir, "..", "assets", "fonts", "arialbd.ttf"),
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+            "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
             "C:/Windows/Fonts/segoeuib.ttf",
             "C:/Windows/Fonts/arialbd.ttf",
-            "C:/Windows/Fonts/calibrib.ttf",
         ]
     else:
         candidates = [
+            os.path.join(base_dir, "assets", "fonts", "segoeui.ttf"),
+            os.path.join(base_dir, "assets", "fonts", "arial.ttf"),
+            os.path.join(base_dir, "..", "assets", "fonts", "segoeui.ttf"),
+            os.path.join(base_dir, "..", "assets", "fonts", "arial.ttf"),
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+            "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
             "C:/Windows/Fonts/segoeui.ttf",
             "C:/Windows/Fonts/arial.ttf",
-            "C:/Windows/Fonts/calibri.ttf",
         ]
     for path in candidates:
         if os.path.exists(path):
@@ -58,7 +68,13 @@ def _load_font(size: int, bold: bool = False) -> ImageFont.FreeTypeFont | ImageF
 
 def _load_symbol_font(size: int) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
     """Load Segoe UI Symbol for special glyphs (checkmark, arrows, etc.)."""
-    for path in ["C:/Windows/Fonts/seguisym.ttf", "C:/Windows/Fonts/symbol.ttf"]:
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    for path in [
+        os.path.join(base_dir, "assets", "fonts", "segoeui.ttf"),
+        os.path.join(base_dir, "..", "assets", "fonts", "segoeui.ttf"),
+        "C:/Windows/Fonts/seguisym.ttf",
+        "C:/Windows/Fonts/symbol.ttf",
+    ]:
         if os.path.exists(path):
             try:
                 return ImageFont.truetype(path, size)
