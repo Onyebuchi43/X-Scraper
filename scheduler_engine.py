@@ -624,7 +624,7 @@ class _Campaign:
                             return
                         continue
                     else:
-                        cooldown_mins = 30
+                        cooldown_mins = int(cfg.get("cooldown_minutes", 30))
                         self._log("WARNING", f"⏳ {acc_label} post did not complete ({err_msg}). Cooling down account for {cooldown_mins} minutes to protect account safety.")
                         if acc_id:
                             set_account_cooldown(acc_id, cooldown_mins * 60)

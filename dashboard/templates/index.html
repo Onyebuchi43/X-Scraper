@@ -388,6 +388,11 @@
               <label>Max Posts / Account / Day</label>
               <input type="number" id="c-max-posts" value="30" min="1" max="100"/>
             </div>
+            <div class="form-group">
+              <label>Account Cooldown Duration (minutes)</label>
+              <input type="number" id="c-cooldown-mins" value="30" min="1" max="1440"/>
+              <p class="field-hint">Pause time for an account before retrying if a post fails (default: 30 mins)</p>
+            </div>
           </div>
         </div>
 
