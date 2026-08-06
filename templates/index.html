@@ -422,10 +422,9 @@
             <div class="form-group">
               <label>Campaign Execution Mode <span class="badge-required">required</span></label>
               <select id="c-execution-mode">
-                <option value="vps" selected>🌐 24/7 Cloud VPS Engine (Runs continuously in cloud — PC can be closed/turned off)</option>
-                <option value="local">💻 Local PC Engine (Runs only while this PC is open)</option>
+                <option value="vps" selected>🌐 24/7 Cloud Engine (Cloud execution — PC can be closed/turned off)</option>
               </select>
-              <p class="field-hint">Choosing "24/7 Cloud VPS Engine" dispatches the campaign to run continuously in the cloud so you can close your laptop and rest.</p>
+              <p class="field-hint">Campaigns run continuously on the cloud server 24/7 so you can close your browser or laptop and rest.</p>
             </div>
             <div class="form-group">
               <label>Campaign Name</label>
@@ -548,27 +547,7 @@
         </div>
       </div>
       <div class="form-actions" style="margin-top:12px;">
-        <button class="btn btn-primary" onclick="loadVpsStatus()">↺ Check VPS Node Health</button>
-      </div>
-    </div>
-
-    <!-- VPS Connection Credentials Card -->
-    <div class="card card-form" style="margin-top:16px;">
-      <div class="card-title">🔑 Remote VPS Server Connection</div>
-      <p class="card-desc" style="font-size:13px;color:var(--text-3);margin-bottom:12px;">Once you purchase a cloud VPS (DigitalOcean, AWS, etc.), enter its URL and Secret API Key below to dispatch 24/7 campaigns to your cloud server.</p>
-      <div class="form-grid form-grid-2">
-        <div class="form-group">
-          <label>Remote VPS Server URL / Endpoint</label>
-          <input type="text" id="vps-cfg-url" placeholder="https://vps.yourdomain.com:5000 or http://164.92.100.4:5000"/>
-        </div>
-        <div class="form-group">
-          <label>VPS Secret API Key</label>
-          <input type="password" id="vps-cfg-key" placeholder="Enter secret API key"/>
-        </div>
-      </div>
-      <div class="form-actions" style="margin-top:12px;display:flex;align-items:center;gap:12px;">
-        <button class="btn btn-primary" onclick="saveVpsConfig()">💾 Save VPS Connection</button>
-        <span id="vps-cfg-status" style="font-size:13px;font-weight:600;color:var(--text-3);">🔴 Not Connected</span>
+        <button class="btn btn-primary" onclick="loadVpsStatus()">↺ Refresh Server Status</button>
       </div>
     </div>
 

@@ -747,20 +747,12 @@ async function loadVpsStatus() {
   }
 }
 
-function updateExecutionModeDropdown(isConnected, url) {
+function updateExecutionModeDropdown() {
   const el = document.getElementById('c-execution-mode');
   if (!el) return;
-  if (isConnected) {
-    el.innerHTML = `
-      <option value="vps" selected>🌐 24/7 Cloud VPS Engine (Connected: ${esc(url)})</option>
-      <option value="local">💻 Local PC Engine (Local Instance)</option>
-    `;
-  } else {
-    el.innerHTML = `
-      <option value="local" selected>💻 Local PC Engine (Runs while PC is open — Current Host)</option>
-      <option value="vps" disabled>🌐 24/7 Cloud VPS Engine (⚠️ VPS Not Connected — Configure in VPS tab)</option>
-    `;
-  }
+  el.innerHTML = `
+    <option value="vps" selected>🌐 24/7 Cloud Engine (Cloud execution — PC can be closed/turned off)</option>
+  `;
 }
 
 async function saveVpsConfig() {
