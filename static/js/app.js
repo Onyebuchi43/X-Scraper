@@ -458,16 +458,19 @@ function updateCampaignStats(config) {
 }
 
 async function stopCampaign() {
-  if (!currentCampaignId) return;
-  await api(`/api/campaigns/${currentCampaignId}/stop`, { method: 'POST' });
-  toast('Stop signal sent', 'info');
-  document.getElementById('stop-btn').style.display = 'none';
-  document.getElementById('resume-btn').style.display = 'inline-flex';
+  if (!currentCampaignId) { toast('No active campaign selected', 'error'); return; }
+  await stopCampaignId(currentCampaignId);
 }
 
 async function stopCampaignId(cid) {
-  await api(`/api/campaigns/${cid}/stop`, { method: 'POST' });
+  const res = await api(`/api/campaigns/${cid}/stop`, { method: 'POST' });
   toast(`Campaign #${cid} stopped`, 'info');
+  const stopBtn = document.getElementById('stop-btn');
+  const resumeBtn = document.getElementById('resume-btn');
+  if (currentCampaignId === cid) {
+    if (stopBtn) stopBtn.style.display = 'none';
+    if (resumeBtn) resumeBtn.style.display = 'inline-flex';
+  }
   loadCampaignDbPanel();
 }
 
@@ -476,11 +479,21 @@ async function resumeCampaign(cid) {
   const res = await api(`/api/campaigns/${cid}/resume`, { method: 'POST' });
   if (res.error) { toast(res.error, 'error'); return; }
   toast(`Campaign #${cid} resumed!`, 'success');
-  document.getElementById('stop-btn').style.display = 'inline-flex';
-  document.getElementById('resume-btn').style.display = 'none';
-  document.getElementById('clear-tagged-btn').style.display = 'inline-flex';
+  const stopBtn = document.getElementById('stop-btn');
+  const resumeBtn = document.getElementById('resume-btn');
+  if (stopBtn) stopBtn.style.display = 'inline-flex';
+  if (resumeBtn) resumeBtn.style.display = 'none';
+  const clearBtn = document.getElementById('clear-tagged-btn');
+  if (clearBtn) clearBtn.style.display = 'inline-flex';
   startCampaignPoll();
   loadCampaignDbPanel();
+}
+
+async function selectCampaignForLogs(cid) {
+  currentCampaignId = cid;
+  startCampaignPoll();
+  pollCampaign();
+  toast(`Viewing logs for Campaign #${cid}`, 'info');
 }
 
 async function resumeActiveCampaign() {
@@ -641,8 +654,11 @@ async function loadCampaignDbPanel() {
               <td><span class="status-pill" data-status="${c.status}">${c.status}</span></td>
               <td><strong>${c.tagged_count.toLocaleString()}</strong></td>
               <td style="display:flex;gap:4px;flex-wrap:wrap;">
-                <button class="btn btn-sm btn-success" onclick="resumeCampaign(${c.id})">▶ Resume</button>
-                <button class="btn btn-sm btn-danger" onclick="stopCampaignId(${c.id})">⏹ Stop</button>
+                ${c.status === 'running'
+                  ? `<button class="btn btn-sm btn-danger" onclick="stopCampaignId(${c.id})">⏹ Stop</button>`
+                  : `<button class="btn btn-sm btn-success" onclick="resumeCampaign(${c.id})">▶ Resume</button>`
+                }
+                <button class="btn btn-sm btn-ghost" onclick="selectCampaignForLogs(${c.id})">👁 Logs</button>
                 <button class="btn btn-sm btn-ghost" onclick="clearCampaignTagged(${c.id})">🗑 Clear</button>
                 <button class="btn btn-sm btn-danger" onclick="deleteCampaign(${c.id})">✕ Delete</button>
               </td>
