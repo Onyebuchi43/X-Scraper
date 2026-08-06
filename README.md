@@ -1,51 +1,44 @@
-<p align="center">
-  <img src="assets/scweet_banner.png" alt="Scweet" width="480" />
-</p>
+# 🚀 X-Scraper &amp; Automated Campaign Engine
 
-<p align="center">
-  <strong>Scrape Twitter / X without the official API.</strong>
-  <br>
-  Hosted on Apify with no cookies or proxies, or run locally with Python and CLI.
-</p>
-
-<p align="center">
-  <a href="https://apify.com/altimis/scweet?fpr=a40q9">
-    <img alt="Run on Apify" src="https://img.shields.io/badge/Run%20on-Apify-246DFF?logo=apify&logoColor=white">
-  </a>
-  <a href="#python-quickstart">
-    <img alt="Python Quickstart" src="https://img.shields.io/badge/Python-Quickstart-3776AB?logo=python&logoColor=white">
-  </a>
-  <a href="#cli">
-    <img alt="CLI Quickstart" src="https://img.shields.io/badge/CLI-Quickstart-111111?logo=gnu-bash&logoColor=white">
-  </a>
-  <a href="#documentation">
-    <img alt="Documentation" src="https://img.shields.io/badge/Docs-Full%20Reference-0A66C2">
-  </a>
-</p>
-
-<p align="center">
-  <a href="https://github.com/Altimis/Scweet/actions/workflows/tests.yml">
-    <img alt="Tests" src="https://github.com/Altimis/Scweet/actions/workflows/tests.yml/badge.svg">
-  </a>
-  <a href="https://pypi.org/project/scweet/">
-    <img alt="PyPI Version" src="https://img.shields.io/pypi/v/scweet.svg">
-  </a>
-  <a href="https://pepy.tech/projects/scweet">
-    <img alt="PyPI Downloads" src="https://static.pepy.tech/badge/scweet/month">
-  </a>
-  <a href="https://github.com/Altimis/scweet/blob/main/LICENSE">
-    <img alt="License" src="https://img.shields.io/github/license/Altimis/scweet">
-  </a>
-  <a href="https://apify.com/altimis/scweet">
-    <img alt="Scweet Actor Status" src="https://apify.com/actor-badge?actor=altimis/scweet">
-  </a>
-</p>
-
+> Advanced Twitter / X Scraper, Streaming Tagging Engine, Dynamic Card Generator, and 24/7 VPS Campaign Manager.
 
 ---
-<p align="center">
-<strong>Scrape tweets, profile timelines, followers and more from Twitter/X. Use the hosted Apify Actor when you do not want to manage cookies or proxies, or run locally with your own browser cookies and account pool.</strong>
-</p>
+
+## 🌟 Key Features
+
+- **🌐 Web Dashboard UI (`dashboard/`)**: Full-featured Web GUI running at `http://localhost:5000` with Live Campaign Feed, Status Indicators, and Control Panels.
+- **🔄 Streaming Followers &amp; Tweet Commenters Scraping**: Memory-streamed scraping without saving disk `.csv` files. Supports Followers of Profile(s) and Tweet Commenters/Replies.
+- **🔁 Round-Robin Multi-Account Batch Posting**: Automatically rotates posting across all selected accounts in round batches before entering interval cooldowns.
+- **🎨 Dynamic Tweet Screenshot Card Generator (`image_editor.py`)**: Renders native-looking Tweet screenshot cards with Twitter Blue (`#1d9bf0`) `@mentions` and automatic profile avatar fetching via `unavatar.io`.
+- **📊 Campaign Tag Database**: Tracks tagged users per campaign with instant deduplication, campaign resume support, clear/restart tagging history, and database bulk deletion.
+- **🌐 24/7 Cloud VPS Server Integration**: Remote VPS health monitoring, execution mode selector (`🌐 24/7 Cloud VPS Engine` vs `💻 Local PC Engine`), and connection setup.
+
+---
+
+## 🛠 Quickstart
+
+### 1. Launch Web Dashboard
+```bash
+python -m dashboard.app
+```
+Open **[http://localhost:5000](http://localhost:5000)** in your browser.
+
+### 2. Run Standalone Streaming Scraper
+```bash
+python scrape_followers.py --profiles elonmusk,OpenAI --limit 100
+```
+
+---
+
+## 📂 Project Architecture
+
+- **`dashboard/app.py`** — Flask Dashboard Server &amp; REST API endpoints.
+- **`dashboard/scheduler_engine.py`** — Campaign loop engine, streaming follower/commenter scrapers.
+- **`dashboard/poster.py`** — Twitter posting API, GraphQL list banner uploader, error classifier.
+- **`dashboard/image_editor.py`** — PIL image generator for tweet cards with syntax tokens.
+- **`dashboard/templates/index.html`** — Web Dashboard interface &amp; tab layouts.
+- **`dashboard/static/js/app.js`** — Live log poller, selection counters, toast notification engine.
+- **`dashboard/static/css/style.css`** — Dark mode UI styles.
 
 ---
 
