@@ -586,6 +586,18 @@ async function loadCampaignDbPanel() {
   const campaigns = await api('/api/campaigns');
   const container = document.getElementById('campaign-db-list');
   if (!container) return;
+
+  // Auto-attach running campaign to live log poller if not already attached
+  const activeCamp = campaigns.find(c => c.status === 'running') || campaigns[0];
+  if (activeCamp && !currentCampaignId) {
+    currentCampaignId = activeCamp.id;
+    startCampaignPoll();
+    pollCampaign();
+    document.getElementById('stop-btn').style.display = activeCamp.status === 'running' ? 'inline-flex' : 'none';
+    document.getElementById('resume-btn').style.display = activeCamp.status !== 'running' ? 'inline-flex' : 'none';
+    document.getElementById('clear-tagged-btn').style.display = 'inline-flex';
+  }
+
   if (!campaigns.length) {
     container.innerHTML = `
       <p style="color:var(--text-3);font-size:13px;margin:0 0 8px;">No campaigns in database.</p>
