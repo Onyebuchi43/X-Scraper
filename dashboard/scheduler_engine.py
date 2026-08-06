@@ -627,19 +627,22 @@ class _Campaign:
 
             # ── Check overall account statuses after round ─────────────────────
             if not accounts:
+                self._log("ERROR", "🚨 All campaign accounts have been removed due to blocks/suspensions. Stopping campaign automatically.")
+                _set_status(campaign_id, "stopped")
                 break
 
             all_cooling = all(a.get("cooldown_until", 0) > time.time() for a in accounts)
             all_maxed = all(account_post_counts.get(a.get("id") or idx, 0) >= max_posts_per_account for idx, a in enumerate(accounts))
 
             if all_maxed:
-                self._log("WARNING", "All accounts have reached their daily post limit.")
+                self._log("WARNING", "All accounts have reached their daily post limit. Campaign complete.")
+                _set_status(campaign_id, "stopped")
                 break
 
             if all_cooling:
-                self._log("WARNING", "Active posting accounts are currently cooling down due to rate limits. Waiting 3 minutes…")
-                time.sleep(180)
-                continue
+                self._log("WARNING", "🚨 All active posting accounts are currently cooling down. No active accounts available to continue right now — stopping campaign automatically.")
+                _set_status(campaign_id, "stopped")
+                break
 
             # ── Main interval delay between posting rounds ────────────────────
             if not self._stop_event.is_set():
