@@ -44,6 +44,11 @@ def add_header(response):
     response.headers["Expires"] = "0"
     return response
 
+
+@app.route("/favicon.ico")
+def favicon():
+    return "", 204
+
 for _d in [app.config["UPLOAD_FOLDER"], app.config["GENERATED_FOLDER"], "outputs"]:
     os.makedirs(_d, exist_ok=True)
 
