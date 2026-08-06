@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Scweet Dashboard</title>
+  <meta name="description" content="Scweet dashboard for scraping Twitter followers and running automated posting campaigns."/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="/static/css/style.css?v=3"/>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <span class="logo-icon">X</span>
+    <span class="logo-text">Scweet</span>
+  </div>
+  <ul class="nav-list">
+    <li class="nav-item active" data-tab="accounts" onclick="switchTab('accounts',this)">
+      <span class="nav-icon">&#128100;</span><span class="nav-label">Accounts</span>
+    </li>
+    <li class="nav-item" data-tab="scraper" onclick="switchTab('scraper',this)">
+      <span class="nav-icon">&#128269;</span><span class="nav-label">Scraper</span>
+    </li>
+    <li class="nav-item" data-tab="campaign" onclick="switchTab('campaign',this)">
+      <span class="nav-icon">&#128640;</span><span class="nav-label">Campaign</span>
+    </li>
+    <li class="nav-item" data-tab="results" onclick="switchTab('results',this)">
+      <span class="nav-icon">&#128202;</span><span class="nav-label">Results</span>
+    </li>
+    <li class="nav-item" data-tab="vps" onclick="switchTab('vps',this)">
+      <span class="nav-icon">🌐</span><span class="nav-label">VPS &amp; Production</span>
+    </li>
+  </ul>
+  <div class="sidebar-footer">
+    <div class="status-dot"></div>
+    <span class="sidebar-version">Scweet v5</span>
+  </div>
+</nav>
+
+<!-- MAIN CONTENT -->
+<main class="main-content">
+
+  <header class="top-bar">
+    <div class="top-bar-title" id="tabTitle">Account Manager</div>
+    <div class="top-bar-actions">
+      <button class="btn btn-ghost" onclick="refreshCurrentTab()">Refresh</button>
+    </div>
+  </header>
+
+  <!-- ======= TAB: ACCOUNTS ======= -->
+  <section class="tab-panel active" id="tab-accounts">
+    <div class="panel-header">
+      <h2>Twitter Accounts</h2>
+      <p class="panel-sub">Add auth_token + ct0 from each account's browser cookies. All scraping and posting uses these credentials.</p>
+    </div>
+
+    <div class="card card-form">
+      <div class="card-title">Add Account</div>
+      <div class="form-grid form-grid-2">
+        <div class="form-group">
+          <label>Auth Token <span class="badge-required">required</span></label>
+          <input type="password" id="inp-auth-token" placeholder="6b832b12eb0d082ca93..." autocomplete="off"/>
+        </div>
+        <div class="form-group">
+          <label>ct0 (CSRF Token) <span class="badge-required">required</span></label>
+          <input type="password" id="inp-ct0" placeholder="633172eddbaa..." autocomplete="off"/>
+        </div>
+        <div class="form-group">
+          <label>Proxy <span class="badge-optional">optional</span></label>
+          <input type="text" id="inp-proxy" placeholder="http://user:pass@host:port"/>
+        </div>
+        <div class="form-group">
+          <label>Label <span class="badge-optional">optional</span></label>
+          <input type="text" id="inp-label" placeholder="Account #1 - Main"/>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-primary" onclick="addAccount()">Add Account</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Registered Accounts <span class="counter" id="accounts-count">0</span></div>
+      <div class="table-wrap">
+        <table class="data-table" id="accounts-table">
+          <thead><tr>
+            <th>#</th><th>Label</th><th>Token Preview</th><th>Proxy</th><th>Added</th><th>Actions</th>
+          </tr></thead>
+          <tbody id="accounts-tbody">
+            <tr><td colspan="6" class="empty-row">No accounts yet</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======= TAB: SCRAPER ======= -->
+  <section class="tab-panel" id="tab-scraper">
+    <div class="panel-header">
+      <h2>Scraper</h2>
+      <p class="panel-sub">Scrape followers, search tweets, or fetch profile timelines. Results are saved as CSV files.</p>
+    </div>
+
+    <div class="sub-tabs">
+      <button class="sub-tab active" onclick="switchSubTab('scraper','followers',this)">Followers</button>
+      <button class="sub-tab" onclick="switchSubTab('scraper','search',this)">Search</button>
+      <button class="sub-tab" onclick="switchSubTab('scraper','profile',this)">Profile Timeline</button>
+    </div>
+
+    <!-- Followers -->
+    <div class="sub-panel active" id="scraper-followers">
+      <div class="card card-form">
+        <div class="card-title">Followers Scraper</div>
+        <div class="form-grid form-grid-2">
+          <div class="form-group span-2">
+            <label>Target Profile(s) <span class="badge-required">required</span></label>
+            <input type="text" id="f-targets" placeholder="elonmusk, OpenAI, nasa (comma-separated)"/>
+          </div>
+          <div class="form-group">
+            <label>Limit</label>
+            <input type="number" id="f-limit" value="100" min="1" max="10000"/>
+          </div>
+          <div class="form-group">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+              <label style="margin:0;">Accounts to use <span id="f-accounts-badge" style="font-size:12px;font-weight:600;margin-left:6px;"></span></label>
+              <div style="display:flex;gap:6px;">
+                <button type="button" class="btn btn-sm btn-ghost" style="padding:2px 8px;font-size:11px;" onclick="selectAllAccounts('f-accounts', true)">Select All</button>
+                <button type="button" class="btn btn-sm btn-ghost" style="padding:2px 8px;font-size:11px;" onclick="selectAllAccounts('f-accounts', false)">Deselect All</button>
+              </div>
+            </div>
+            <select id="f-accounts" multiple class="multi-select"></select>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-primary" onclick="startScrape('followers')">Start Scraping</button>
+        </div>
+      </div>
+
+      <div class="card card-secondary">
+        <div class="card-title">Upload Existing CSV</div>
+        <p class="card-desc">Skip scraping and upload a followers CSV you already have (must have a <code>username</code> or <code>user_screen_name</code> column).</p>
+        <div class="upload-area" id="csv-upload-area" ondrop="dropCSV(event)" ondragover="event.preventDefault()">
+          <input type="file" id="csv-file-input" accept=".csv" style="display:none" onchange="uploadCSV(this)"/>
+          <span class="upload-icon">&#128193;</span>
+          <span>Drag &amp; drop CSV or <button class="btn-link" onclick="document.getElementById('csv-file-input').click()">browse</button></span>
+        </div>
+        <div id="csv-upload-status" class="upload-status"></div>
+      </div>
+    </div>
+
+    <!-- Search -->
+    <div class="sub-panel" id="scraper-search">
+      <div class="card card-form">
+        <div class="card-title">Tweet Search</div>
+        <div class="form-grid form-grid-2">
+          <div class="form-group span-2">
+            <label>Search Query</label>
+            <input type="text" id="s-query" placeholder="bitcoin crypto OR ethereum..."/>
+          </div>
+          <div class="form-group">
+            <label>From Users</label>
+            <input type="text" id="s-from-users" placeholder="elonmusk, OpenAI"/>
+          </div>
+          <div class="form-group">
+            <label>Language</label>
+            <input type="text" id="s-lang" placeholder="en"/>
+          </div>
+          <div class="form-group">
+            <label>Since (YYYY-MM-DD)</label>
+            <input type="date" id="s-since"/>
+          </div>
+          <div class="form-group">
+            <label>Until (YYYY-MM-DD)</label>
+            <input type="date" id="s-until"/>
+          </div>
+          <div class="form-group">
+            <label>Min Likes</label>
+            <input type="number" id="s-min-likes" placeholder="0" min="0"/>
+          </div>
+          <div class="form-group">
+            <label>Min Retweets</label>
+            <input type="number" id="s-min-rt" placeholder="0" min="0"/>
+          </div>
+          <div class="form-group">
+            <label>Display Type</label>
+            <select id="s-display">
+              <option value="Top">Top</option>
+              <option value="Latest">Latest</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Limit</label>
+            <input type="number" id="s-limit" value="100" min="1" max="5000"/>
+          </div>
+          <div class="form-group">
+            <label>Has Images</label>
+            <select id="s-has-images">
+              <option value="">Any</option>
+              <option value="true">Yes</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+              <label style="margin:0;">Accounts to use <span id="s-accounts-badge" style="font-size:12px;font-weight:600;margin-left:6px;"></span></label>
+              <div style="display:flex;gap:6px;">
+                <button type="button" class="btn btn-sm btn-ghost" style="padding:2px 8px;font-size:11px;" onclick="selectAllAccounts('s-accounts', true)">Select All</button>
+                <button type="button" class="btn btn-sm btn-ghost" style="padding:2px 8px;font-size:11px;" onclick="selectAllAccounts('s-accounts', false)">Deselect All</button>
+              </div>
+            </div>
+            <select id="s-accounts" multiple class="multi-select"></select>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-primary" onclick="startScrape('search')">Start Search</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Profile Timeline -->
+    <div class="sub-panel" id="scraper-profile">
+      <div class="card card-form">
+        <div class="card-title">Profile Timeline</div>
+        <div class="form-grid form-grid-2">
+          <div class="form-group span-2">
+            <label>Profiles <span class="badge-required">required</span></label>
+            <input type="text" id="p-targets" placeholder="elonmusk, OpenAI"/>
+          </div>
+          <div class="form-group">
+            <label>Limit</label>
+            <input type="number" id="p-limit" value="100" min="1"/>
+          </div>
+          <div class="form-group">
+            <label>Accounts to use</label>
+            <select id="p-accounts" multiple class="multi-select"></select>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-primary" onclick="startScrape('profile')">Fetch Tweets</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Job monitor -->
+    <div class="card" id="scraper-job-monitor" style="display:none">
+      <div class="card-title">Job Progress <span class="spinner" id="job-spinner"></span></div>
+      <div class="job-status-bar">
+        <div class="status-pill" id="job-status-pill">running</div>
+        <span id="job-status-text">Starting...</span>
+        <button class="btn btn-sm btn-ghost" id="job-download-btn" style="display:none" onclick="downloadJob()">Download CSV</button>
+      </div>
+      <div class="log-panel" id="job-log"></div>
+    </div>
+  </section>
+
+  <!-- ======= TAB: CAMPAIGN ======= -->
+  <section class="tab-panel" id="tab-campaign">
+    <div class="panel-header">
+      <h2>Post Campaign</h2>
+      <p class="panel-sub">Configure auto-posting: each account creates its own Twitter List, uploads a branded tweet-card image, then posts tweets tagging batches of followers.</p>
+    </div>
+
+    <div class="campaign-grid">
+      <div class="campaign-col">
+
+        <!-- STEP 1: Tweet card template -->
+        <div class="card card-step">
+          <div class="step-badge">1</div>
+          <div class="card-title">Tweet Card Image Template</div>
+          <p class="card-desc">Enter the tweet details below. The image is generated locally (no internet needed) and used as the list banner for all posting accounts.</p>
+          <div class="form-grid form-grid-2">
+            <div class="form-group">
+              <label>Display Name <span class="badge-required">required</span></label>
+              <input type="text" id="c-display-name" placeholder="Elon Musk"/>
+            </div>
+            <div class="form-group">
+              <label>Username <span class="badge-required">required</span></label>
+              <div class="input-row">
+                <span class="input-prefix">@</span>
+                <input type="text" id="c-username" placeholder="elonmusk"/>
+              </div>
+            </div>
+            <div class="form-group span-2">
+              <label>Profile Picture (Avatar Image) <span class="badge-optional">optional</span></label>
+              <input type="file" id="c-avatar-file" accept="image/*"/>
+              <p class="field-hint">Upload an avatar picture (e.g. rocket image for Elon Musk). If blank, an initial letter icon is used.</p>
+            </div>
+            <div class="form-group span-2">
+              <label>Tweet Body Text <span class="badge-required">required</span></label>
+              <textarea id="c-body-text" rows="3" placeholder="Hello {taggings}, SpaceX has committed to using Nvidia GPUs exclusively because they are the best"></textarea>
+              <p class="field-hint">Use <code>{taggings}</code> to place the tagged handles inside the card image text.</p>
+            </div>
+            <div class="form-group span-2">
+              <label>Update List Profile Picture Per Post?</label>
+              <select id="c-update-list-banner">
+                <option value="true" selected>Yes — Update list image for every post (integrates {taggings} into image)</option>
+                <option value="false">No — Use static list profile picture for all posts</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Timestamp <span class="badge-optional">optional</span></label>
+              <input type="text" id="c-timestamp" placeholder="3:51 PM - 8/4/26"/>
+            </div>
+            <div class="form-group">
+              <label>Verified Badge</label>
+              <select id="c-verified">
+                <option value="true">Yes (blue checkmark)</option>
+                <option value="false">No</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Likes <span class="badge-optional">optional</span></label>
+              <input type="text" id="c-likes" placeholder="54K"/>
+            </div>
+            <div class="form-group">
+              <label>Retweets <span class="badge-optional">optional</span></label>
+              <input type="text" id="c-retweets" placeholder="4.2K"/>
+            </div>
+            <div class="form-group">
+              <label>Replies <span class="badge-optional">optional</span></label>
+              <input type="text" id="c-replies" placeholder="2.8K"/>
+            </div>
+            <div class="form-group">
+              <label>Views <span class="badge-optional">optional</span></label>
+              <input type="text" id="c-views" placeholder="3M"/>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button class="btn btn-secondary" onclick="generateCardImage()">Preview Card</button>
+          </div>
+          <div id="image-preview-wrap" style="display:none;margin-top:16px;">
+            <img id="image-preview" class="image-preview-img" src="" alt="Tweet card preview"/>
+          </div>
+        </div>
+
+        <!-- STEP 2: List settings -->
+        <div class="card card-step">
+          <div class="step-badge">2</div>
+          <div class="card-title">Twitter List Settings</div>
+          <div class="form-grid form-grid-2">
+            <div class="form-group span-2">
+              <label>List Name</label>
+              <input type="text" id="c-list-name" value="Official Notice" maxlength="25"/>
+            </div>
+            <div class="form-group span-2">
+              <label>List Description</label>
+              <input type="text" id="c-list-desc" placeholder="Official announcements" maxlength="100"/>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 3: Posting message -->
+        <div class="card card-step">
+          <div class="step-badge">3</div>
+          <div class="card-title">Post Message Template</div>
+          <p class="card-desc">Use <code>{taggings}</code> where the tagged handles appear. The list URL is appended automatically.</p>
+          <div class="form-grid form-grid-1">
+            <div class="form-group">
+              <label>Tweet Template <span class="badge-required">required</span></label>
+              <textarea id="c-post-template" rows="3" placeholder="Hello {taggings}, you have been selected. Visit xcoin.com to receive your exclusive access."></textarea>
+              <div class="char-counter" id="template-counter">0 / 240</div>
+            </div>
+            <div class="form-group">
+              <label>Tags per Post (1-5)</label>
+              <input type="range" id="c-tags-per-post" min="1" max="5" value="3" oninput="document.getElementById('tags-per-post-val').textContent=this.value"/>
+              <span class="range-val" id="tags-per-post-val">3</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 4: Timing -->
+        <div class="card card-step">
+          <div class="step-badge">4</div>
+          <div class="card-title">Posting Interval (Safety)</div>
+          <p class="card-desc">Random delay between posts to minimise ban risk. Recommended: 8-20 min.</p>
+          <div class="form-grid form-grid-2">
+            <div class="form-group">
+              <label>Min Delay (minutes)</label>
+              <input type="number" id="c-min-delay" value="8" min="2" max="60"/>
+            </div>
+            <div class="form-group">
+              <label>Max Delay (minutes)</label>
+              <input type="number" id="c-max-delay" value="20" min="5" max="120"/>
+            </div>
+            <div class="form-group">
+              <label>Max Posts / Account / Day</label>
+              <input type="number" id="c-max-posts" value="30" min="1" max="100"/>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 5: Accounts + Source Profiles -->
+        <div class="card card-step">
+          <div class="step-badge">5</div>
+          <div class="card-title">Accounts &amp; Scrape Target</div>
+          <div class="form-grid form-grid-1">
+            <div class="form-group">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                <label style="margin:0;">Posting Accounts <span class="badge-required">required</span> <span id="c-accounts-badge" style="font-size:12px;font-weight:600;margin-left:6px;"></span></label>
+                <div style="display:flex;gap:6px;">
+                  <button type="button" class="btn btn-sm btn-ghost" style="padding:2px 8px;font-size:11px;" onclick="selectAllAccounts('c-accounts', true)">Select All</button>
+                  <button type="button" class="btn btn-sm btn-ghost" style="padding:2px 8px;font-size:11px;" onclick="selectAllAccounts('c-accounts', false)">Deselect All</button>
+                </div>
+              </div>
+              <select id="c-accounts" multiple class="multi-select"></select>
+              <p class="field-hint">Click "Select All" above or hold Ctrl/Cmd to choose multiple accounts. All selected accounts post in each round before the interval delay.</p>
+            </div>
+            <div class="form-group">
+              <label>Scrape Target Type <span class="badge-required">required</span></label>
+              <select id="c-target-type" onchange="toggleTargetType(this.value)">
+                <option value="followers" selected>👤 Followers of Profile(s)</option>
+                <option value="tweet_commenters">💬 Commenters / Replies of a Tweet (URL or ID)</option>
+              </select>
+            </div>
+            <div class="form-group" id="group-target-input">
+              <label id="lbl-target-input">Source Profiles to Scrape From <span class="badge-required">required</span></label>
+              <input type="text" id="c-source-profiles" placeholder="elonmusk, OpenAI, nasa"/>
+              <p class="field-hint" id="hint-target-input">Comma-separated usernames. Streamingly scrapes followers without saving CSV files on disk.</p>
+            </div>
+            <div class="form-group">
+              <label>Campaign Execution Mode <span class="badge-required">required</span></label>
+              <select id="c-execution-mode">
+                <option value="vps" selected>🌐 24/7 Cloud VPS Engine (Runs continuously in cloud — PC can be closed/turned off)</option>
+                <option value="local">💻 Local PC Engine (Runs only while this PC is open)</option>
+              </select>
+              <p class="field-hint">Choosing "24/7 Cloud VPS Engine" dispatches the campaign to run continuously in the cloud so you can close your laptop and rest.</p>
+            </div>
+            <div class="form-group">
+              <label>Campaign Name</label>
+              <input type="text" id="c-name" placeholder="Campaign #1"/>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button class="btn btn-success" onclick="startCampaign()">Launch Campaign</button>
+          </div>
+        </div>
+
+      </div><!-- /campaign-col -->
+
+      <!-- Right column: Live feed -->
+      <div class="campaign-col">
+        <div class="card card-live">
+          <div class="card-title">Live Campaign Feed
+            <span class="campaign-status-pill" id="camp-status-pill" data-s="idle">idle</span>
+          </div>
+          <div class="campaign-stats" id="camp-stats">
+            <div class="stat-box"><div class="stat-num" id="stat-posts">--</div><div class="stat-label">Posts sent</div></div>
+            <div class="stat-box"><div class="stat-num" id="stat-tagged">--</div><div class="stat-label">Users tagged</div></div>
+            <div class="stat-box"><div class="stat-num" id="stat-accounts">--</div><div class="stat-label">Active accounts</div></div>
+          </div>
+
+          <div class="log-panel" id="campaign-log">
+            <div class="log-entry log-info">Waiting for campaign to start...</div>
+          </div>
+
+          <div class="form-actions" style="margin-top:12px;gap:8px;display:flex;flex-wrap:wrap;">
+            <button class="btn btn-success" id="resume-btn" style="display:none" onclick="resumeActiveCampaign()">▶ Resume Campaign</button>
+            <button class="btn btn-danger" id="stop-btn" style="display:none" onclick="stopCampaign()">Stop Campaign</button>
+            <button class="btn btn-ghost" id="clear-tagged-btn" style="display:none" onclick="clearTaggedUsers()">🗑 Clear Tagged Users</button>
+          </div>
+
+          <div class="lists-section" id="lists-section" style="display:none">
+            <div class="card-title" style="margin-top:20px;">Created Lists</div>
+            <div id="lists-feed"></div>
+          </div>
+        </div>
+      </div><!-- /campaign-col -->
+
+    </div><!-- /campaign-grid -->
+
+    <!-- Standalone Campaign Tag Database Section -->
+    <div class="card" style="margin-top:24px;">
+      <div class="card-title">📊 Campaign Tag Database</div>
+      <p class="card-desc" style="font-size:13px;color:var(--text-3);margin:0 0 12px;">Each campaign tracks which users it has already tagged so they are never tagged again. You can clear this history to restart tagging from scratch or delete campaigns.</p>
+      <div id="campaign-db-list"></div>
+    </div>
+  </section>
+
+  <!-- ======= TAB: RESULTS ======= -->
+  <section class="tab-panel" id="tab-results">
+    <div class="panel-header">
+      <h2>Results and Files</h2>
+      <p class="panel-sub">All scrape jobs and their downloadable CSV outputs.</p>
+    </div>
+
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <div class="card-title" style="margin:0;">Scrape Jobs</div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-sm btn-ghost" onclick="loadJobs()">↺ Refresh</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteAllJobs()">🗑 Clear All Jobs</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table" id="jobs-table">
+          <thead><tr>
+            <th>Target</th><th>Type</th><th>Status</th><th>Created</th><th>Actions</th>
+          </tr></thead>
+          <tbody id="jobs-tbody">
+            <tr><td colspan="5" class="empty-row">No jobs yet</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Available CSV Files</div>
+      <div id="csv-files-list" class="files-grid"></div>
+    </div>
+  </section>
+
+  <!-- ======= TAB: VPS & PRODUCTION ======= -->
+  <section class="tab-panel" id="tab-vps">
+    <div class="panel-header">
+      <h2>VPS &amp; Production Deployment</h2>
+      <p class="panel-sub">Run campaigns 24/7 in the cloud without keeping your local PC open, and prepare your app for production with a custom domain.</p>
+    </div>
+
+    <!-- Node Status Card -->
+    <div class="card card-form">
+      <div class="card-title">🌐 Server Node &amp; Health Monitor</div>
+      <div class="form-grid form-grid-2" id="vps-node-details">
+        <div class="form-group">
+          <label>Node Environment</label>
+          <input type="text" id="vps-node-type" readonly value="Loading..."/>
+        </div>
+        <div class="form-group">
+          <label>Database Backend</label>
+          <input type="text" id="vps-db-backend" readonly value="Loading..."/>
+        </div>
+        <div class="form-group">
+          <label>Server Hostname</label>
+          <input type="text" id="vps-hostname" readonly value="Loading..."/>
+        </div>
+        <div class="form-group">
+          <label>Operating System</label>
+          <input type="text" id="vps-os" readonly value="Loading..."/>
+        </div>
+        <div class="form-group">
+          <label>Python Environment</label>
+          <input type="text" id="vps-python" readonly value="Loading..."/>
+        </div>
+        <div class="form-group">
+          <label>Active Background Campaigns</label>
+          <input type="text" id="vps-active-camps" readonly value="0"/>
+        </div>
+      </div>
+      <div class="form-actions" style="margin-top:12px;">
+        <button class="btn btn-primary" onclick="loadVpsStatus()">↺ Check VPS Node Health</button>
+      </div>
+    </div>
+
+    <!-- VPS Connection Credentials Card -->
+    <div class="card card-form" style="margin-top:16px;">
+      <div class="card-title">🔑 Remote VPS Server Connection</div>
+      <p class="card-desc" style="font-size:13px;color:var(--text-3);margin-bottom:12px;">Once you purchase a cloud VPS (DigitalOcean, AWS, etc.), enter its URL and Secret API Key below to dispatch 24/7 campaigns to your cloud server.</p>
+      <div class="form-grid form-grid-2">
+        <div class="form-group">
+          <label>Remote VPS Server URL / Endpoint</label>
+          <input type="text" id="vps-cfg-url" placeholder="https://vps.yourdomain.com:5000 or http://164.92.100.4:5000"/>
+        </div>
+        <div class="form-group">
+          <label>VPS Secret API Key</label>
+          <input type="password" id="vps-cfg-key" placeholder="Enter secret API key"/>
+        </div>
+      </div>
+      <div class="form-actions" style="margin-top:12px;display:flex;align-items:center;gap:12px;">
+        <button class="btn btn-primary" onclick="saveVpsConfig()">💾 Save VPS Connection</button>
+        <span id="vps-cfg-status" style="font-size:13px;font-weight:600;color:var(--text-3);">🔴 Not Connected</span>
+      </div>
+    </div>
+
+    <!-- Production Guide -->
+    <div class="card card-secondary" style="margin-top:16px;">
+      <div class="card-title">📦 Production Setup &amp; Custom Domain Guide</div>
+      <div style="font-size:13px;color:var(--text-2);line-height:1.6;">
+        <h4 style="margin:12px 0 4px;color:var(--text-1);">1. Will campaigns run when my PC is off?</h4>
+        <p><strong>Yes!</strong> When you deploy this application to a Virtual Private Server (VPS) such as DigitalOcean, AWS EC2, Hetzner, Vultr, or Linode, the server runs continuously 24 hours a day, 7 days a week. All active campaigns and scraping threads run on the VPS background scheduler.</p>
+
+        <h4 style="margin:12px 0 4px;color:var(--text-1);">2. Does it need a production database?</h4>
+        <p>Currently, the application runs on a single-file SQLite database (<code>dashboard.db</code>), which works fine on a VPS filesystem. For publishing to a custom domain with high traffic, set the <code>DATABASE_URL</code> environment variable (e.g. <code>postgresql://user:pass@host:5432/dbname</code>) on your VPS to automatically enable production-grade PostgreSQL storage.</p>
+
+        <h4 style="margin:12px 0 4px;color:var(--text-1);">3. Production Deployment Commands (Copy &amp; Run on VPS)</h4>
+        <pre style="background:var(--bg-card);padding:12px;border-radius:6px;border:1px solid var(--border);font-family:monospace;font-size:12px;overflow-x:auto;color:var(--accent);"># 1. Clone your repo on VPS
+git clone https://github.com/yourusername/Scweet.git
+cd Scweet
+
+# 2. Create virtual environment & install requirements
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+
+# 3. Launch 24/7 background service with Gunicorn / Flask
+nohup python3 -m dashboard.app > app.log 2>&1 &
+</pre>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- TOAST -->
+<div class="toast-container" id="toast-container"></div>
+
+<script src="/static/js/app.js?v=3"></script>
+</body>
+</html>

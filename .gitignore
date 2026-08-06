@@ -8,6 +8,8 @@ __pycache__/
 *.py[cod]
 .pytest_cache/
 .ipynb_checkpoints/
+venv/
+.venv/
 
 # Local state DBs (examples/runtime artifacts)
 *.db
@@ -21,9 +23,16 @@ __pycache__/
 
 # Runtime output artifacts
 outputs/
+dashboard/uploads/
+dashboard/generated_images/
+*.log
+*.png
+!assets/*.png
+elonmusk_followers.json
 
 # Ignore IDE settings
 .idea/
+.vscode/
 
 # Ignore stale files inside Scweet/
 Scweet/debug.log
