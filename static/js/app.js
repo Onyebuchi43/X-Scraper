@@ -151,6 +151,8 @@ async function startScrape(type) {
     if (!targets) { toast('Enter at least one target profile', 'error'); return; }
     payload.targets = targets;
     payload.limit = parseInt(val('f-limit') || '100');
+    payload.min_followers = parseInt(val('f-min-followers') || '0');
+    payload.max_followers = parseInt(val('f-max-followers') || '1000');
   } else if (type === 'search') {
     payload = {
       ...payload,
@@ -426,7 +428,8 @@ async function startCampaign() {
     min_delay_minutes: parseInt(val('c-min-delay') || '8'),
     max_delay_minutes: parseInt(val('c-max-delay') || '20'),
     max_posts_per_account: parseInt(val('c-max-posts') || '30'),
-    cooldown_minutes:      parseInt(val('c-cooldown-mins') || '30'),
+    min_followers:     parseInt(val('c-min-followers') || '0'),
+    max_followers:     parseInt(val('c-max-followers') || '1000'),
     execution_mode:        val('c-execution-mode') || 'vps',
   };
 
@@ -537,6 +540,9 @@ async function pollCampaign() {
     if (el) el.textContent = tc.tagged_count;
   }
 
+  const editBtn = document.getElementById('edit-camp-btn');
+  if (editBtn) editBtn.style.display = 'inline-flex';
+
   if (['done', 'error', 'stopped'].includes(data.status)) {
     clearInterval(campaignPollInterval);
     document.getElementById('stop-btn').style.display = 'none';
@@ -646,6 +652,7 @@ async function loadCampaignDbPanel() {
               <td><span class="status-pill" data-status="${c.status}">${c.status}</span></td>
               <td><strong>${c.tagged_count.toLocaleString()}</strong></td>
               <td style="display:flex;gap:4px;flex-wrap:wrap;">
+                <button class="btn btn-sm btn-ghost" onclick="openEditCampaignModal(${c.id})">✏ Edit</button>
                 <button class="btn btn-sm btn-success" onclick="resumeCampaign(${c.id})">▶ Resume</button>
                 <button class="btn btn-sm btn-ghost" onclick="clearCampaignTagged(${c.id})">🗑 Clear</button>
                 <button class="btn btn-sm btn-danger" onclick="deleteCampaign(${c.id})">✕ Delete</button>
@@ -661,6 +668,97 @@ async function loadCampaignDbPanel() {
       <button class="btn btn-danger" onclick="deleteAllCampaigns()">🗑 Delete All Campaigns</button>
     </div>
   `;
+}
+
+// ══ Edit Campaign Modal Handlers ═════════════════════════════════════════════
+let editingCampaignId = null;
+
+async function openEditCampaignModal(cid) {
+  const targetId = cid || currentCampaignId;
+  if (!targetId) { toast('No campaign selected to edit', 'error'); return; }
+  editingCampaignId = targetId;
+
+  const data = await api(`/api/campaigns/${targetId}`);
+  if (data.error) { toast(data.error, 'error'); return; }
+
+  const cfg = data.config || {};
+  set('edit-c-name', data.name || '');
+  set('edit-c-source-profiles', cfg.source_profiles || '');
+  set('edit-c-min-followers', cfg.min_followers ?? 0);
+  set('edit-c-max-followers', cfg.max_followers ?? 1000);
+  set('edit-c-post-template', cfg.post_template || '');
+  set('edit-c-display-name', cfg.display_name || '');
+  set('edit-c-username', cfg.username || '');
+  set('edit-c-body-text', cfg.body_text || '');
+  set('edit-c-update-list-banner', cfg.update_list_banner !== false ? 'true' : 'false');
+  set('edit-c-list-name', cfg.list_name || 'Official Notice');
+  set('edit-c-tags-per-post', cfg.tags_per_post || 3);
+  set('edit-c-min-delay', cfg.min_delay_minutes || 8);
+  set('edit-c-max-delay', cfg.max_delay_minutes || 20);
+  set('edit-c-max-posts', cfg.max_posts_per_account || 30);
+  set('edit-c-cooldown-mins', cfg.cooldown_minutes || 30);
+
+  // Populate accounts multi-select
+  const accSel = document.getElementById('edit-c-accounts');
+  if (accSel) {
+    const selectedIds = cfg.account_ids || [];
+    accSel.innerHTML = accounts.map(a =>
+      `<option value="${a.id}" ${selectedIds.includes(a.id) ? 'selected' : ''}>
+        ${esc(a.label || `Account #${a.id}`)} (${esc(a.token_preview)})
+      </option>`
+    ).join('');
+  }
+
+  document.getElementById('editCampaignModal').style.display = 'block';
+}
+
+function closeEditCampaignModal() {
+  document.getElementById('editCampaignModal').style.display = 'none';
+  editingCampaignId = null;
+}
+
+async function saveCampaignEdit() {
+  if (!editingCampaignId) return;
+
+  const name = val('edit-c-name');
+  if (!name) { toast('Campaign name is required', 'error'); return; }
+
+  const accSel = document.getElementById('edit-c-accounts');
+  const account_ids = accSel ? Array.from(accSel.selectedOptions).map(o => parseInt(o.value)) : [];
+  if (!account_ids.length) { toast('Select at least one posting account', 'error'); return; }
+
+  // Fetch current config to merge
+  const current = await api(`/api/campaigns/${editingCampaignId}`);
+  const prevConfig = current.config || {};
+
+  const updatedConfig = {
+    ...prevConfig,
+    account_ids,
+    source_profiles: val('edit-c-source-profiles'),
+    min_followers: parseInt(val('edit-c-min-followers') || '0'),
+    max_followers: parseInt(val('edit-c-max-followers') || '1000'),
+    post_template: val('edit-c-post-template'),
+    display_name: val('edit-c-display-name'),
+    username: val('edit-c-username'),
+    body_text: val('edit-c-body-text'),
+    update_list_banner: document.getElementById('edit-c-update-list-banner')?.value !== 'false',
+    list_name: val('edit-c-list-name') || 'Official Notice',
+    tags_per_post: parseInt(val('edit-c-tags-per-post') || '3'),
+    min_delay_minutes: parseInt(val('edit-c-min-delay') || '8'),
+    max_delay_minutes: parseInt(val('edit-c-max-delay') || '20'),
+    max_posts_per_account: parseInt(val('edit-c-max-posts') || '30'),
+    cooldown_minutes: parseInt(val('edit-c-cooldown-mins') || '30'),
+  };
+
+  const res = await api(`/api/campaigns/${editingCampaignId}`, {
+    method: 'PUT',
+    body: JSON.stringify({ name, config: updatedConfig }),
+  });
+
+  if (res.error) { toast(res.error, 'error'); return; }
+  toast('Campaign updated successfully!', 'success');
+  closeEditCampaignModal();
+  loadCampaignDbPanel();
 }
 
 async function deleteAllCampaigns() {
@@ -793,41 +891,30 @@ async function saveVpsConfig() {
 async function api(url, opts = {}) {
   try {
     const res = await fetch(url, {
-      headers: { 'Content-Type': 'application/json', ...opts.headers },
+      headers: { 'Content-Type': 'application/json', ...(opts.headers || {}) },
       ...opts,
     });
     return await res.json();
   } catch (e) {
-    console.error('API error', url, e);
     return { error: e.message };
   }
 }
 
-function val(id) {
-  const el = document.getElementById(id);
-  return el ? el.value.trim() : '';
-}
-function set(id, v) {
-  const el = document.getElementById(id);
-  if (el) el.value = v;
-}
-function esc(s) {
-  if (s == null) return '';
-  return String(s)
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
-function fmtDate(s) {
-  if (!s) return '—';
-  try { return new Date(s).toLocaleString(); } catch { return s; }
-}
-
 function toast(msg, type = 'info') {
   const container = document.getElementById('toast-container');
+  if (!container) return;
   const el = document.createElement('div');
   el.className = `toast toast-${type}`;
   const icons = { success: '✓', error: '✕', info: 'ℹ' };
-  el.innerHTML = `<strong>${icons[type] || 'ℹ'}</strong> ${esc(msg)}`;
+  el.innerHTML = `<span>${icons[type] || 'ℹ'}</span><span>${esc(msg)}</span>`;
   container.appendChild(el);
-  setTimeout(() => { el.style.opacity = '0'; el.style.transform = 'translateX(30px)'; el.style.transition = '0.3s'; setTimeout(() => el.remove(), 300); }, 4000);
+  setTimeout(() => el.remove(), 4000);
+}
+
+function set(id, v) { const el = document.getElementById(id); if (el) el.value = v; }
+function val(id) { const el = document.getElementById(id); return el ? el.value.trim() : ''; }
+function esc(s) { return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+function fmtDate(s) {
+  if (!s) return '—';
+  try { return new Date(s).toLocaleString(); } catch (e) { return s; }
 }
