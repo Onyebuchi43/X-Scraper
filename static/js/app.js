@@ -565,8 +565,14 @@ function updateCampaignLog(data) {
   const postCount = data.log.filter(e => e.level === 'SUCCESS' && (e.msg.includes('Tweeted:') || e.msg.includes('Posted:'))).length;
   document.getElementById('stat-posts').textContent = postCount || '0';
 
+  // If log entry count has not changed, do NOT touch the DOM at all to avoid scrolling/highlighting jumps
+  if (log.dataset.lastCount && parseInt(log.dataset.lastCount) === data.log.length) {
+    return;
+  }
+  log.dataset.lastCount = data.log.length;
+
   // Smart scroll: check if user is at the bottom before rendering new HTML
-  const isAtBottom = (log.scrollHeight - log.scrollTop - log.clientHeight) < 60;
+  const isAtBottom = (log.scrollHeight - log.scrollTop - log.clientHeight) < 80;
 
   log.innerHTML = data.log.map(e => {
     const cls = {
