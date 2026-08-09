@@ -431,7 +431,8 @@ class _Campaign:
         try:
             self._log("INFO", f"Creating campaign list '{list_name}'...")
             list_info = poster.create_list(
-                first_account["auth_token"], first_account["ct0"], list_name, list_desc
+                first_account["auth_token"], first_account["ct0"], list_name, list_desc,
+                proxy=first_account.get("proxy"),
             )
             shared_list_id  = list_info["list_id"]
             shared_list_url = list_info["list_url"]
@@ -461,6 +462,7 @@ class _Campaign:
                     ok = poster.set_list_banner(
                         first_account["auth_token"], first_account["ct0"],
                         shared_list_id, static_img,
+                        proxy=first_account.get("proxy"),
                     )
                     if ok:
                         self._log("SUCCESS", "Initial static list profile picture set successfully")
@@ -587,6 +589,7 @@ class _Campaign:
                             ok = poster.set_list_banner(
                                 acc["auth_token"], acc["ct0"],
                                 shared_list_id, batch_image_bytes,
+                                proxy=acc.get("proxy"),
                             )
                             if not ok:
                                 self._log("WARNING", "Could not update list profile picture")
@@ -606,7 +609,7 @@ class _Campaign:
                 tweet_text = tweet_text[:280]
 
                 self._log("POST", f"{acc_label} → {taggings[:80]}")
-                result = poster.post_tweet(acc["auth_token"], acc["ct0"], tweet_text)
+                result = poster.post_tweet(acc["auth_token"], acc["ct0"], tweet_text, proxy=acc.get("proxy"))
 
                 if result.get("error") or not result.get("tweet_id"):
                     err_msg = result.get("error") or "Post verification failed: No tweet ID returned"
@@ -664,9 +667,28 @@ class _Campaign:
                 break
 
             if all_cooling:
-                self._log("WARNING", "🚨 All active posting accounts are currently cooling down. No active accounts available to continue right now — stopping campaign automatically.")
-                _set_status(campaign_id, "stopped")
-                break
+                # Find when the soonest account wakes up and wait it out instead of stopping
+                soonest = min(
+                    (
+                        get_account_cooldown(a["id"]) if a.get("id") else a.get("cooldown_until", 0)
+                    )
+                    for a in accounts
+                )
+                wait_secs = max(0, soonest - time.time())
+                wait_mins = int(wait_secs // 60)
+                wait_sec_rem = int(wait_secs % 60)
+                self._log(
+                    "WARNING",
+                    f"⏳ All accounts are cooling down. Resuming automatically in {wait_mins}m {wait_sec_rem}s when the first account becomes available…",
+                )
+                elapsed = 0
+                while elapsed < wait_secs and not self._stop_event.is_set():
+                    time.sleep(5)
+                    elapsed += 5
+                if self._stop_event.is_set():
+                    break
+                self._log("INFO", "Account cooldown expired — resuming campaign.")
+                continue
 
             # ── Main interval delay between posting rounds ────────────────────
             if not self._stop_event.is_set():
@@ -691,6 +713,12 @@ class _Campaign:
 # ── Public API ─────────────────────────────────────────────────────────────────
 def launch_campaign(campaign_id: int, config: dict) -> None:
     """Create and start a _Campaign background thread."""
+    # Clear stale cooldowns for this campaign's accounts so a resume starts fresh
+    with _lock:
+        for acc in config.get("accounts", []):
+            acc_id = acc.get("id")
+            if acc_id and acc_id in _GLOBAL_ACCOUNT_COOLDOWNS:
+                _GLOBAL_ACCOUNT_COOLDOWNS.pop(acc_id, None)
     c = _Campaign(campaign_id, config)
     with _lock:
         _campaigns[campaign_id] = c

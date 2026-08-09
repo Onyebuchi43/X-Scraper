@@ -1,5 +1,4 @@
-from __future__ import annotations
-
+from Scweet.http_utils import normalize_http_proxies
 from Scweet.utils import as_str, normalize_proxy_payload
 
 
@@ -39,3 +38,34 @@ def test_normalize_proxy_payload_dict_returns_copy():
     result = normalize_proxy_payload(original)
     assert result == original
     assert result is not original
+
+
+def test_normalize_http_proxies_colon_separated_formats():
+    # host:port:user:pass format
+    p1 = normalize_http_proxies("172.93.105.208:43159:5962gz3g8l:yPdWneyVU0")
+    assert p1 == {
+        "http": "http://5962gz3g8l:yPdWneyVU0@172.93.105.208:43159",
+        "https": "http://5962gz3g8l:yPdWneyVU0@172.93.105.208:43159",
+    }
+
+    # user:pass:host:port format
+    p2 = normalize_http_proxies("5962gz3g8l:yPdWneyVU0:172.93.105.208:43159")
+    assert p2 == {
+        "http": "http://5962gz3g8l:yPdWneyVU0@172.93.105.208:43159",
+        "https": "http://5962gz3g8l:yPdWneyVU0@172.93.105.208:43159",
+    }
+
+    # host:port format
+    p3 = normalize_http_proxies("172.93.105.208:43159")
+    assert p3 == {
+        "http": "http://172.93.105.208:43159",
+        "https": "http://172.93.105.208:43159",
+    }
+
+    # user:pass@host:port format
+    p4 = normalize_http_proxies("5962gz3g8l:yPdWneyVU0@172.93.105.208:43159")
+    assert p4 == {
+        "http": "http://5962gz3g8l:yPdWneyVU0@172.93.105.208:43159",
+        "https": "http://5962gz3g8l:yPdWneyVU0@172.93.105.208:43159",
+    }
+

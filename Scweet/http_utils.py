@@ -7,10 +7,37 @@ from urllib.parse import quote, urlparse
 from .utils import as_str as _as_str
 
 
+def _parse_proxy_string(raw: str, *, default_scheme: str = "http") -> str:
+    raw = raw.strip()
+    if not raw:
+        return ""
+    if "://" in raw:
+        return raw
+
+    if "@" in raw:
+        return f"{default_scheme}://{raw}"
+
+    parts = raw.split(":")
+    if len(parts) == 4:
+        # Format: host:port:user:pass (parts[1] is port)
+        if parts[1].isdigit():
+            host, port, user, password = parts[0], parts[1], parts[2], parts[3]
+            auth = f"{quote(user, safe='')}:{quote(password, safe='')}"
+            return f"{default_scheme}://{auth}@{host}:{port}"
+        # Format: user:pass:host:port (parts[3] is port)
+        elif parts[3].isdigit():
+            user, password, host, port = parts[0], parts[1], parts[2], parts[3]
+            auth = f"{quote(user, safe='')}:{quote(password, safe='')}"
+            return f"{default_scheme}://{auth}@{host}:{port}"
+
+    if len(parts) == 2 and parts[1].isdigit():
+        return f"{default_scheme}://{parts[0]}:{parts[1]}"
+
+    return f"{default_scheme}://{raw}"
+
+
 def _ensure_scheme(url: str, *, default_scheme: str = "http") -> str:
-    if "://" in url:
-        return url
-    return f"{default_scheme}://{url}"
+    return _parse_proxy_string(url, default_scheme=default_scheme)
 
 
 def normalize_http_proxies(proxy: Any) -> Optional[dict[str, str]]:
@@ -18,7 +45,7 @@ def normalize_http_proxies(proxy: Any) -> Optional[dict[str, str]]:
 
     Accepted forms:
     - None -> None
-    - str -> used for both http/https (scheme inferred as http if missing)
+    - str -> used for both http/https (supports URL, host:port, user:pass@host:port, host:port:user:pass, user:pass:host:port)
     - dict with keys "http"/"https" -> used directly (missing scheme inferred as http)
     - dict with keys host/port[/scheme][/username/password] -> converted to URL and used for both
     """
@@ -30,7 +57,7 @@ def normalize_http_proxies(proxy: Any) -> Optional[dict[str, str]]:
         raw = _as_str(proxy)
         if not raw:
             return None
-        url = _ensure_scheme(raw)
+        url = _parse_proxy_string(raw)
         return {"http": url, "https": url}
 
     if not isinstance(proxy, dict):

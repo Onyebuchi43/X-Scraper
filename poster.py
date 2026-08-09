@@ -19,13 +19,13 @@ BEARER_TOKEN = (
     "AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs"
     "%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA"
 )
-CREATE_TWEET_QUERY_ID = "SoVnbfCycZ7fERGCwpZkYA"
+CREATE_TWEET_QUERY_ID = "lYrkzD_-rtW5H3wDiwlcWA"
 CREATE_LIST_URL        = "https://api.twitter.com/1.1/lists/create.json"
 UPLOAD_MEDIA_URL       = "https://upload.twitter.com/i/media/upload.json"
 CREATE_TWEET_URL       = f"https://x.com/i/api/graphql/{CREATE_TWEET_QUERY_ID}/CreateTweet"
 GQL_API                = "https://x.com/i/api/graphql"
 EDIT_LIST_BANNER_QID   = "Uk0ZwKSMYng56aQdeJD1yw"
-USER_LOOKUP_URL        = "https://x.com/i/api/graphql/IGgvgiOx4QZndDHuD3x9TQ/UserByScreenName"
+USER_LOOKUP_URL        = "https://x.com/i/api/graphql/Gb-d6r0vxPOADdG62OEBpQ/UserByScreenName"
 
 
 # ── Auth helpers ───────────────────────────────────────────────────────────────
@@ -84,8 +84,23 @@ def classify_account_error(error: Exception | str, status_code: Optional[int] = 
     return "OTHER"
 
 
+def _get_httpx_proxy_url(proxy: Optional[str | dict]) -> Optional[str]:
+    if not proxy:
+        return None
+    try:
+        from Scweet.http_utils import normalize_http_proxies
+        normalized = normalize_http_proxies(proxy)
+        if normalized:
+            return normalized.get("https") or normalized.get("http")
+    except Exception:
+        pass
+    if isinstance(proxy, str) and proxy.strip():
+        return proxy.strip()
+    return None
+
+
 # ── Profile lookup ─────────────────────────────────────────────────────────────
-def get_profile_info(auth_token: str, ct0: str, handle: str) -> dict:
+def get_profile_info(auth_token: str, ct0: str, handle: str, proxy: Optional[str | dict] = None) -> dict:
     """Fetch basic profile data for *handle* (name, avatar URL, etc.)."""
     handle = handle.lstrip("@")
     params = {
@@ -106,12 +121,15 @@ def get_profile_info(auth_token: str, ct0: str, handle: str) -> dict:
         "fieldToggles": json.dumps({"withAuxiliaryUserLabels": False}),
     }
     try:
+        proxy_url = _get_httpx_proxy_url(proxy)
+        httpx_kwargs = {"proxy": proxy_url} if proxy_url else {}
         resp = httpx.get(
             USER_LOOKUP_URL,
             params=params,
             headers=_headers(ct0),
             cookies=_cookies(auth_token, ct0),
             timeout=20,
+            **httpx_kwargs,
         )
         resp.raise_for_status()
         legacy = (
@@ -139,14 +157,17 @@ def get_profile_info(auth_token: str, ct0: str, handle: str) -> dict:
 
 
 # ── List management ────────────────────────────────────────────────────────────
-def create_list(auth_token: str, ct0: str, name: str, description: str = "") -> dict:
+def create_list(auth_token: str, ct0: str, name: str, description: str = "", proxy: Optional[str | dict] = None) -> dict:
     """Create a public Twitter/X list. Returns {list_id, list_url, slug, owner}."""
+    proxy_url = _get_httpx_proxy_url(proxy)
+    httpx_kwargs = {"proxy": proxy_url} if proxy_url else {}
     resp = httpx.post(
         CREATE_LIST_URL,
         data={"name": name[:25], "mode": "public", "description": description[:100]},
         headers=_headers(ct0, {"Content-Type": "application/x-www-form-urlencoded"}),
         cookies=_cookies(auth_token, ct0),
         timeout=30,
+        **httpx_kwargs,
     )
     resp.raise_for_status()
     data = resp.json()
@@ -163,7 +184,7 @@ def create_list(auth_token: str, ct0: str, name: str, description: str = "") -> 
     }
 
 
-def upload_media(auth_token: str, ct0: str, image_bytes: bytes) -> str:
+def upload_media(auth_token: str, ct0: str, image_bytes: bytes, proxy: Optional[str | dict] = None) -> str:
     """
     Upload image bytes using the INIT/APPEND/FINALIZE chunked protocol.
     Returns media_id_string.
@@ -175,6 +196,8 @@ def upload_media(auth_token: str, ct0: str, image_bytes: bytes) -> str:
     total_bytes = len(image_bytes)
     cookies = _cookies(auth_token, ct0)
     headers = _headers(ct0)
+    proxy_url = _get_httpx_proxy_url(proxy)
+    httpx_kwargs = {"proxy": proxy_url} if proxy_url else {}
 
     # INIT
     init_resp = httpx.post(
@@ -188,6 +211,7 @@ def upload_media(auth_token: str, ct0: str, image_bytes: bytes) -> str:
         headers=headers,
         cookies=cookies,
         timeout=30,
+        **httpx_kwargs,
     )
     init_resp.raise_for_status()
     media_id = init_resp.json()["media_id"]
@@ -219,6 +243,7 @@ def upload_media(auth_token: str, ct0: str, image_bytes: bytes) -> str:
             cookies=cookies,
             content=body,
             timeout=60,
+            **httpx_kwargs,
         )
         offset += CHUNK_SIZE
         segment_index += 1
@@ -230,6 +255,7 @@ def upload_media(auth_token: str, ct0: str, image_bytes: bytes) -> str:
         headers=headers,
         cookies=cookies,
         timeout=30,
+        **httpx_kwargs,
     )
     final_resp.raise_for_status()
     return str(media_id)
@@ -300,13 +326,13 @@ DEFAULT_GQL_FEATURES = {
 }
 
 
-def set_list_banner(auth_token: str, ct0: str, list_id: str, image_bytes: bytes) -> bool:
+def set_list_banner(auth_token: str, ct0: str, list_id: str, image_bytes: bytes, proxy: Optional[str | dict] = None) -> bool:
     """
     Upload image and set it as the Twitter/X list banner via the internal
     GraphQL EditListBanner mutation. Returns True on success.
     """
     try:
-        media_id = upload_media(auth_token, ct0, image_bytes)
+        media_id = upload_media(auth_token, ct0, image_bytes, proxy=proxy)
         variables = DEFAULT_GQL_VARIABLES.copy()
         variables.update({"listId": int(list_id), "mediaId": int(media_id)})
         payload = {
@@ -314,12 +340,15 @@ def set_list_banner(auth_token: str, ct0: str, list_id: str, image_bytes: bytes)
             "features": DEFAULT_GQL_FEATURES,
             "queryId": EDIT_LIST_BANNER_QID,
         }
+        proxy_url = _get_httpx_proxy_url(proxy)
+        httpx_kwargs = {"proxy": proxy_url} if proxy_url else {}
         resp = httpx.post(
             f"{GQL_API}/{EDIT_LIST_BANNER_QID}/EditListBanner",
             json=payload,
             headers=_headers(ct0, {"Content-Type": "application/json"}),
             cookies=_cookies(auth_token, ct0),
             timeout=30,
+            **httpx_kwargs,
         )
         if resp.status_code not in (200, 204):
             logger.warning(
@@ -372,6 +401,7 @@ def post_tweet(
     text: str,
     media_id: Optional[str] = None,
     attachment_url: Optional[str] = None,
+    proxy: Optional[str | dict] = None,
 ) -> dict:
     """
     Post a tweet with optional image and/or quote-tweet attachment.
@@ -383,6 +413,7 @@ def post_tweet(
         media_id:        Optional media_id_string from upload_media().
         attachment_url:  Optional URL of a tweet to quote. When set, every
                          post becomes a quote-tweet embedding that tweet.
+        proxy:           Optional proxy (URL string or dict).
 
     Returns:
         dict with keys: tweet_id, tweet_url, error.
@@ -404,12 +435,15 @@ def post_tweet(
         "queryId": CREATE_TWEET_QUERY_ID,
     }
     try:
+        proxy_url = _get_httpx_proxy_url(proxy)
+        httpx_kwargs = {"proxy": proxy_url} if proxy_url else {}
         resp = httpx.post(
             CREATE_TWEET_URL,
             json=payload,
             headers=_headers(ct0, {"Content-Type": "application/json"}),
             cookies=_cookies(auth_token, ct0),
             timeout=30,
+            **httpx_kwargs,
         )
         resp.raise_for_status()
         data = resp.json()
@@ -429,7 +463,7 @@ def post_tweet(
         tweet_id = result.get("rest_id", "")
         if not tweet_id:
             logger.warning("post_tweet response missing rest_id: %s", str(data)[:300])
-            return {"tweet_id": "", "tweet_url": "", "error": "Post Verification Failed: No tweet ID returned by Twitter/X API", "error_type": "RATE_LIMIT", "status_code": resp.status_code}
+            return {"tweet_id": "", "tweet_url": "", "error": "Post Verification Failed: No tweet ID returned by Twitter/X API", "error_type": "OTHER", "status_code": resp.status_code}
 
         screen_name = (
             result.get("core", {})
