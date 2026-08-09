@@ -124,6 +124,15 @@
             <input type="number" id="f-limit" value="100" min="1" max="10000"/>
           </div>
           <div class="form-group">
+            <label>Follower Count Range (Consumers vs Influencers)</label>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <input type="number" id="f-min-followers" value="0" min="0" placeholder="Min (0)"/>
+              <span>to</span>
+              <input type="number" id="f-max-followers" value="1000" min="0" placeholder="Max (1000)"/>
+            </div>
+            <p class="field-hint">Defaults: 0 to 1,000 followers (filters out influencers & celebrities)</p>
+          </div>
+          <div class="form-group">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
               <label style="margin:0;">Accounts to use <span id="f-accounts-badge" style="font-size:12px;font-weight:600;margin-left:6px;"></span></label>
               <div style="display:flex;gap:6px;">
@@ -425,6 +434,15 @@
               <p class="field-hint" id="hint-target-input">Comma-separated usernames. Streamingly scrapes followers without saving CSV files on disk.</p>
             </div>
             <div class="form-group">
+              <label>Follower Count Range (Target Consumers)</label>
+              <div style="display:flex;gap:8px;align-items:center;">
+                <input type="number" id="c-min-followers" value="0" min="0" placeholder="Min (0)"/>
+                <span>to</span>
+                <input type="number" id="c-max-followers" value="1000" min="0" placeholder="Max (1000)"/>
+              </div>
+              <p class="field-hint">Defaults: 0 to 1,000 followers (filters out influencers & celebrities)</p>
+            </div>
+            <div class="form-group">
               <label>Campaign Execution Mode <span class="badge-required">required</span></label>
               <select id="c-execution-mode">
                 <option value="vps" selected>🌐 24/7 Cloud Engine (Cloud execution — PC can be closed/turned off)</option>
@@ -460,6 +478,7 @@
           </div>
 
           <div class="form-actions" style="margin-top:12px;gap:8px;display:flex;flex-wrap:wrap;">
+            <button class="btn btn-secondary" id="edit-camp-btn" style="display:none" onclick="openEditCampaignModal()">✏ Edit Campaign</button>
             <button class="btn btn-success" id="resume-btn" style="display:none" onclick="resumeActiveCampaign()">▶ Resume Campaign</button>
             <button class="btn btn-danger" id="stop-btn" style="display:none" onclick="stopCampaign()">Stop Campaign</button>
             <button class="btn btn-ghost" id="clear-tagged-btn" style="display:none" onclick="clearTaggedUsers()">🗑 Clear Tagged Users</button>
@@ -585,9 +604,92 @@ nohup python3 -m dashboard.app > app.log 2>&1 &
 
 </main>
 
+<!-- EDIT CAMPAIGN MODAL -->
+<div id="editCampaignModal" class="modal-backdrop" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:9999;overflow-y:auto;padding:20px;">
+  <div class="modal-content card" style="max-width:700px;margin:30px auto;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:24px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:12px;">
+      <h3 style="margin:0;">✏ Edit Campaign Details</h3>
+      <button class="btn btn-sm btn-ghost" onclick="closeEditCampaignModal()" style="font-size:16px;">✕</button>
+    </div>
+    <div class="form-grid form-grid-2">
+      <div class="form-group span-2">
+        <label>Campaign Name</label>
+        <input type="text" id="edit-c-name"/>
+      </div>
+      <div class="form-group span-2">
+        <label>Source Profile(s) to Scrape From</label>
+        <input type="text" id="edit-c-source-profiles" placeholder="elonmusk, OpenAI"/>
+      </div>
+      <div class="form-group span-2">
+        <label>Follower Count Range (Consumers vs Influencers)</label>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input type="number" id="edit-c-min-followers" value="0" min="0" placeholder="Min"/>
+          <span>to</span>
+          <input type="number" id="edit-c-max-followers" value="1000" min="0" placeholder="Max"/>
+        </div>
+      </div>
+      <div class="form-group span-2">
+        <label>Post Message Template</label>
+        <textarea id="edit-c-post-template" rows="3"></textarea>
+      </div>
+      <div class="form-group">
+        <label>Display Name (Card Image)</label>
+        <input type="text" id="edit-c-display-name"/>
+      </div>
+      <div class="form-group">
+        <label>Username (Card Image)</label>
+        <input type="text" id="edit-c-username"/>
+      </div>
+      <div class="form-group span-2">
+        <label>Tweet Body Text (Card Image)</label>
+        <textarea id="edit-c-body-text" rows="2"></textarea>
+      </div>
+      <div class="form-group span-2">
+        <label>Update List Image Per Post?</label>
+        <select id="edit-c-update-list-banner">
+          <option value="true">Yes — Update list image for every post</option>
+          <option value="false">No — Use static list image</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>List Name</label>
+        <input type="text" id="edit-c-list-name"/>
+      </div>
+      <div class="form-group">
+        <label>Tags Per Post (1-5)</label>
+        <input type="number" id="edit-c-tags-per-post" min="1" max="5"/>
+      </div>
+      <div class="form-group">
+        <label>Min Delay (minutes)</label>
+        <input type="number" id="edit-c-min-delay" min="1"/>
+      </div>
+      <div class="form-group">
+        <label>Max Delay (minutes)</label>
+        <input type="number" id="edit-c-max-delay" min="1"/>
+      </div>
+      <div class="form-group">
+        <label>Max Posts / Account / Day</label>
+        <input type="number" id="edit-c-max-posts" min="1"/>
+      </div>
+      <div class="form-group">
+        <label>Account Cooldown (minutes)</label>
+        <input type="number" id="edit-c-cooldown-mins" min="1"/>
+      </div>
+      <div class="form-group span-2">
+        <label>Posting Accounts</label>
+        <select id="edit-c-accounts" multiple class="multi-select" style="height:100px;"></select>
+      </div>
+    </div>
+    <div class="form-actions" style="margin-top:20px;display:flex;justify-content:flex-end;gap:10px;">
+      <button class="btn btn-ghost" onclick="closeEditCampaignModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveCampaignEdit()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
 <!-- TOAST -->
 <div class="toast-container" id="toast-container"></div>
 
-<script src="/static/js/app.js?v=3"></script>
+<script src="/static/js/app.js?v=4"></script>
 </body>
 </html>

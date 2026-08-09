@@ -151,6 +151,8 @@ async function startScrape(type) {
     if (!targets) { toast('Enter at least one target profile', 'error'); return; }
     payload.targets = targets;
     payload.limit = parseInt(val('f-limit') || '100');
+    payload.min_followers = parseInt(val('f-min-followers') || '0');
+    payload.max_followers = parseInt(val('f-max-followers') || '1000');
   } else if (type === 'search') {
     payload = {
       ...payload,
@@ -426,7 +428,8 @@ async function startCampaign() {
     min_delay_minutes: parseInt(val('c-min-delay') || '8'),
     max_delay_minutes: parseInt(val('c-max-delay') || '20'),
     max_posts_per_account: parseInt(val('c-max-posts') || '30'),
-    cooldown_minutes:      parseInt(val('c-cooldown-mins') || '30'),
+    min_followers:     parseInt(val('c-min-followers') || '0'),
+    max_followers:     parseInt(val('c-max-followers') || '1000'),
     execution_mode:        val('c-execution-mode') || 'vps',
   };
 
@@ -537,6 +540,9 @@ async function pollCampaign() {
     if (el) el.textContent = tc.tagged_count;
   }
 
+  const editBtn = document.getElementById('edit-camp-btn');
+  if (editBtn) editBtn.style.display = 'inline-flex';
+
   if (['done', 'error', 'stopped'].includes(data.status)) {
     clearInterval(campaignPollInterval);
     document.getElementById('stop-btn').style.display = 'none';
@@ -646,6 +652,7 @@ async function loadCampaignDbPanel() {
               <td><span class="status-pill" data-status="${c.status}">${c.status}</span></td>
               <td><strong>${c.tagged_count.toLocaleString()}</strong></td>
               <td style="display:flex;gap:4px;flex-wrap:wrap;">
+                <button class="btn btn-sm btn-ghost" onclick="openEditCampaignModal(${c.id})">✏ Edit</button>
                 <button class="btn btn-sm btn-success" onclick="resumeCampaign(${c.id})">▶ Resume</button>
                 <button class="btn btn-sm btn-ghost" onclick="clearCampaignTagged(${c.id})">🗑 Clear</button>
                 <button class="btn btn-sm btn-danger" onclick="deleteCampaign(${c.id})">✕ Delete</button>

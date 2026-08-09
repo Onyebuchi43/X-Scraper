@@ -21,6 +21,7 @@ BEARER_TOKEN = (
 )
 CREATE_TWEET_QUERY_ID = "lYrkzD_-rtW5H3wDiwlcWA"
 CREATE_LIST_URL        = "https://api.twitter.com/1.1/lists/create.json"
+GET_USER_LISTS_URL     = "https://api.twitter.com/1.1/lists/ownerships.json"
 UPLOAD_MEDIA_URL       = "https://upload.twitter.com/i/media/upload.json"
 CREATE_TWEET_URL       = f"https://x.com/i/api/graphql/{CREATE_TWEET_QUERY_ID}/CreateTweet"
 GQL_API                = "https://x.com/i/api/graphql"
@@ -162,6 +163,36 @@ def get_profile_info(auth_token: str, ct0: str, handle: str, proxy: Optional[str
     except Exception as exc:
         logger.warning("Profile lookup failed for @%s: %s", handle, exc)
         return {"name": handle, "handle": handle, "avatar_url": "", "followers_count": 0, "description": ""}
+
+
+def get_user_lists(auth_token: str, ct0: str, proxy: Optional[str | dict] = None) -> list[dict]:
+    """Fetch all lists owned by the account. Returns list of dicts: [{list_id, list_name, list_url}]."""
+    try:
+        proxy_url = _get_httpx_proxy_url(proxy)
+        httpx_kwargs = {"proxy": proxy_url} if proxy_url else {}
+        resp = httpx.get(
+            GET_USER_LISTS_URL,
+            headers=_headers(ct0),
+            cookies=_cookies(auth_token, ct0),
+            timeout=20,
+            **httpx_kwargs,
+        )
+        if resp.status_code == 200:
+            raw_lists = resp.json().get("lists", [])
+            out = []
+            for l in raw_lists:
+                lid = str(l.get("id_str") or l.get("id") or "")
+                lname = str(l.get("name") or "")
+                if lid:
+                    out.append({
+                        "list_id": lid,
+                        "list_name": lname,
+                        "list_url": f"https://x.com/i/lists/{lid}",
+                    })
+            return out
+    except Exception as exc:
+        logger.warning("get_user_lists failed: %s", exc)
+    return []
 
 
 # ── List management ────────────────────────────────────────────────────────────

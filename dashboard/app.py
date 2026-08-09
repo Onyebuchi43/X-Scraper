@@ -338,6 +338,8 @@ def scrape_followers():
         "targets": targets,
         "limit": data.get("limit", 100),
         "account_ids": data.get("account_ids", []),
+        "min_followers": data.get("min_followers", 0),
+        "max_followers": data.get("max_followers", 1000),
     }
     job_id = _start_job("followers", params)
     return jsonify({"job_id": job_id})
@@ -632,7 +634,7 @@ def _get_scheduler_engine():
         return scheduler_engine
 
 
-@app.route("/api/campaigns/<int:cid>", methods=["GET", "DELETE"])
+@app.route("/api/campaigns/<int:cid>", methods=["GET", "PUT", "DELETE"])
 def get_campaign(cid: int):
     conn = _db()
     row = conn.execute("SELECT * FROM campaigns WHERE id=?", (cid,)).fetchone()
@@ -652,6 +654,20 @@ def get_campaign(cid: int):
         conn2.commit()
         conn2.close()
         return jsonify({"msg": f"Campaign {cid} deleted"})
+
+    if request.method == "PUT":
+        data = request.json or {}
+        name = (data.get("name") or row["name"]).strip()
+        new_config = data.get("config")
+        if new_config is None:
+            new_config = json.loads(row["config"] or "{}")
+        conn.execute(
+            "UPDATE campaigns SET name=?, config=?, updated_at=CURRENT_TIMESTAMP WHERE id=?",
+            (name, json.dumps(new_config), cid),
+        )
+        conn.commit()
+        conn.close()
+        return jsonify({"id": cid, "msg": "Campaign updated"})
 
     # GET
     conn.close()

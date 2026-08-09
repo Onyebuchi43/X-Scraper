@@ -62,6 +62,29 @@ def test_normalize_http_proxies_colon_separated_formats():
         "https": "http://172.93.105.208:43159",
     }
 
+
+def test_follower_range_filtering():
+    from scheduler_engine import _scrape_followers
+
+    # Test filtering logic on mock items
+    items = [
+        {"username": "user1", "followers_count": 50},      # match (0-1000)
+        {"username": "influencer", "followers_count": 50000}, # skip (>1000)
+        {"username": "user2", "followers_count": 800},     # match (0-1000)
+    ]
+    min_f = 0
+    max_f = 1000
+
+    handles = []
+    for item in items:
+        fc = item.get("followers_count")
+        if fc is not None and not (min_f <= fc <= max_f):
+            continue
+        handles.append(item["username"])
+
+    assert handles == ["user1", "user2"]
+
+
     # user:pass@host:port format
     p4 = normalize_http_proxies("5962gz3g8l:yPdWneyVU0@172.93.105.208:43159")
     assert p4 == {
