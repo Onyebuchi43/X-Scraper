@@ -509,9 +509,12 @@ def post_tweet(
             .get("user_results", {})
             .get("result", {})
             .get("legacy", {})
-            .get("screen_name", "unknown")
+            .get("screen_name", "")
         )
-        tweet_url = f"https://x.com/{screen_name}/status/{tweet_id}"
+        if screen_name and screen_name.lower() != "unknown":
+            tweet_url = f"https://x.com/{screen_name}/status/{tweet_id}"
+        else:
+            tweet_url = f"https://x.com/i/status/{tweet_id}"
         return {"tweet_id": tweet_id, "tweet_url": tweet_url, "error": None, "error_type": None, "status_code": 200}
     except httpx.HTTPStatusError as exc:
         status_code = exc.response.status_code
