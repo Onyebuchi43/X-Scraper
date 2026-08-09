@@ -562,8 +562,11 @@ function updateCampaignLog(data) {
   const log = document.getElementById('campaign-log');
   if (!log || !data.log) return;
 
-  const postCount = data.log.filter(e => e.level === 'SUCCESS' && e.msg.includes('Tweeted:')).length;
+  const postCount = data.log.filter(e => e.level === 'SUCCESS' && (e.msg.includes('Tweeted:') || e.msg.includes('Posted:'))).length;
   document.getElementById('stat-posts').textContent = postCount || '0';
+
+  // Smart scroll: check if user is at the bottom before rendering new HTML
+  const isAtBottom = (log.scrollHeight - log.scrollTop - log.clientHeight) < 60;
 
   log.innerHTML = data.log.map(e => {
     const cls = {
@@ -572,7 +575,23 @@ function updateCampaignLog(data) {
     }[e.level] || 'log-info';
     return `<div class="log-entry ${cls}"><span class="log-ts">${e.ts}</span>${esc(e.msg)}</div>`;
   }).join('');
-  log.scrollTop = log.scrollHeight;
+
+  if (isAtBottom) {
+    log.scrollTop = log.scrollHeight;
+  }
+}
+
+function copyCampaignLogs() {
+  const log = document.getElementById('campaign-log');
+  if (!log) return;
+  const entries = Array.from(log.querySelectorAll('.log-entry'));
+  if (!entries.length) { toast('No logs to copy', 'info'); return; }
+  const text = entries.map(el => el.textContent).join('\n');
+  navigator.clipboard.writeText(text).then(() => {
+    toast('Logs copied to clipboard! 📋', 'success');
+  }).catch(e => {
+    toast('Could not copy logs: ' + e.message, 'error');
+  });
 }
 
 async function loadLists() {

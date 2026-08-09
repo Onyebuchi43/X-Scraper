@@ -140,7 +140,35 @@ def _init_db() -> None:
 
 _init_db()
 
-# ── Background job registry ────────────────────────────────────────────────────
+
+def _resume_running_campaigns():
+    try:
+        conn = _db()
+        rows = conn.execute("SELECT id, config FROM campaigns WHERE status='running'").fetchall()
+        conn.close()
+        if not rows:
+            return
+        from dashboard.app import _get_scheduler_engine
+        engine = _get_scheduler_engine()
+        for r in rows:
+            cid = r["id"]
+            cfg = json.loads(r["config"] or "{}")
+            account_ids = cfg.get("account_ids", [])
+            conn2 = _db()
+            accounts = []
+            for aid in account_ids:
+                a = conn2.execute("SELECT id, auth_token, ct0, proxy FROM accounts WHERE id=?", (aid,)).fetchone()
+                if a:
+                    accounts.append(dict(a))
+            conn2.close()
+            cfg["accounts"] = accounts
+            engine.launch_campaign(cid, cfg)
+            logger.info("Automatically resumed active campaign %d on app startup", cid)
+    except Exception as exc:
+        logger.error("Failed to auto-resume campaigns on startup: %s", exc)
+
+
+_resume_running_campaigns()
 _jobs: dict[str, threading.Thread] = {}
 
 
@@ -522,7 +550,7 @@ def generate_card():
         username = display_name.lower().replace(" ", "")
 
     try:
-        from dashboard import image_editor  # type: ignore
+        import image_editor  # type: ignore
 
         img_bytes = image_editor.generate_tweet_card_screenshot(
             name          = display_name,
@@ -562,7 +590,7 @@ def generate_image():
     handle = (data.get("handle") or "user").strip().lstrip("@")
     image_text = (data.get("image_text") or "Official announcement.").strip()
     try:
-        from dashboard import image_editor  # type: ignore
+        import image_editor  # type: ignore
         img_bytes = image_editor.generate_tweet_card(
             display_name=handle.title(),
             username=handle,
@@ -613,7 +641,7 @@ def create_campaign():
 @app.route("/api/campaigns/all", methods=["DELETE"])
 def delete_all_campaigns():
     try:
-        from dashboard import scheduler_engine  # type: ignore
+        import scheduler_engine  # type: ignore
         scheduler_engine.stop_all_campaigns()
     except Exception as exc:
         logger.error("stop_all_campaigns error: %s", exc)
@@ -798,52 +826,19 @@ def vps_config():
 @app.route("/api/vps/status")
 def vps_status():
     import platform
-    import socket
-    from dashboard import scheduler_engine  # type: ignore
-
-    hostname = socket.gethostname()
-    system_os = f"{platform.system()} {platform.release()}"
-    python_ver = platform.python_version()
-    db_url = os.environ.get("DATABASE_URL")
-    db_backend = "PostgreSQL (Production Cloud DB)" if db_url else "SQLite (Local System File)"
-
-    is_vps = os.environ.get("IS_VPS", "false").lower() in ("true", "1", "yes") or not (
-        hostname.startswith("DESKTOP") or hostname.startswith("LAPTOP") or "win" in system_os.lower()
-    )
-
     conn = _db()
-    vps_row = conn.execute("SELECT * FROM vps_settings WHERE id=1").fetchone()
+    active_camps = conn.execute("SELECT COUNT(*) as cnt FROM campaigns WHERE status='running'").fetchone()["cnt"]
     conn.close()
 
-    vps_url = vps_row["vps_url"] if vps_row else ""
-    has_remote_vps = bool(vps_url and len(vps_url) > 5)
-
-    active_campaign_count = 0
-    try:
-        with scheduler_engine._lock:
-            active_campaign_count = len(scheduler_engine._campaigns)
-    except Exception:
-        pass
-
     return jsonify({
-        "status": "online",
-        "hostname": hostname,
-        "os": system_os,
-        "python_version": python_ver,
-        "database": db_backend,
-        "is_vps": is_vps,
-        "has_remote_vps": has_remote_vps,
-        "remote_vps_url": vps_url,
-        "node_type": "24/7 Cloud VPS Server" if is_vps else "Local Development Instance",
-        "active_campaigns": active_campaign_count,
-        "time": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime()),
+        "node_type": "24/7 Cloud Node",
+        "database": "SQLite (dashboard.db)",
+        "hostname": platform.node(),
+        "os": f"{platform.system()} {platform.release()}",
+        "python_version": platform.python_version(),
+        "active_campaigns": active_camps,
     })
 
 
-# ── Run ────────────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    print("\n" + "=" * 60)
-    print(f"  Scweet Dashboard  ->  http://localhost:{port}")
-    print("=" * 60 + "\n")
-    app.run(host="0.0.0.0", port=port, debug=False, threaded=True)
+    app.run(host="0.0.0.0", port=5000, debug=True)

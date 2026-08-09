@@ -140,7 +140,35 @@ def _init_db() -> None:
 
 _init_db()
 
-# ── Background job registry ────────────────────────────────────────────────────
+
+def _resume_running_campaigns():
+    try:
+        conn = _db()
+        rows = conn.execute("SELECT id, config FROM campaigns WHERE status='running'").fetchall()
+        conn.close()
+        if not rows:
+            return
+        from dashboard.app import _get_scheduler_engine
+        engine = _get_scheduler_engine()
+        for r in rows:
+            cid = r["id"]
+            cfg = json.loads(r["config"] or "{}")
+            account_ids = cfg.get("account_ids", [])
+            conn2 = _db()
+            accounts = []
+            for aid in account_ids:
+                a = conn2.execute("SELECT id, auth_token, ct0, proxy FROM accounts WHERE id=?", (aid,)).fetchone()
+                if a:
+                    accounts.append(dict(a))
+            conn2.close()
+            cfg["accounts"] = accounts
+            engine.launch_campaign(cid, cfg)
+            logger.info("Automatically resumed active campaign %d on app startup", cid)
+    except Exception as exc:
+        logger.error("Failed to auto-resume campaigns on startup: %s", exc)
+
+
+_resume_running_campaigns()
 _jobs: dict[str, threading.Thread] = {}
 
 
