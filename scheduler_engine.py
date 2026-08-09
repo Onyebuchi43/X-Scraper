@@ -177,15 +177,15 @@ def _scrape_followers(
     log_fn,
     min_followers: int = 0,
     max_followers: int = 1000,
-) -> Tuple[List[str], bool]:
+) -> Tuple[List[str], bool, int]:
     """
     Scrape up to *limit* followers from *source_profiles* using Scweet in streaming mode (save=False).
-    Returns (handles, ok) tuple.
+    Returns (handles, ok, raw_count) tuple.
     Uses the first account's credentials for scraping.
     """
     if not accounts:
         log_fn("ERROR", "No accounts available for scraping.")
-        return [], False
+        return [], False, 0
 
     try:
         from Scweet import Scweet, ScweetConfig  # type: ignore
@@ -198,7 +198,9 @@ def _scrape_followers(
         if scrape_account.get("proxy"):
             cookies_entry["proxy"] = scrape_account["proxy"]
 
-        log_fn("INFO", f"Initialising streaming Scweet scraper for source profiles: {source_profiles} (followers range: {min_followers}-{max_followers})")
+        # Fetch at least 100 items from Twitter so follower filter doesn't get stuck on top 20 influencers
+        fetch_limit = max(limit, 100) if (max_followers and max_followers < 1000000) else limit
+        log_fn("INFO", f"Initialising streaming Scweet scraper for source profiles: {source_profiles} (fetch limit: {fetch_limit}, followers range: {min_followers}-{max_followers})")
         cfg = ScweetConfig(daily_requests_limit=100000, daily_tweets_limit=100000)
         s = Scweet(
             cookies=cookies_entry,
@@ -207,7 +209,8 @@ def _scrape_followers(
 
         handles: List[str] = []
         # save=False to stream results in memory without creating CSV files
-        results = s.get_followers(source_profiles, limit=limit, save=False)
+        results = s.get_followers(source_profiles, limit=fetch_limit, save=False)
+        raw_count = len(results) if results else 0
 
         if results:
             for item in results:
@@ -219,7 +222,7 @@ def _scrape_followers(
                         or ""
                     ).strip().lstrip("@").lower()
                     fc = item.get("followers_count") or item.get("followers") or item.get("followers_cnt")
-                    if fc is not None:
+                    if fc is not None and max_followers and max_followers > 0:
                         try:
                             val = int(fc)
                             if not (min_followers <= val <= max_followers):
@@ -233,8 +236,8 @@ def _scrape_followers(
                 if handle:
                     handles.append(handle)
 
-        log_fn("INFO", f"Scraped {len(handles)} handles matching follower criteria from {source_profiles}")
-        return handles, True
+        log_fn("INFO", f"Scraped {raw_count} total profiles from Twitter; {len(handles)} matched follower criteria ({min_followers}-{max_followers})")
+        return handles, True, raw_count
 
     except Exception as exc:
         from .poster import classify_account_error  # type: ignore
@@ -251,7 +254,7 @@ def _scrape_followers(
         else:
             log_fn("ERROR", f"Scraping failed: {exc}")
         logger.exception("_scrape_followers failed")
-        return [], False
+        return [], False, 0
 
 
 def _scrape_tweet_commenters(
@@ -259,14 +262,14 @@ def _scrape_tweet_commenters(
     accounts: List[dict],
     limit: int,
     log_fn,
-) -> Tuple[List[str], bool]:
+) -> Tuple[List[str], bool, int]:
     """
     Scrape handles of users who commented on / replied to a target tweet URL or ID.
-    Returns (handles, ok) tuple.
+    Returns (handles, ok, raw_count) tuple.
     """
     if not accounts:
         log_fn("ERROR", "No accounts available for scraping.")
-        return [], False
+        return [], False, 0
 
     target_clean = tweet_target.strip()
     tweet_id = ""
@@ -330,7 +333,7 @@ def _scrape_tweet_commenters(
                 break
 
         log_fn("INFO", f"Scraped {len(handles)} commenter handles for target {target_clean}")
-        return handles, True
+        return handles, True, len(handles)
 
     except Exception as exc:
         from .poster import classify_account_error  # type: ignore
@@ -347,7 +350,7 @@ def _scrape_tweet_commenters(
         else:
             log_fn("ERROR", f"Commenter scraping failed: {exc}")
         logger.exception("_scrape_tweet_commenters failed")
-        return [], False
+        return [], False, 0
 
 
 # ── Campaign thread ────────────────────────────────────────────────────────────
@@ -554,18 +557,18 @@ class _Campaign:
                 # ── Refill queue when empty ──────────────────────────────────
                 if not queue:
                     scrape_round += 1
-                    limit_this_round = max(tags_per_post * 5, 20) * scrape_round
+                    limit_this_round = max(tags_per_post * 10, 50) * scrape_round
                     self._log(
                         "INFO",
                         f"Scrape round {scrape_round} ({target_type}): fetching up to {limit_this_round} users "
                         f"for target {source_profiles_raw}…"
                     )
                     if target_type == "tweet_commenters":
-                        raw_handles, ok = _scrape_tweet_commenters(
+                        raw_handles, ok, raw_count = _scrape_tweet_commenters(
                             source_profiles_raw, accounts, limit_this_round, self._log
                         )
                     else:
-                        raw_handles, ok = _scrape_followers(
+                        raw_handles, ok, raw_count = _scrape_followers(
                             source_profiles, accounts, limit_this_round, self._log,
                             min_followers=min_followers, max_followers=max_followers,
                         )
@@ -586,11 +589,11 @@ class _Campaign:
                     fresh = [h for h in raw_handles if h.lower() not in already_tagged]
                     self._log(
                         "INFO",
-                        f"Round {scrape_round}: {len(raw_handles)} scraped, {len(fresh)} new (not yet tagged)"
+                        f"Round {scrape_round}: {raw_count} total scraped from Twitter, {len(raw_handles)} matched criteria ({min_followers}-{max_followers}), {len(fresh)} new (not yet tagged)"
                     )
 
                     if not fresh:
-                        if len(raw_handles) == 0:
+                        if raw_count == 0:
                             self._log(
                                 "WARNING",
                                 "No followers returned from source profiles. Source profiles may be exhausted or private. Campaign complete."
@@ -599,14 +602,14 @@ class _Campaign:
                         else:
                             self._log(
                                 "INFO",
-                                f"All {len(raw_handles)} scraped followers in round {scrape_round} were already tagged. Fetching deeper in next round…"
+                                f"Round {scrape_round}: {raw_count} profiles scraped, 0 passed criteria/new. Fetching deeper in next round…"
                             )
                             continue
 
                     queue = fresh
 
                 if not queue:
-                    break
+                    continue
 
                 # ── Pop a batch from the queue ────────────────────────────────
                 batch = queue[:tags_per_post]
