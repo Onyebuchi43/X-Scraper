@@ -43,6 +43,14 @@ def _headers(ct0: str, extra: Optional[dict] = None) -> dict:
             "AppleWebKit/537.36 (KHTML, like Gecko) "
             "Chrome/122.0.0.0 Safari/537.36"
         ),
+        "Sec-Ch-Ua": '"Chromium";v="122", "Not(A:Brand";v="24", "Google Chrome";v="122"',
+        "Sec-Ch-Ua-Mobile": "?0",
+        "Sec-Ch-Ua-Platform": '"Windows"',
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "same-origin",
+        "Accept": "*/*",
+        "Accept-Language": "en-US,en;q=0.9",
     }
     if extra:
         h.update(extra)
@@ -57,7 +65,7 @@ def classify_account_error(error: Exception | str, status_code: Optional[int] = 
     """
     Categorize account errors:
       - "BLOCKED": Account is blocked, suspended, locked, unauthorized (401, 403 with suspension/bad credentials) -> auto-remove from DB
-      - "RATE_LIMIT": Account is rate-limited or restricted temporarily (429, daily limit) -> cool down, do not remove
+      - "RATE_LIMIT": Account is rate-limited or restricted temporarily (429, 226, daily limit) -> cool down, do not remove
       - "OTHER": General error
     """
     err_str = str(error).lower()
@@ -69,7 +77,7 @@ def classify_account_error(error: Exception | str, status_code: Optional[int] = 
         except Exception:
             pass
 
-    if code == 429 or any(k in err_str for k in ("rate limit", "too many requests", "daily limit", "throttled", "over daily")):
+    if code in (429, 226) or any(k in err_str for k in ("rate limit", "too many requests", "daily limit", "throttled", "over daily", "226", "automated", "spam", "protect our users")):
         return "RATE_LIMIT"
 
     blocked_keywords = [
