@@ -508,7 +508,7 @@ def _scrape_target_tweets_commenters(
             tweet_ids = []
             try:
                 tweet_query = f"from:{clean_user} -is:retweet"
-                tweet_results = s.search(tweet_query, limit=10, save=False)
+                tweet_results = s.search(tweet_query, limit=3, save=False)
                 if tweet_results:
                     for tr in tweet_results:
                         if isinstance(tr, dict):
@@ -520,7 +520,7 @@ def _scrape_target_tweets_commenters(
 
             log_fn("INFO", f"Found {len(tweet_ids)} recent tweets by @{clean_user}. Scraping recent comments/replies...")
 
-            for tid in tweet_ids[:6]:  # Target top 6 recent tweets to conserve search rate limit
+            for tid in tweet_ids[:3]:  # Narrowed to top 3 recent tweets for ultra-fast, lightweight scraping
                 if len(candidate_items) >= max(limit * 3, 50):
                     break
                 comment_results = None
