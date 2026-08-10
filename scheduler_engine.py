@@ -218,14 +218,14 @@ def _scrape_followers(
     try:
         from Scweet import Scweet, ScweetConfig  # type: ignore
 
-        # Rotate primary scraping account on each round across all available pool accounts
-        scrape_account = pool_accounts[(scrape_round - 1) % len(pool_accounts)]
-        cookies_entry = {
-            "auth_token": scrape_account["auth_token"],
-            "ct0": scrape_account["ct0"],
-        }
-        if scrape_account.get("proxy"):
-            cookies_entry["proxy"] = scrape_account["proxy"]
+        cookies_pool_list = []
+        for acc in pool_accounts:
+            entry = {"auth_token": acc["auth_token"], "ct0": acc["ct0"]}
+            if acc.get("proxy"): entry["proxy"] = acc["proxy"]
+            cookies_pool_list.append(entry)
+
+        start_idx = (scrape_round - 1) % len(cookies_pool_list)
+        rotated_cookies = cookies_pool_list[start_idx:] + cookies_pool_list[:start_idx]
 
         country_keywords = [
             alias.strip().lower()
@@ -233,13 +233,12 @@ def _scrape_followers(
             if alias.strip()
         ] if country_filter else []
 
-        # Fetch at least 100 items from Twitter so follower filter doesn't get stuck on top 20 influencers
         fetch_limit = max(limit, 100) if (max_followers and max_followers < 1000000) else limit
         country_msg = f", 'Account based in' filter: {country_filter}" if country_filter else ""
         log_fn("INFO", f"Initialising streaming Scweet scraper for source profiles: {source_profiles} (fetch limit: {fetch_limit}, followers range: {min_followers}-{max_followers}{country_msg})")
         cfg = ScweetConfig(daily_requests_limit=100000, daily_tweets_limit=100000)
         s = Scweet(
-            cookies=cookies_entry,
+            cookies=rotated_cookies if len(rotated_cookies) > 1 else rotated_cookies[0],
             config=cfg,
         )
 
@@ -403,19 +402,19 @@ def _scrape_tweet_commenters(
     try:
         from Scweet import Scweet, ScweetConfig  # type: ignore
 
-        # Rotate primary scraping account on each round across all available pool accounts
-        scrape_account = pool_accounts[(scrape_round - 1) % len(pool_accounts)]
-        cookies_entry = {
-            "auth_token": scrape_account["auth_token"],
-            "ct0": scrape_account["ct0"],
-        }
-        if scrape_account.get("proxy"):
-            cookies_entry["proxy"] = scrape_account["proxy"]
+        cookies_pool_list = []
+        for acc in pool_accounts:
+            entry = {"auth_token": acc["auth_token"], "ct0": acc["ct0"]}
+            if acc.get("proxy"): entry["proxy"] = acc["proxy"]
+            cookies_pool_list.append(entry)
+
+        start_idx = (scrape_round - 1) % len(cookies_pool_list)
+        rotated_cookies = cookies_pool_list[start_idx:] + cookies_pool_list[:start_idx]
 
         log_fn("INFO", f"Initialising Scweet commenter scraper for target: {target_clean}")
         cfg = ScweetConfig(daily_requests_limit=100000, daily_tweets_limit=100000)
         s = Scweet(
-            cookies=cookies_entry,
+            cookies=rotated_cookies if len(rotated_cookies) > 1 else rotated_cookies[0],
             config=cfg,
         )
 
@@ -542,16 +541,20 @@ def _scrape_target_tweets_commenters(
     try:
         from Scweet import Scweet, ScweetConfig  # type: ignore
 
-        scrape_account = pool_accounts[(scrape_round - 1) % len(pool_accounts)]
-        cookies_entry = {
-            "auth_token": scrape_account["auth_token"],
-            "ct0": scrape_account["ct0"],
-        }
-        if scrape_account.get("proxy"):
-            cookies_entry["proxy"] = scrape_account["proxy"]
+        cookies_pool_list = []
+        for acc in pool_accounts:
+            entry = {"auth_token": acc["auth_token"], "ct0": acc["ct0"]}
+            if acc.get("proxy"): entry["proxy"] = acc["proxy"]
+            cookies_pool_list.append(entry)
+
+        start_idx = (scrape_round - 1) % len(cookies_pool_list)
+        rotated_cookies = cookies_pool_list[start_idx:] + cookies_pool_list[:start_idx]
 
         cfg = ScweetConfig(daily_requests_limit=100000, daily_tweets_limit=100000)
-        s = Scweet(cookies=cookies_entry, config=cfg)
+        s = Scweet(
+            cookies=rotated_cookies if len(rotated_cookies) > 1 else rotated_cookies[0],
+            config=cfg,
+        )
 
         country_keywords = [
             alias.strip().lower()
