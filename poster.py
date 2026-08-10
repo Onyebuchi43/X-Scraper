@@ -7,12 +7,16 @@ from __future__ import annotations
 
 import json
 import logging
+import os
+import sqlite3
 import time
 from typing import Optional
 
 import httpx
 
 logger = logging.getLogger(__name__)
+
+DASH_DB = os.path.join(os.path.dirname(__file__), "dashboard.db")
 
 # ── Constants ─────────────────────────────────────────────────────────────────
 BEARER_TOKEN = (
