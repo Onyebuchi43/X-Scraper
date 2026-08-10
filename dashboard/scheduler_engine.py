@@ -910,7 +910,7 @@ def launch_campaign(campaign_id: int, config: dict) -> None:
     """Create and start a _Campaign background thread."""
     with _lock:
         existing = _campaigns.get(campaign_id)
-        if existing and existing.is_alive():
+        if existing and existing.is_running():
             logger.info("Campaign %d is already running in active thread. Ignoring duplicate launch request.", campaign_id)
             return
         # Clear stale cooldowns for this campaign's accounts so a resume starts fresh
