@@ -189,32 +189,38 @@ def fetch_account_based_in(
     params = {
         "variables": json.dumps({"screenName": username}),
     }
-    try:
-        proxy_url = _get_httpx_proxy_url(proxy)
-        httpx_kwargs = {"proxy": proxy_url} if proxy_url else {}
-        resp = httpx.get(
-            ABOUT_ACCOUNT_URL,
-            params=params,
-            headers=_headers(ct0),
-            cookies=_cookies(auth_token, ct0),
-            timeout=timeout,
-            **httpx_kwargs,
-        )
-        if resp.status_code != 200:
-            logger.debug("AboutAccountQuery for @%s returned HTTP %s", username, resp.status_code)
+    proxy_url = _get_httpx_proxy_url(proxy)
+    httpx_kwargs = {"proxy": proxy_url} if proxy_url else {}
+
+    for attempt in range(2):
+        try:
+            resp = httpx.get(
+                ABOUT_ACCOUNT_URL,
+                params=params,
+                headers=_headers(ct0),
+                cookies=_cookies(auth_token, ct0),
+                timeout=timeout,
+                **httpx_kwargs,
+            )
+            if resp.status_code == 429 and attempt == 0:
+                time.sleep(1.2)
+                continue
+            if resp.status_code != 200:
+                logger.debug("AboutAccountQuery for @%s returned HTTP %s", username, resp.status_code)
+                return None
+            data = resp.json()
+            country = (
+                data.get("data", {})
+                    .get("user_result_by_screen_name", {})
+                    .get("result", {})
+                    .get("about_profile", {})
+                    .get("account_based_in")
+            )
+            return str(country).strip() if country else None
+        except Exception as exc:
+            logger.debug("fetch_account_based_in failed for @%s: %s", username, exc)
             return None
-        data = resp.json()
-        country = (
-            data.get("data", {})
-                .get("user_result_by_screen_name", {})
-                .get("result", {})
-                .get("about_profile", {})
-                .get("account_based_in")
-        )
-        return str(country).strip() if country else None
-    except Exception as exc:
-        logger.debug("fetch_account_based_in failed for @%s: %s", username, exc)
-        return None
+    return None
 
 
 def get_user_lists(auth_token: str, ct0: str, proxy: Optional[str | dict] = None) -> list[dict]:

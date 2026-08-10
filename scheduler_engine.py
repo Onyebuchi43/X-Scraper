@@ -237,7 +237,7 @@ def _scrape_followers(
         raw_count = len(results) if results else 0
 
         # ── Step 1: follower count filter (fast, no extra API calls) ─────────
-        candidate_handles: List[str] = []
+        candidate_items: List[dict] = []
         if results:
             for item in results:
                 if isinstance(item, dict):
@@ -247,6 +247,7 @@ def _scrape_followers(
                         or item.get("handle")
                         or ""
                     ).strip().lstrip("@").lower()
+                    loc_str = str(item.get("location") or "").strip().lower()
                     fc = item.get("followers_count") or item.get("followers") or item.get("followers_cnt")
                     if fc is not None and max_followers and max_followers > 0:
                         try:
@@ -256,42 +257,48 @@ def _scrape_followers(
                         except (ValueError, TypeError):
                             pass
                     if handle:
-                        candidate_handles.append(handle)
+                        candidate_items.append({"handle": handle, "bio_location": loc_str})
                 elif isinstance(item, str):
                     handle = item.strip().lstrip("@").lower()
                     if handle:
-                        candidate_handles.append(handle)
+                        candidate_items.append({"handle": handle, "bio_location": ""})
 
-        # ── Step 2: "Account based in" country filter (AboutAccountQuery) ────
-        if country_keywords and candidate_handles:
+        # ── Step 2: "Account based in" country filter (AboutAccountQuery + Bio Location fallback) ────
+        if country_keywords and candidate_items:
             from concurrent.futures import ThreadPoolExecutor, as_completed
 
             scrape_auth  = scrape_account["auth_token"]
             scrape_ct0   = scrape_account["ct0"]
             scrape_proxy = scrape_account.get("proxy")
-            log_fn("INFO", f"Country filter active — checking 'Account based in' country for {len(candidate_handles)} candidates in parallel...")
+            log_fn("INFO", f"Country filter active — checking location for {len(candidate_items)} candidates...")
 
-            def check_candidate(handle):
-                cntry = fetch_account_based_in(scrape_auth, scrape_ct0, handle, proxy=scrape_proxy, timeout=10)
-                return handle, cntry
+            def check_candidate(cand):
+                h = cand["handle"]
+                bio_loc = cand["bio_location"]
+                _time.sleep(0.15)  # throttle to avoid 429 rate limit
+                cntry = fetch_account_based_in(scrape_auth, scrape_ct0, h, proxy=scrape_proxy, timeout=8)
+                return h, bio_loc, cntry
 
-            with ThreadPoolExecutor(max_workers=5) as executor:
-                futures = {executor.submit(check_candidate, h): h for h in candidate_handles}
+            with ThreadPoolExecutor(max_workers=2) as executor:
+                futures = [executor.submit(check_candidate, item) for item in candidate_items]
                 checked_count = 0
                 for future in as_completed(futures):
                     checked_count += 1
-                    handle, account_country = future.result()
+                    handle, bio_loc, account_country = future.result()
                     if account_country:
                         country_lower = account_country.lower()
                         if any(ck in country_lower for ck in country_keywords):
                             handles.append(handle)
-                            log_fn("INFO", f"  [{checked_count}/{len(candidate_handles)}] @{handle}: Account based in '{account_country}' ✓ MATCH")
+                            log_fn("INFO", f"  [{checked_count}/{len(candidate_items)}] @{handle}: Account based in '{account_country}' ✓ MATCH")
                         else:
-                            log_fn("DEBUG", f"  [{checked_count}/{len(candidate_handles)}] @{handle}: Account based in '{account_country}' — skip")
+                            log_fn("DEBUG", f"  [{checked_count}/{len(candidate_items)}] @{handle}: Account based in '{account_country}' — skip")
+                    elif bio_loc and any(ck in bio_loc for ck in country_keywords):
+                        handles.append(handle)
+                        log_fn("INFO", f"  [{checked_count}/{len(candidate_items)}] @{handle}: Profile location '{bio_loc}' ✓ MATCH (fallback)")
                     else:
-                        log_fn("DEBUG", f"  [{checked_count}/{len(candidate_handles)}] @{handle}: Account based in unavailable — skip")
+                        log_fn("DEBUG", f"  [{checked_count}/{len(candidate_items)}] @{handle}: Location unavailable — skip")
         else:
-            handles = candidate_handles
+            handles = [c["handle"] for c in candidate_items]
 
         log_fn("INFO", f"Scraped {raw_count} total profiles from Twitter; {len(handles)} matched criteria ({min_followers}-{max_followers} followers{country_msg})")
         return handles, True, raw_count
