@@ -616,33 +616,38 @@ function toggleTargetType(val) {
 
 function startCampaignPoll() {
   if (campaignPollInterval) clearInterval(campaignPollInterval);
+  pollCampaign();
   campaignPollInterval = setInterval(pollCampaign, 3000);
 }
 
 async function pollCampaign() {
   if (!currentCampaignId) return;
-  const data = await api(`/api/campaigns/${currentCampaignId}/log`);
-  updateCampaignLog(data);
+  try {
+    const data = await api(`/api/campaigns/${currentCampaignId}/log`);
+    if (data && !data.error) {
+      updateCampaignLog(data);
+    }
 
-  // Poll tagged count
-  const tc = await api(`/api/campaigns/${currentCampaignId}/tagged-count`);
-  if (!tc.error) {
-    const el = document.getElementById('stat-tagged');
-    if (el) el.textContent = tc.tagged_count;
-  }
+    // Poll tagged count
+    const tc = await api(`/api/campaigns/${currentCampaignId}/tagged-count`);
+    if (tc && !tc.error) {
+      const el = document.getElementById('stat-tagged');
+      if (el) el.textContent = tc.tagged_count;
+    }
 
-  const editBtn = document.getElementById('edit-camp-btn');
-  if (editBtn) editBtn.style.display = 'inline-flex';
+    const editBtn = document.getElementById('edit-camp-btn');
+    if (editBtn) editBtn.style.display = 'inline-flex';
 
-  if (['done', 'error', 'stopped'].includes(data.status)) {
-    clearInterval(campaignPollInterval);
-    document.getElementById('stop-btn').style.display = 'none';
-    document.getElementById('resume-btn').style.display = 'inline-flex';
-    document.getElementById('clear-tagged-btn').style.display = 'inline-flex';
-    if (data.status === 'done') toast('Campaign completed!', 'success');
-    if (data.status === 'stopped') toast('Campaign stopped.', 'info');
-    loadLists();
-    loadCampaignDbPanel();
+    if (data.status === 'running') {
+      document.getElementById('stop-btn').style.display = 'inline-flex';
+      document.getElementById('resume-btn').style.display = 'none';
+    } else if (['done', 'error', 'stopped'].includes(data.status)) {
+      document.getElementById('stop-btn').style.display = 'none';
+      document.getElementById('resume-btn').style.display = 'inline-flex';
+      document.getElementById('clear-tagged-btn').style.display = 'inline-flex';
+    }
+  } catch (err) {
+    console.warn("Campaign poll failed:", err);
   }
 }
 
