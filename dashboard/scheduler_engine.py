@@ -292,11 +292,8 @@ def _scrape_followers(
                             log_fn("INFO", f"  [{checked_count}/{len(candidate_items)}] @{handle}: Account based in '{account_country}' ✓ MATCH")
                         else:
                             log_fn("DEBUG", f"  [{checked_count}/{len(candidate_items)}] @{handle}: Account based in '{account_country}' — skip")
-                    elif bio_loc and any(ck in bio_loc for ck in country_keywords):
-                        handles.append(handle)
-                        log_fn("INFO", f"  [{checked_count}/{len(candidate_items)}] @{handle}: Profile location '{bio_loc}' ✓ MATCH (fallback)")
                     else:
-                        log_fn("DEBUG", f"  [{checked_count}/{len(candidate_items)}] @{handle}: Location unavailable — skip")
+                        log_fn("DEBUG", f"  [{checked_count}/{len(candidate_items)}] @{handle}: Account based in unavailable — skip")
         else:
             handles = [c["handle"] for c in candidate_items]
 
