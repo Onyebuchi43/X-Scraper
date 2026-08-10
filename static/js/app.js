@@ -31,7 +31,8 @@ document.addEventListener('DOMContentLoaded', () => {
     area.addEventListener('dragover', e => { e.preventDefault(); area.classList.add('drag-over'); });
     area.addEventListener('dragleave', () => area.classList.remove('drag-over'));
     area.addEventListener('drop', e => area.classList.remove('drag-over'));
-  }
+  renderCountryChips('c');
+  renderCountryChips('edit-c');
 });
 
 const TAB_TITLES = {
@@ -139,25 +140,43 @@ function loadAccountSelects() {
   });
 }
 
-function toggleCustomCountry(prefix) {
+let campaignSelectedCountries = {
+  c: [],
+  'edit-c': [],
+};
+
+function addCountryChip(prefix) {
   const sel = document.getElementById(`${prefix}-country`);
-  const customInp = document.getElementById(`${prefix}-custom-country`);
-  if (!sel || !customInp) return;
-  customInp.style.display = sel.value === 'custom' ? 'block' : 'none';
+  if (!sel) return;
+  const val = sel.value;
+  if (!val) return;
+
+  if (!campaignSelectedCountries[prefix].includes(val)) {
+    campaignSelectedCountries[prefix].push(val);
+    renderCountryChips(prefix);
+  }
+  sel.value = '';
 }
 
-function updateCountryBadge(id) {
-  const el = document.getElementById(id);
-  const badge = document.getElementById(`${id}-badge`);
-  if (!el || !badge) return;
-  const selected = Array.from(el.selectedOptions).map(o => o.value).filter(v => v !== '');
-  if (selected.length === 0) {
-    badge.textContent = '(All Countries / No Filter)';
-    badge.style.color = 'var(--text-3)';
-  } else {
-    badge.textContent = `(${selected.length} selected: ${selected.join(', ')})`;
-    badge.style.color = '#38ef7d';
+function removeCountryChip(prefix, country) {
+  campaignSelectedCountries[prefix] = (campaignSelectedCountries[prefix] || []).filter(c => c !== country);
+  renderCountryChips(prefix);
+}
+
+function renderCountryChips(prefix) {
+  const container = document.getElementById(`${prefix}-country-tags`);
+  if (!container) return;
+  const list = campaignSelectedCountries[prefix] || [];
+  if (list.length === 0) {
+    container.innerHTML = '<span style="font-size:12px;color:var(--text-3);font-style:italic;">🌐 All Countries / Worldwide (No Filter)</span>';
+    return;
   }
+  container.innerHTML = list.map(c => `
+    <span class="country-chip">
+      <span>${esc(c)}</span>
+      <span class="country-chip-remove" onclick="removeCountryChip('${prefix}', '${esc(c)}')">✕</span>
+    </span>
+  `).join('');
 }
 
 function togglePostingMode(mode) {
@@ -457,9 +476,7 @@ async function startCampaign() {
   if (!display_name) { toast('Name is required in Step 1', 'error'); return; }
   if (!body_text)    { toast('Body text is required in Step 1', 'error'); return; }
 
-  const countryEl = document.getElementById('c-country');
-  const selectedCountries = countryEl ? Array.from(countryEl.selectedOptions).map(o => o.value).filter(v => v !== '') : [];
-  let countryVal = selectedCountries.join(', ');
+  let countryVal = (campaignSelectedCountries['c'] || []).join(', ');
 
   const posting_mode = val('c-posting-mode') || 'list_card';
   let normal_media_data = null;
@@ -788,14 +805,8 @@ async function openEditCampaignModal(cid) {
   set('edit-c-max-followers', cfg.max_followers ?? 1000);
 
   const cVal = cfg.country_filter || '';
-  const selectedList = cVal.split(',').map(s => s.trim().toLowerCase()).filter(s => s);
-  const editCountrySel = document.getElementById('edit-c-country');
-  if (editCountrySel) {
-    Array.from(editCountrySel.options).forEach(o => {
-      o.selected = selectedList.includes(o.value.toLowerCase());
-    });
-    updateCountryBadge('edit-c-country');
-  }
+  campaignSelectedCountries['edit-c'] = cVal ? cVal.split(',').map(s => s.trim()).filter(s => s) : [];
+  renderCountryChips('edit-c');
 
   set('edit-c-post-template', cfg.post_template || '');
   set('edit-c-display-name', cfg.display_name || '');
@@ -842,9 +853,7 @@ async function saveCampaignEdit() {
   const current = await api(`/api/campaigns/${editingCampaignId}`);
   const prevConfig = current.config || {};
 
-  const editCountrySel = document.getElementById('edit-c-country');
-  const editSelectedCountries = editCountrySel ? Array.from(editCountrySel.selectedOptions).map(o => o.value).filter(v => v !== '') : [];
-  const editCountryVal = editSelectedCountries.join(', ');
+  const editCountryVal = (campaignSelectedCountries['edit-c'] || []).join(', ');
 
   const updatedConfig = {
     ...prevConfig,

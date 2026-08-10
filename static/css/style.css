@@ -674,5 +674,29 @@ code {
   .main-content { margin-left: 64px; }
   .form-grid-2 { grid-template-columns: 1fr; }
   .span-2 { grid-column: span 1; }
-  .tab-panel { padding: 18px 16px; }
+/* Country Tag Chips */
+.country-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(29, 155, 240, 0.15);
+  color: #1d9bf0;
+  border: 1px solid rgba(29, 155, 240, 0.3);
+  border-radius: 16px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  animation: fadeIn 0.15s ease;
 }
+.country-chip-remove {
+  cursor: pointer;
+  opacity: 0.7;
+  font-size: 13px;
+  line-height: 1;
+  user-select: none;
+}
+.country-chip-remove:hover {
+  opacity: 1;
+  color: #ef4444;
+}
+
