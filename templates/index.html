@@ -303,17 +303,17 @@
       <div class="campaign-col">
 
         <!-- STEP 1: Tweet card template -->
-        <div class="card card-step">
+        <div class="card card-step" id="step-1-card-container">
           <div class="step-badge">1</div>
           <div class="card-title">Tweet Card Image Template</div>
-          <p class="card-desc">Enter the tweet details below. The image is generated locally (no internet needed) and used as the list banner for all posting accounts.</p>
+          <p class="card-desc">Enter the tweet details below. The image is generated locally (no internet needed) and used as the list banner or post attachment.</p>
           <div class="form-grid form-grid-2">
             <div class="form-group">
-              <label>Display Name <span class="badge-required">required</span></label>
+              <label>Display Name <span class="badge-required">required for Card</span></label>
               <input type="text" id="c-display-name" placeholder="Elon Musk"/>
             </div>
             <div class="form-group">
-              <label>Username <span class="badge-required">required</span></label>
+              <label>Username <span class="badge-required">required for Card</span></label>
               <div class="input-row">
                 <span class="input-prefix">@</span>
                 <input type="text" id="c-username" placeholder="elonmusk"/>
@@ -325,16 +325,9 @@
               <p class="field-hint">Upload an avatar picture (e.g. rocket image for Elon Musk). If blank, an initial letter icon is used.</p>
             </div>
             <div class="form-group span-2">
-              <label>Tweet Body Text <span class="badge-required">required</span></label>
+              <label>Tweet Body Text <span class="badge-required">required for Card</span></label>
               <textarea id="c-body-text" rows="3" placeholder="Hello {taggings}, SpaceX has committed to using Nvidia GPUs exclusively because they are the best"></textarea>
               <p class="field-hint">Use <code>{taggings}</code> to place the tagged handles inside the card image text.</p>
-            </div>
-            <div class="form-group span-2">
-              <label>Update List Profile Picture Per Post?</label>
-              <select id="c-update-list-banner">
-                <option value="true" selected>Yes — Update list image for every post (integrates {taggings} into image)</option>
-                <option value="false">No — Use static list profile picture for all posts</option>
-              </select>
             </div>
             <div class="form-group">
               <label>Timestamp <span class="badge-optional">optional</span></label>
@@ -1106,13 +1099,7 @@ nohup python3 -m dashboard.app > app.log 2>&1 &
         <label>Tweet Body Text (Card Image)</label>
         <textarea id="edit-c-body-text" rows="2"></textarea>
       </div>
-      <div class="form-group span-2 edit-c-list-field">
-        <label>Update List Image Per Post?</label>
-        <select id="edit-c-update-list-banner">
-          <option value="true">Yes — Update list image for every post</option>
-          <option value="false">No — Use static list image</option>
-        </select>
-      </div>
+
       <div class="form-group edit-c-list-field">
         <label>List Name</label>
         <input type="text" id="edit-c-list-name"/>

@@ -970,7 +970,7 @@ class _Campaign:
                         acc, list_name, list_desc, poster, self._log, campaign_id=campaign_id
                     )
 
-                    should_update_banner = (posting_mode_effective == "list_card") or (update_list_banner and posting_mode == "list")
+                    should_update_banner = (posting_mode_effective == "list_card")
 
                     # ── Update list banner image ─────────────────────────────
                     if should_update_banner and display_name and body_text_tpl:

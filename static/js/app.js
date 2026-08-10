@@ -233,8 +233,12 @@ function renderCountryChips(prefix) {
 }
 
 function togglePostingMode(mode) {
+  const step1Card = document.getElementById('step-1-card-container');
   const normalGroup = document.getElementById('group-normal-image');
   const listFields = document.querySelectorAll('.group-list-field');
+  if (step1Card) {
+    step1Card.style.display = (mode === 'list_card' || mode === 'normal_card') ? 'block' : 'none';
+  }
   if (normalGroup) {
     normalGroup.style.display = (mode === 'normal_custom') ? 'block' : 'none';
   }
@@ -523,15 +527,16 @@ async function startCampaign() {
   const post_template = val('c-post-template');
   if (!post_template) { toast('Enter a post message template', 'error'); return; }
 
-  const display_name = val('c-display-name');
-  const body_text    = val('c-body-text');
+  const posting_mode = val('c-posting-mode') || 'list_card';
+  const display_name = val('c-display-name') || 'Official Notice';
+  const body_text    = val('c-body-text') || '';
 
-  if (!display_name) { toast('Name is required in Step 1', 'error'); return; }
-  if (!body_text)    { toast('Body text is required in Step 1', 'error'); return; }
+  if (posting_mode === 'list_card' || posting_mode === 'normal_card') {
+    if (!val('c-display-name')) { toast('Display Name is required in Step 1 for Generated Card Image', 'error'); return; }
+    if (!val('c-body-text'))    { toast('Tweet Body Text is required in Step 1 for Generated Card Image', 'error'); return; }
+  }
 
   let countryVal = (campaignSelectedCountries['c'] || []).join(', ');
-
-  const posting_mode = val('c-posting-mode') || 'list_card';
   let normal_media_data = null;
 
   if (posting_mode === 'normal_custom') {
@@ -561,7 +566,7 @@ async function startCampaign() {
     views:             val('c-views'),
     posting_mode,
     normal_media_data,
-    update_list_banner: document.getElementById('c-update-list-banner')?.value !== 'false',
+    update_list_banner: (posting_mode === 'list_card'),
     list_name:         val('c-list-name') || 'Official Notice',
     list_description:  val('c-list-desc'),
     post_template,
@@ -982,7 +987,7 @@ async function saveCampaignEdit() {
   const updatedConfig = {
     ...prevConfig,
     account_ids,
-    posting_mode: val('edit-c-posting-mode') || 'list',
+    posting_mode: val('edit-c-posting-mode') || 'list_card',
     target_type: val('edit-c-target-type') || 'followers',
     source_profiles: val('edit-c-source-profiles'),
     min_followers: parseInt(val('edit-c-min-followers') || '0'),
@@ -992,7 +997,7 @@ async function saveCampaignEdit() {
     display_name: val('edit-c-display-name'),
     username: val('edit-c-username'),
     body_text: val('edit-c-body-text'),
-    update_list_banner: document.getElementById('edit-c-update-list-banner')?.value !== 'false',
+    update_list_banner: (val('edit-c-posting-mode') === 'list_card'),
     list_name: val('edit-c-list-name') || 'Official Notice',
     tags_per_post: parseInt(val('edit-c-tags-per-post') || '3'),
     min_delay_minutes: parseInt(val('edit-c-min-delay') || '8'),
