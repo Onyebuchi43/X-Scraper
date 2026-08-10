@@ -257,11 +257,24 @@ def _run_scrape_job(job_id: str, job_type: str, params: dict) -> None:
                 filtered = []
                 for r in results:
                     if isinstance(r, dict):
-                        loc_str = str(r.get("location") or r.get("user_location") or r.get("profile_location") or "")
-                        bio_str = str(r.get("description") or r.get("bio") or r.get("profile_bio") or "")
-                        based_str = str(r.get("account_based_in") or r.get("account_location") or "")
-                        combined_loc = f"{loc_str} {bio_str} {based_str}".strip().lower()
-                        if combined_loc and any(ck in combined_loc for ck in country_keywords):
+                        primary_loc = str(
+                            r.get("location")
+                            or r.get("user_location")
+                            or r.get("profile_location")
+                            or r.get("account_based_in")
+                            or r.get("account_location")
+                            or ""
+                        ).strip().lower()
+                        if primary_loc:
+                            target_loc = primary_loc
+                        else:
+                            target_loc = str(
+                                r.get("description")
+                                or r.get("bio")
+                                or r.get("profile_bio")
+                                or ""
+                            ).strip().lower()
+                        if target_loc and any(ck in target_loc for ck in country_keywords):
                             filtered.append(r)
                 _append_job_log(job_id, f"Filtered by country '{country_filter}': {len(filtered)} / {len(results)} matches")
                 results = filtered
