@@ -132,6 +132,11 @@ def _init_db() -> None:
             is_active    INTEGER DEFAULT 0,
             updated_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
+        CREATE TABLE IF NOT EXISTS account_locations (
+            username    TEXT PRIMARY KEY,
+            country     TEXT,
+            created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
         CREATE UNIQUE INDEX IF NOT EXISTS idx_camp_tagged ON campaign_tagged(campaign_id, username);
     """)
     try:

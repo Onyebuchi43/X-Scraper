@@ -172,6 +172,31 @@ def get_profile_info(auth_token: str, ct0: str, handle: str, proxy: Optional[str
 _ACCOUNT_LOCATION_CACHE: dict[str, Optional[str]] = {}
 
 
+def _get_cached_location_from_db(username: str) -> Optional[str]:
+    try:
+        conn = sqlite3.connect(DASH_DB)
+        row = conn.execute("SELECT country FROM account_locations WHERE username=?", (username.lower(),)).fetchone()
+        conn.close()
+        if row and row[0] is not None:
+            return row[0]
+    except Exception:
+        pass
+    return None
+
+
+def _save_location_to_db(username: str, country: Optional[str]) -> None:
+    try:
+        conn = sqlite3.connect(DASH_DB)
+        conn.execute(
+            "INSERT OR REPLACE INTO account_locations (username, country) VALUES (?, ?)",
+            (username.lower(), country if country is not None else "")
+        )
+        conn.commit()
+        conn.close()
+    except Exception:
+        pass
+
+
 def fetch_account_based_in(
     auth_token: str,
     ct0: str,
@@ -192,6 +217,12 @@ def fetch_account_based_in(
     clean_username = username.lstrip("@").lower()
     if clean_username in _ACCOUNT_LOCATION_CACHE:
         return _ACCOUNT_LOCATION_CACHE[clean_username]
+
+    db_loc = _get_cached_location_from_db(clean_username)
+    if db_loc is not None:
+        val = db_loc if db_loc != "" else None
+        _ACCOUNT_LOCATION_CACHE[clean_username] = val
+        return val
 
     params = {
         "variables": json.dumps({"screenName": clean_username}),
@@ -235,6 +266,7 @@ def fetch_account_based_in(
             )
             res = str(country).strip() if country else None
             _ACCOUNT_LOCATION_CACHE[clean_username] = res
+            _save_location_to_db(clean_username, res)
             return res
         except Exception as exc:
             logger.debug("fetch_account_based_in failed for @%s: %s", clean_username, exc)
@@ -269,6 +301,7 @@ def fetch_account_based_in(
                 )
                 res = str(country).strip() if country else None
                 _ACCOUNT_LOCATION_CACHE[clean_username] = res
+                _save_location_to_db(clean_username, res)
                 return res
         except Exception:
             pass
