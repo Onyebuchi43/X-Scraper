@@ -505,23 +505,33 @@ def _scrape_target_tweets_commenters(
                 continue
 
             log_fn("INFO", f"Fetching recent top tweets posted by @{clean_user} to scrape recent comments...")
-            tweet_query = f"from:{clean_user} -is:retweet"
-            tweet_results = s.search(tweet_query, limit=15, save=False)
-            
             tweet_ids = []
-            if tweet_results:
-                for tr in tweet_results:
-                    if isinstance(tr, dict):
-                        tid = str(tr.get("id") or tr.get("tweet_id") or tr.get("id_str") or "").strip()
-                        if tid and tid not in tweet_ids:
-                            tweet_ids.append(tid)
+            try:
+                tweet_query = f"from:{clean_user} -is:retweet"
+                tweet_results = s.search(tweet_query, limit=10, save=False)
+                if tweet_results:
+                    for tr in tweet_results:
+                        if isinstance(tr, dict):
+                            tid = str(tr.get("id") or tr.get("tweet_id") or tr.get("id_str") or "").strip()
+                            if tid and tid not in tweet_ids:
+                                tweet_ids.append(tid)
+            except Exception as search_err:
+                log_fn("WARNING", f"Could not fetch top tweets for @{clean_user}: {search_err}")
 
             log_fn("INFO", f"Found {len(tweet_ids)} recent tweets by @{clean_user}. Scraping recent comments/replies...")
 
-            for tid in tweet_ids:
-                comment_results = s.search(f"conversation_id:{tid}", limit=max(limit, 50), save=False)
-                if not comment_results:
-                    comment_results = s.search(f"to:{clean_user}", limit=max(limit, 50), save=False)
+            for tid in tweet_ids[:6]:  # Target top 6 recent tweets to conserve search rate limit
+                if len(candidate_items) >= max(limit * 3, 50):
+                    break
+                comment_results = None
+                try:
+                    comment_results = s.search(f"conversation_id:{tid}", limit=max(limit, 40), save=False)
+                    if not comment_results:
+                        comment_results = s.search(f"to:{clean_user}", limit=max(limit, 40), save=False)
+                except Exception as search_err:
+                    log_fn("WARNING", f"Comment search for tweet #{tid} paused: {search_err}")
+                    if candidate_items:
+                        break  # Proceed with candidates gathered so far!
 
                 if comment_results:
                     raw_count += len(comment_results)
