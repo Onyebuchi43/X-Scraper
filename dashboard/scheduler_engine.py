@@ -743,7 +743,8 @@ class _Campaign:
 
                     should_update_banner = (posting_mode_effective == "list_card") or (update_list_banner and posting_mode == "list")
 
-                    # ── Update list banner image ─────────────────────────────
+                    # ── Update list banner image & attach image directly ──────
+                    list_media_id = None
                     if should_update_banner and display_name and body_text_tpl:
                         if "{taggings}" in body_text_tpl:
                             card_body = body_text_tpl.replace("{taggings}", taggings)
@@ -762,30 +763,23 @@ class _Campaign:
                                 retweets=cfg.get("retweets") or "4.2K",
                                 likes=cfg.get("likes") or "54K",
                             )
-                            if acc_list_id and batch_image_bytes:
-                                ok = poster.set_list_banner(
-                                    acc["auth_token"], acc["ct0"],
-                                    acc_list_id, batch_image_bytes,
-                                    proxy=acc.get("proxy"),
-                                )
-                                if not ok:
-                                    self._log("WARNING", f"Could not update list profile picture for {acc_label}. Creating fresh list fallback...")
-                                    try:
-                                        fresh_name = f"{list_name[:20]}_{int(time.time()) % 1000}"
-                                        list_info = poster.create_list(
-                                            acc["auth_token"], acc["ct0"], fresh_name, list_desc,
-                                            proxy=acc.get("proxy"),
-                                        )
-                                        acc_list_id = list_info["list_id"]
-                                        acc_list_url = list_info["list_url"]
-                                        _save_list_to_db(acc_id, acc_list_id, acc_list_url, list_name)
-                                        poster.set_list_banner(
-                                            acc["auth_token"], acc["ct0"],
-                                            acc_list_id, batch_image_bytes,
-                                            proxy=acc.get("proxy"),
-                                        )
-                                    except Exception as exc:
-                                        self._log("WARNING", f"Fallback list creation for {acc_label} failed: {exc}")
+                            if batch_image_bytes:
+                                # 1. Upload media directly for tweet attachment to guarantee image accuracy & bypass Twitter link preview caching
+                                try:
+                                    up_res = poster.upload_media(acc["auth_token"], acc["ct0"], batch_image_bytes, proxy=acc.get("proxy"))
+                                    list_media_id = up_res.get("media_id")
+                                    if list_media_id:
+                                        self._log("INFO", f"Uploaded fresh card image for {acc_label} list post (Media ID: {list_media_id})")
+                                except Exception as exc:
+                                    self._log("WARNING", f"Media upload for list card failed for {acc_label}: {exc}")
+
+                                # 2. Also update List banner image on Twitter
+                                if acc_list_id:
+                                    poster.set_list_banner(
+                                        acc["auth_token"], acc["ct0"],
+                                        acc_list_id, batch_image_bytes,
+                                        proxy=acc.get("proxy"),
+                                    )
                         except Exception as exc:
                             self._log("WARNING", f"Could not generate card image for {acc_label}: {exc}")
 
@@ -801,7 +795,7 @@ class _Campaign:
 
                     tweet_text = tweet_text[:280]
                     self._log("POST", f"{acc_label} (List Post) → {taggings[:80]}")
-                    result = poster.post_tweet(acc["auth_token"], acc["ct0"], tweet_text, proxy=acc.get("proxy"))
+                    result = poster.post_tweet(acc["auth_token"], acc["ct0"], tweet_text, media_id=list_media_id, proxy=acc.get("proxy"))
 
                 if result.get("error") or not result.get("tweet_id"):
                     err_msg = result.get("error") or "Post verification failed: No tweet ID returned"
