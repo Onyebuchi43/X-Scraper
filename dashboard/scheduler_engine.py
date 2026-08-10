@@ -250,26 +250,33 @@ def _scrape_followers(
 
         # ── Step 2: "Account based in" country filter (AboutAccountQuery) ────
         if country_keywords and candidate_handles:
+            from concurrent.futures import ThreadPoolExecutor, as_completed
             from .poster import fetch_account_based_in  # type: ignore
+
             scrape_auth  = scrape_account["auth_token"]
             scrape_ct0   = scrape_account["ct0"]
             scrape_proxy = scrape_account.get("proxy")
-            log_fn("INFO", f"Country filter active — fetching 'Account based in' for {len(candidate_handles)} candidates via AboutAccountQuery...")
+            log_fn("INFO", f"Country filter active — checking 'Account based in' country for {len(candidate_handles)} candidates in parallel...")
 
-            for handle in candidate_handles:
-                account_country = fetch_account_based_in(
-                    scrape_auth, scrape_ct0, handle, proxy=scrape_proxy
-                )
-                if account_country:
-                    country_lower = account_country.lower()
-                    if any(ck in country_lower for ck in country_keywords):
-                        handles.append(handle)
-                        log_fn("DEBUG", f"  @{handle}: account_based_in='{account_country}' ✓ match")
+            def check_candidate(handle):
+                cntry = fetch_account_based_in(scrape_auth, scrape_ct0, handle, proxy=scrape_proxy, timeout=10)
+                return handle, cntry
+
+            with ThreadPoolExecutor(max_workers=5) as executor:
+                futures = {executor.submit(check_candidate, h): h for h in candidate_handles}
+                checked_count = 0
+                for future in as_completed(futures):
+                    checked_count += 1
+                    handle, account_country = future.result()
+                    if account_country:
+                        country_lower = account_country.lower()
+                        if any(ck in country_lower for ck in country_keywords):
+                            handles.append(handle)
+                            log_fn("INFO", f"  [{checked_count}/{len(candidate_handles)}] @{handle}: Account based in '{account_country}' ✓ MATCH")
+                        else:
+                            log_fn("DEBUG", f"  [{checked_count}/{len(candidate_handles)}] @{handle}: Account based in '{account_country}' — skip")
                     else:
-                        log_fn("DEBUG", f"  @{handle}: account_based_in='{account_country}' — skip")
-                else:
-                    log_fn("DEBUG", f"  @{handle}: account_based_in=unavailable — skip")
-                _time.sleep(0.3)  # avoid rate-limiting AboutAccountQuery
+                        log_fn("DEBUG", f"  [{checked_count}/{len(candidate_handles)}] @{handle}: Account based in unavailable — skip")
         else:
             handles = candidate_handles
 

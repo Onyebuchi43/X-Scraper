@@ -684,11 +684,30 @@ function copyCampaignLogs() {
   const entries = Array.from(log.querySelectorAll('.log-entry'));
   if (!entries.length) { toast('No logs to copy', 'info'); return; }
   const text = entries.map(el => el.textContent).join('\n');
-  navigator.clipboard.writeText(text).then(() => {
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(() => {
+      toast('Logs copied to clipboard! 📋', 'success');
+    }).catch(() => fallbackCopyText(text));
+  } else {
+    fallbackCopyText(text);
+  }
+}
+
+function fallbackCopyText(text) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.left = '-9999px';
+  document.body.appendChild(ta);
+  ta.select();
+  try {
+    document.execCommand('copy');
     toast('Logs copied to clipboard! 📋', 'success');
-  }).catch(e => {
+  } catch (e) {
     toast('Could not copy logs: ' + e.message, 'error');
-  });
+  }
+  document.body.removeChild(ta);
 }
 
 async function loadLists() {
