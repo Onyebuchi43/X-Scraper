@@ -193,6 +193,7 @@ def _scrape_followers(
     max_followers: int = 1000,
     country_filter: str = "",
     scrape_round: int = 1,
+    checked_handles_set: Optional[set] = None,
 ) -> Tuple[List[str], bool, int]:
     """
     Scrape follower handles from `source_profiles`.
@@ -210,6 +211,9 @@ def _scrape_followers(
     if not pool_accounts:
         log_fn("ERROR", "No accounts available for scraping.")
         return [], False, 0
+
+    if checked_handles_set is None:
+        checked_handles_set = set()
 
     try:
         from Scweet import Scweet, ScweetConfig  # type: ignore
@@ -242,8 +246,8 @@ def _scrape_followers(
         import time as _time
 
         handles: List[str] = []
-        # save=False to stream results in memory without creating CSV files
-        results = s.get_followers(source_profiles, limit=fetch_limit, save=False)
+        # resume=True to paginate deeper across rounds
+        results = s.get_followers(source_profiles, limit=fetch_limit, save=False, resume=True)
         raw_count = len(results) if results else 0
 
         # ── Step 1: follower count filter (fast, no extra API calls) ─────────
@@ -274,7 +278,9 @@ def _scrape_followers(
                         candidate_items.append({"handle": handle, "bio_location": ""})
 
         # ── Step 2: "Account based in" country filter (AboutAccountQuery + Bio Location fallback) ────
-        if country_keywords and candidate_items:
+        unprocessed_candidates = [c for c in candidate_items if c["handle"] not in checked_handles_set]
+
+        if country_keywords and unprocessed_candidates:
             from concurrent.futures import ThreadPoolExecutor, as_completed
 
             scrape_auth  = scrape_account["auth_token"]
@@ -619,6 +625,7 @@ class _Campaign:
                 self._log("WARNING", f"Could not read avatar image: {exc}")
 
         already_tagged: set = _load_already_tagged(campaign_id)
+        checked_candidates_set: set = set()
         self._log("INFO", f"Previously tagged usernames in this campaign: {len(already_tagged)}")
 
         # ── Posting loop with live-scraping and deduplication ─────────────────
@@ -669,6 +676,7 @@ class _Campaign:
                             source_profiles, accounts, limit_this_round, self._log,
                             min_followers=min_followers, max_followers=max_followers,
                             country_filter=country_filter, scrape_round=scrape_round,
+                            checked_handles_set=checked_candidates_set,
                         )
 
                     if not ok:
