@@ -21,6 +21,20 @@ from typing import List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
+# Safe imports for poster and image_editor modules
+try:
+    import poster
+    import image_editor
+    from poster import fetch_account_based_in, classify_account_error
+except ImportError:
+    try:
+        from . import poster, image_editor
+        from .poster import fetch_account_based_in, classify_account_error
+    except ImportError:
+        import dashboard.poster as poster
+        import dashboard.image_editor as image_editor
+        from dashboard.poster import fetch_account_based_in, classify_account_error
+
 DASH_DB = os.path.join(os.path.dirname(__file__), "dashboard.db")
 
 # Ensure Scweet package is importable
@@ -251,7 +265,6 @@ def _scrape_followers(
         # ── Step 2: "Account based in" country filter (AboutAccountQuery) ────
         if country_keywords and candidate_handles:
             from concurrent.futures import ThreadPoolExecutor, as_completed
-            from .poster import fetch_account_based_in  # type: ignore
 
             scrape_auth  = scrape_account["auth_token"]
             scrape_ct0   = scrape_account["ct0"]
@@ -284,7 +297,6 @@ def _scrape_followers(
         return handles, True, raw_count
 
     except Exception as exc:
-        from .poster import classify_account_error  # type: ignore
         err_type = classify_account_error(exc)
         scrape_acc_id = accounts[0].get("id")
         if err_type == "BLOCKED" and scrape_acc_id:
@@ -380,7 +392,6 @@ def _scrape_tweet_commenters(
         return handles, True, len(handles)
 
     except Exception as exc:
-        from .poster import classify_account_error  # type: ignore
         err_type = classify_account_error(exc)
         scrape_acc_id = accounts[0].get("id")
         if err_type == "BLOCKED" and scrape_acc_id:
@@ -474,11 +485,6 @@ class _Campaign:
 
     # ── Main loop ─────────────────────────────────────────────────────────────
     def _run(self) -> None:
-        try:
-            from . import poster, image_editor  # type: ignore
-        except ImportError:
-            import poster, image_editor  # type: ignore
-
         cfg = self.config
         campaign_id = self.campaign_id
 
