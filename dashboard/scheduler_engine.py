@@ -239,13 +239,11 @@ def _scrape_followers(
                             pass
 
                     if country_keywords:
-                        loc = (
-                            item.get("location")
-                            or item.get("user_location")
-                            or item.get("profile_location")
-                            or ""
-                        ).strip().lower()
-                        if not loc or not any(ck in loc for ck in country_keywords):
+                        loc_str = str(item.get("location") or item.get("user_location") or item.get("profile_location") or "")
+                        bio_str = str(item.get("description") or item.get("bio") or item.get("profile_bio") or "")
+                        based_str = str(item.get("account_based_in") or item.get("account_location") or "")
+                        combined_loc = f"{loc_str} {bio_str} {based_str}".strip().lower()
+                        if not combined_loc or not any(ck in combined_loc for ck in country_keywords):
                             continue
                 elif isinstance(item, str):
                     handle = item.strip().lstrip("@").lower()
