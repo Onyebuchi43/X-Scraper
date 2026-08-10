@@ -598,35 +598,35 @@ def _scrape_target_tweets_commenters(
                 except Exception as search_err:
                     log_fn("WARNING", f"Top tweet conversation search for @{clean_user} paused: {search_err}")
 
-                if comment_results:
-                    raw_count += len(comment_results)
-                    for item in comment_results:
-                        if isinstance(item, dict):
-                            user_obj = item.get("user") or item.get("author") or item
-                            if isinstance(user_obj, str): user_obj = item
-                            handle = (
-                                user_obj.get("username")
-                                or user_obj.get("screen_name")
-                                or user_obj.get("handle")
-                                or item.get("username")
-                                or item.get("screen_name")
-                                or ""
-                            ).strip().lstrip("@").lower()
-                            loc_str = str(user_obj.get("location") or item.get("location") or "").strip().lower()
-                            fc = user_obj.get("followers_count") or user_obj.get("followers") or user_obj.get("followers_cnt")
-                            if fc is not None and max_followers and max_followers > 0:
-                                try:
-                                    val = int(fc)
-                                    if not (min_followers <= val <= max_followers):
-                                        continue
-                                except (ValueError, TypeError):
-                                    pass
-                            if handle and handle != clean_user.lower():
-                                candidate_items.append({"handle": handle, "bio_location": loc_str})
-                        elif isinstance(item, str):
-                            handle = item.strip().lstrip("@").lower()
-                            if handle and handle != clean_user.lower():
-                                candidate_items.append({"handle": handle, "bio_location": ""})
+            if comment_results:
+                raw_count += len(comment_results)
+                for item in comment_results:
+                    if isinstance(item, dict):
+                        user_obj = item.get("user") or item.get("author") or item
+                        if isinstance(user_obj, str): user_obj = item
+                        handle = (
+                            user_obj.get("username")
+                            or user_obj.get("screen_name")
+                            or user_obj.get("handle")
+                            or item.get("username")
+                            or item.get("screen_name")
+                            or ""
+                        ).strip().lstrip("@").lower()
+                        loc_str = str(user_obj.get("location") or item.get("location") or "").strip().lower()
+                        fc = user_obj.get("followers_count") or user_obj.get("followers") or user_obj.get("followers_cnt")
+                        if fc is not None and max_followers and max_followers > 0:
+                            try:
+                                val = int(fc)
+                                if not (min_followers <= val <= max_followers):
+                                    continue
+                            except (ValueError, TypeError):
+                                pass
+                        if handle and handle != clean_user.lower():
+                            candidate_items.append({"handle": handle, "bio_location": loc_str})
+                    elif isinstance(item, str):
+                        handle = item.strip().lstrip("@").lower()
+                        if handle and handle != clean_user.lower():
+                            candidate_items.append({"handle": handle, "bio_location": ""})
 
         handles: List[str] = []
         scrape_account = pool_accounts[(scrape_round - 1) % len(pool_accounts)]
