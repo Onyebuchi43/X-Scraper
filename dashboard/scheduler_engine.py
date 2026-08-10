@@ -107,7 +107,7 @@ def _log_to_db(campaign_id: int, entry: dict) -> None:
             log.append(entry)
             conn.execute(
                 "UPDATE campaigns SET log=?, updated_at=CURRENT_TIMESTAMP WHERE id=?",
-                (json.dumps(log[-500:]), campaign_id),  # keep last 500 entries
+                (json.dumps(log[-2000:]), campaign_id),  # keep last 2000 entries
             )
             conn.commit()
         conn.close()
