@@ -262,33 +262,57 @@ def _run_scrape_job(job_id: str, job_type: str, params: dict) -> None:
             country_filter = params.get("country_filter", "")
             min_followers = int(params.get("min_followers", 0))
             max_followers = int(params.get("max_followers", 1000))
-            _append_job_log(job_id, f"Scraping followers of {targets} (limit={limit}, range: {min_followers}-{max_followers})")
-            results = s.get_followers(targets, limit=limit, save=True, save_name=save_name)
+            target_type = params.get("target_type", "followers")
 
-            if country_filter and results:
-                import time as _time
-                from poster import fetch_account_based_in  # type: ignore
-                country_keywords = [c.strip().lower() for c in country_filter.split(",") if c.strip()]
-                _append_job_log(job_id, f"Country filter '{country_filter}' — fetching 'Account based in' for {len(results)} profiles via AboutAccountQuery...")
-                scrape_cookies = cookies_list[0] if cookies_list else {}
-                scrape_auth  = scrape_cookies.get("auth_token", "")
-                scrape_ct0   = scrape_cookies.get("ct0", "")
-                scrape_proxy = scrape_cookies.get("proxy")
-                filtered = []
-                for r in results:
-                    username = ""
-                    if isinstance(r, dict):
-                        username = (r.get("username") or r.get("screen_name") or "").strip().lstrip("@")
-                    elif isinstance(r, str):
-                        username = r.strip().lstrip("@")
-                    if not username:
-                        continue
-                    account_country = fetch_account_based_in(scrape_auth, scrape_ct0, username, proxy=scrape_proxy)
-                    if account_country and any(ck in account_country.lower() for ck in country_keywords):
-                        filtered.append(r)
-                    _time.sleep(0.3)
-                _append_job_log(job_id, f"Filtered by 'Account based in' '{country_filter}': {len(filtered)} / {len(results)} matches")
-                results = filtered
+            if target_type == "tweet_commenters":
+                from scheduler_engine import _scrape_tweet_commenters
+                _append_job_log(job_id, f"Scraping commenters of tweet/URL {targets} (limit={limit})")
+                tweet_target = targets[0] if isinstance(targets, list) and targets else str(targets)
+                handles, ok, raw_count = _scrape_tweet_commenters(
+                    tweet_target, cookies_list, limit, lambda level, msg: _append_job_log(job_id, f"[{level}] {msg}")
+                )
+                results = [{"username": h} for h in handles]
+
+            elif target_type == "target_tweets_commenters":
+                from scheduler_engine import _scrape_target_tweets_commenters
+                _append_job_log(job_id, f"Scraping recent top tweets commenters of {targets} (limit={limit}, range: {min_followers}-{max_followers}, country: '{country_filter}')")
+                handles, ok, raw_count = _scrape_target_tweets_commenters(
+                    targets if isinstance(targets, list) else [str(targets)],
+                    cookies_list, limit,
+                    lambda level, msg: _append_job_log(job_id, f"[{level}] {msg}"),
+                    min_followers=min_followers, max_followers=max_followers,
+                    country_filter=country_filter
+                )
+                results = [{"username": h} for h in handles]
+
+            else:
+                _append_job_log(job_id, f"Scraping followers of {targets} (limit={limit}, range: {min_followers}-{max_followers})")
+                results = s.get_followers(targets, limit=limit, save=True, save_name=save_name)
+
+                if country_filter and results:
+                    import time as _time
+                    from poster import fetch_account_based_in  # type: ignore
+                    country_keywords = [c.strip().lower() for c in country_filter.split(",") if c.strip()]
+                    _append_job_log(job_id, f"Country filter '{country_filter}' — fetching 'Account based in' for {len(results)} profiles via AboutAccountQuery...")
+                    scrape_cookies = cookies_list[0] if cookies_list else {}
+                    scrape_auth  = scrape_cookies.get("auth_token", "")
+                    scrape_ct0   = scrape_cookies.get("ct0", "")
+                    scrape_proxy = scrape_cookies.get("proxy")
+                    filtered = []
+                    for r in results:
+                        username = ""
+                        if isinstance(r, dict):
+                            username = (r.get("username") or r.get("screen_name") or "").strip().lstrip("@")
+                        elif isinstance(r, str):
+                            username = r.strip().lstrip("@")
+                        if not username:
+                            continue
+                        account_country = fetch_account_based_in(scrape_auth, scrape_ct0, username, proxy=scrape_proxy)
+                        if account_country and any(ck in account_country.lower() for ck in country_keywords):
+                            filtered.append(r)
+                        _time.sleep(0.3)
+                    _append_job_log(job_id, f"Filtered by 'Account based in' '{country_filter}': {len(filtered)} / {len(results)} matches")
+                    results = filtered
 
         elif job_type == "search":
             _append_job_log(job_id, "Running tweet search…")

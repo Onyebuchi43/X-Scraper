@@ -658,10 +658,52 @@ function toggleTargetType(val) {
     if (lbl) lbl.innerHTML = 'Tweet URL or Tweet ID <span class="badge-required">required</span>';
     if (inp) inp.placeholder = 'https://x.com/elonmusk/status/1820000000000000000';
     if (hint) hint.textContent = 'Paste Tweet URL or ID. Streamingly scrapes users who commented on this tweet and tags them.';
+  } else if (val === 'target_tweets_commenters') {
+    if (lbl) lbl.innerHTML = 'Target Profile(s) to Scrape Comments From <span class="badge-required">required</span>';
+    if (inp) inp.placeholder = 'elonmusk, OpenAI, nasa';
+    if (hint) hint.textContent = 'Comma-separated usernames. Scrapes recent top tweets posted by target profiles and extracts their comments first.';
   } else {
     if (lbl) lbl.innerHTML = 'Source Profiles to Scrape From <span class="badge-required">required</span>';
     if (inp) inp.placeholder = 'elonmusk, OpenAI, nasa';
     if (hint) hint.textContent = 'Comma-separated usernames. Streamingly scrapes followers from these profiles without saving CSV files.';
+  }
+}
+
+function toggleScraperTargetType(val) {
+  const lbl = document.getElementById('lbl-scraper-target-input');
+  const inp = document.getElementById('f-targets');
+  const hint = document.getElementById('hint-scraper-target-input');
+  if (val === 'tweet_commenters') {
+    if (lbl) lbl.innerHTML = 'Tweet URL or Tweet ID <span class="badge-required">required</span>';
+    if (inp) inp.placeholder = 'https://x.com/elonmusk/status/1820000000000000000';
+    if (hint) hint.textContent = 'Paste Tweet URL or ID. Streamingly scrapes users who commented on this tweet.';
+  } else if (val === 'target_tweets_commenters') {
+    if (lbl) lbl.innerHTML = 'Target Profile(s) to Scrape Comments From <span class="badge-required">required</span>';
+    if (inp) inp.placeholder = 'elonmusk, OpenAI, nasa';
+    if (hint) hint.textContent = 'Comma-separated usernames. Scrapes recent top tweets from these profiles and extracts their comment sections first.';
+  } else {
+    if (lbl) lbl.innerHTML = 'Target Profile(s) <span class="badge-required">required</span>';
+    if (inp) inp.placeholder = 'elonmusk, OpenAI, nasa (comma-separated)';
+    if (hint) hint.textContent = 'Comma-separated usernames. Streamingly scrapes followers from these profiles without saving CSV files.';
+  }
+}
+
+function toggleEditTargetType(val) {
+  const lbl = document.getElementById('lbl-edit-target-input');
+  const inp = document.getElementById('edit-c-source-profiles');
+  const hint = document.getElementById('hint-edit-target-input');
+  if (val === 'tweet_commenters') {
+    if (lbl) lbl.textContent = 'Tweet URL or Tweet ID';
+    if (inp) inp.placeholder = 'https://x.com/elonmusk/status/1820000000000000000';
+    if (hint) hint.textContent = 'Paste Tweet URL or ID. Streamingly scrapes users who commented on this tweet and tags them.';
+  } else if (val === 'target_tweets_commenters') {
+    if (lbl) lbl.textContent = 'Target Profile(s) to Scrape Comments From';
+    if (inp) inp.placeholder = 'elonmusk, OpenAI, nasa';
+    if (hint) hint.textContent = 'Comma-separated usernames. Scrapes recent top tweets posted by target profiles and extracts their comments first.';
+  } else {
+    if (lbl) lbl.textContent = 'Source Profile(s) to Scrape From';
+    if (inp) inp.placeholder = 'elonmusk, OpenAI, nasa';
+    if (hint) hint.textContent = 'Comma-separated usernames. Streamingly scrapes followers from these profiles.';
   }
 }
 
@@ -877,6 +919,11 @@ async function openEditCampaignModal(cid) {
   const modeVal = cfg.posting_mode || (cfg.update_list_banner !== false ? 'list_card' : 'list_static');
   set('edit-c-posting-mode', modeVal);
   toggleEditPostingMode(modeVal);
+
+  const targetTypeVal = cfg.target_type || 'followers';
+  set('edit-c-target-type', targetTypeVal);
+  toggleEditTargetType(targetTypeVal);
+
   set('edit-c-source-profiles', cfg.source_profiles || '');
   set('edit-c-min-followers', cfg.min_followers ?? 0);
   set('edit-c-max-followers', cfg.max_followers ?? 1000);
@@ -936,6 +983,7 @@ async function saveCampaignEdit() {
     ...prevConfig,
     account_ids,
     posting_mode: val('edit-c-posting-mode') || 'list',
+    target_type: val('edit-c-target-type') || 'followers',
     source_profiles: val('edit-c-source-profiles'),
     min_followers: parseInt(val('edit-c-min-followers') || '0'),
     max_followers: parseInt(val('edit-c-max-followers') || '1000'),

@@ -446,6 +446,165 @@ def _scrape_tweet_commenters(
         return [], False, 0
 
 
+def _scrape_target_tweets_commenters(
+    source_profiles: List[str],
+    accounts: List[dict],
+    limit: int,
+    log_fn,
+    min_followers: int = 0,
+    max_followers: int = 1000,
+    country_filter: str = "",
+    scrape_round: int = 1,
+    checked_candidates_set: set = None,
+) -> Tuple[List[str], bool, int]:
+    """
+    Scrape commenters/repliers from recent top tweets originally posted by target profiles.
+    Prioritizes recent comments under the target's top tweets.
+    """
+    if checked_candidates_set is None:
+        checked_candidates_set = set()
+
+    try:
+        conn = _db()
+        all_db_accs = conn.execute("SELECT id, auth_token, ct0, proxy FROM accounts").fetchall()
+        conn.close()
+        pool_accounts = [dict(a) for a in all_db_accs] if all_db_accs else accounts
+    except Exception:
+        pool_accounts = accounts if accounts else []
+
+    if not pool_accounts:
+        log_fn("ERROR", "No accounts available for scraping.")
+        return [], False, 0
+
+    try:
+        from Scweet import Scweet, ScweetConfig  # type: ignore
+
+        scrape_account = pool_accounts[(scrape_round - 1) % len(pool_accounts)]
+        cookies_entry = {
+            "auth_token": scrape_account["auth_token"],
+            "ct0": scrape_account["ct0"],
+        }
+        if scrape_account.get("proxy"):
+            cookies_entry["proxy"] = scrape_account["proxy"]
+
+        cfg = ScweetConfig(daily_requests_limit=100000, daily_tweets_limit=100000)
+        s = Scweet(cookies=cookies_entry, config=cfg)
+
+        country_keywords = [
+            alias.strip().lower()
+            for alias in (country_filter or "").split(",")
+            if alias.strip()
+        ]
+
+        candidate_items: List[dict] = []
+        raw_count = 0
+
+        for profile in source_profiles:
+            clean_user = profile.strip().lstrip("@")
+            if not clean_user:
+                continue
+
+            log_fn("INFO", f"Fetching recent top tweets posted by @{clean_user} to scrape recent comments...")
+            tweet_query = f"from:{clean_user} -is:retweet"
+            tweet_results = s.search(tweet_query, limit=15, save=False)
+            
+            tweet_ids = []
+            if tweet_results:
+                for tr in tweet_results:
+                    if isinstance(tr, dict):
+                        tid = str(tr.get("id") or tr.get("tweet_id") or tr.get("id_str") or "").strip()
+                        if tid and tid not in tweet_ids:
+                            tweet_ids.append(tid)
+
+            log_fn("INFO", f"Found {len(tweet_ids)} recent tweets by @{clean_user}. Scraping recent comments/replies...")
+
+            for tid in tweet_ids:
+                comment_results = s.search(f"conversation_id:{tid}", limit=max(limit, 50), save=False)
+                if not comment_results:
+                    comment_results = s.search(f"to:{clean_user}", limit=max(limit, 50), save=False)
+
+                if comment_results:
+                    raw_count += len(comment_results)
+                    for item in comment_results:
+                        if isinstance(item, dict):
+                            handle = (
+                                item.get("username")
+                                or item.get("screen_name")
+                                or item.get("handle")
+                                or ""
+                            ).strip().lstrip("@").lower()
+                            loc_str = str(item.get("location") or "").strip().lower()
+                            fc = item.get("followers_count") or item.get("followers") or item.get("followers_cnt")
+                            if fc is not None and max_followers and max_followers > 0:
+                                try:
+                                    val = int(fc)
+                                    if not (min_followers <= val <= max_followers):
+                                        continue
+                                except (ValueError, TypeError):
+                                    pass
+                            if handle and handle != clean_user.lower():
+                                candidate_items.append({"handle": handle, "bio_location": loc_str})
+                        elif isinstance(item, str):
+                            handle = item.strip().lstrip("@").lower()
+                            if handle and handle != clean_user.lower():
+                                candidate_items.append({"handle": handle, "bio_location": ""})
+
+        handles: List[str] = []
+        if country_keywords:
+            unprocessed_candidates = [c for c in candidate_items if c["handle"] not in checked_candidates_set]
+            if unprocessed_candidates:
+                from concurrent.futures import ThreadPoolExecutor, as_completed
+
+                scrape_auth = scrape_account["auth_token"]
+                scrape_ct0 = scrape_account["ct0"]
+                scrape_proxy = scrape_account.get("proxy")
+
+                def check_candidate(cand):
+                    h = cand["handle"]
+                    bio_loc = cand["bio_location"]
+                    cntry = fetch_account_based_in(scrape_auth, scrape_ct0, h, proxy=scrape_proxy, timeout=6, accounts_pool=pool_accounts)
+                    return h, bio_loc, cntry
+
+                with ThreadPoolExecutor(max_workers=3) as executor:
+                    futures = [executor.submit(check_candidate, item) for item in unprocessed_candidates]
+                    checked_count = 0
+                    for future in as_completed(futures):
+                        checked_count += 1
+                        handle, bio_loc, account_country = future.result()
+                        checked_candidates_set.add(handle)
+                        if account_country == "RATE_LIMITED":
+                            account_country = bio_loc
+                        if account_country:
+                            if any(ck in account_country.lower() for ck in country_keywords):
+                                handles.append(handle)
+                                log_fn("INFO", f"  [{checked_count}/{len(unprocessed_candidates)}] @{handle}: Location '{account_country}' ✓ MATCH")
+                            else:
+                                log_fn("DEBUG", f"  [{checked_count}/{len(unprocessed_candidates)}] @{handle}: Location '{account_country}' — skip")
+                        else:
+                            log_fn("DEBUG", f"  [{checked_count}/{len(unprocessed_candidates)}] @{handle}: Location unavailable — skip")
+        else:
+            handles = [c["handle"] for c in candidate_items if c["handle"] not in checked_candidates_set]
+
+        unique_handles = list(dict.fromkeys(handles))
+        log_fn("INFO", f"Scraped {raw_count} total comments from recent top tweets; {len(unique_handles)} matched criteria")
+        return unique_handles, True, raw_count
+
+    except Exception as exc:
+        err_type = classify_account_error(exc)
+        scrape_acc_id = accounts[0].get("id") if accounts else None
+        if err_type == "BLOCKED" and scrape_acc_id:
+            log_fn("ERROR", f"🚨 Scraper Account #{scrape_acc_id} was BLOCKED/SUSPENDED ({exc}). Automatically removing from database!")
+            _delete_account_from_db(scrape_acc_id)
+            if accounts: accounts.pop(0)
+        elif err_type == "RATE_LIMIT":
+            log_fn("WARNING", f"⏳ Scraper Account encountered RATE LIMIT / RESTRICTION ({exc}). Leaving account to cool down.")
+            if accounts: accounts[0]["cooldown_until"] = time.time() + 900
+        else:
+            log_fn("ERROR", f"Target tweet commenter scraping failed: {exc}")
+        logger.exception("_scrape_target_tweets_commenters failed")
+        return [], False, 0
+
+
 def _get_or_create_account_list(
     acc: dict, list_name: str, list_desc: str, poster, log_fn, campaign_id: int = 0
 ) -> tuple[str, str]:
@@ -670,6 +829,13 @@ class _Campaign:
                     if target_type == "tweet_commenters":
                         raw_handles, ok, raw_count = _scrape_tweet_commenters(
                             source_profiles_raw, accounts, limit_this_round, self._log, scrape_round=scrape_round
+                        )
+                    elif target_type == "target_tweets_commenters":
+                        raw_handles, ok, raw_count = _scrape_target_tweets_commenters(
+                            source_profiles, accounts, limit_this_round, self._log,
+                            min_followers=min_followers, max_followers=max_followers,
+                            country_filter=country_filter, scrape_round=scrape_round,
+                            checked_candidates_set=checked_candidates_set,
                         )
                     else:
                         raw_handles, ok, raw_count = _scrape_followers(

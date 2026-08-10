@@ -116,8 +116,17 @@
         <div class="card-title">Followers Scraper</div>
         <div class="form-grid form-grid-2">
           <div class="form-group span-2">
-            <label>Target Profile(s) <span class="badge-required">required</span></label>
+            <label>Scrape Target Type <span class="badge-required">required</span></label>
+            <select id="f-target-type" onchange="toggleScraperTargetType(this.value)">
+              <option value="followers" selected>👤 Followers of Target Profile(s)</option>
+              <option value="tweet_commenters">💬 Commenters / Replies of a Specific Tweet (URL or ID)</option>
+              <option value="target_tweets_commenters">🔥 Commenters on Target Profile's Recent/Top Tweets</option>
+            </select>
+          </div>
+          <div class="form-group span-2" id="group-scraper-target-input">
+            <label id="lbl-scraper-target-input">Target Profile(s) <span class="badge-required">required</span></label>
             <input type="text" id="f-targets" placeholder="elonmusk, OpenAI, nasa (comma-separated)"/>
+            <p class="field-hint" id="hint-scraper-target-input">Comma-separated usernames. Streamingly scrapes followers without saving CSV files on disk.</p>
           </div>
           <div class="form-group">
             <label>Limit</label>
@@ -130,9 +139,28 @@
               <span>to</span>
               <input type="number" id="f-max-followers" value="1000" min="0" placeholder="Max (1000)"/>
             </div>
-            <p class="field-hint">Defaults: 0 to 1,000 followers (filters out influencers & celebrities)</p>
+            <p class="field-hint">Defaults: 0 to 1,000 followers (filters out influencers &amp; celebrities)</p>
           </div>
-          <div class="form-group">
+          <div class="form-group span-2">
+            <label>Target Country Filter <span class="badge-optional">optional</span></label>
+            <select id="f-country" onchange="addCountryChip('f')">
+              <option value="" selected>➕ Select a Country to add to filter...</option>
+              <option value="Australia">🇦🇺 Australia</option>
+              <option value="Belgium">🇧🇪 Belgium</option>
+              <option value="Canada">🇨🇦 Canada</option>
+              <option value="Finland">🇫🇮 Finland</option>
+              <option value="France">🇫🇷 France</option>
+              <option value="Germany">🇩🇪 Germany</option>
+              <option value="Netherlands">🇳🇱 Netherlands</option>
+              <option value="New Zealand">🇳🇿 New Zealand</option>
+              <option value="Norway">🇳🇴 Norway</option>
+              <option value="United Kingdom">🇬🇧 United Kingdom</option>
+              <option value="United States">🇺🇸 United States</option>
+            </select>
+            <div id="f-country-tags" class="country-tags-container" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;"></div>
+            <p class="field-hint">Filter scraped profiles by verified 'Account based in' country location. Leave empty for All Countries.</p>
+          </div>
+          <div class="form-group span-2">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
               <label style="margin:0;">Accounts to use <span id="f-accounts-badge" style="font-size:12px;font-weight:600;margin-left:6px;"></span></label>
               <div style="display:flex;gap:6px;">
@@ -442,7 +470,8 @@
               <label>Scrape Target Type <span class="badge-required">required</span></label>
               <select id="c-target-type" onchange="toggleTargetType(this.value)">
                 <option value="followers" selected>👤 Followers of Profile(s)</option>
-                <option value="tweet_commenters">💬 Commenters / Replies of a Tweet (URL or ID)</option>
+                <option value="tweet_commenters">💬 Commenters / Replies of a Specific Tweet (URL or ID)</option>
+                <option value="target_tweets_commenters">🔥 Commenters on Target Profile's Recent/Top Tweets</option>
               </select>
             </div>
             <div class="form-group" id="group-target-input">
@@ -861,8 +890,17 @@ nohup python3 -m dashboard.app > app.log 2>&1 &
         </select>
       </div>
       <div class="form-group span-2">
-        <label>Source Profile(s) to Scrape From</label>
+        <label>Scrape Target Type</label>
+        <select id="edit-c-target-type" onchange="toggleEditTargetType(this.value)">
+          <option value="followers">👤 Followers of Profile(s)</option>
+          <option value="tweet_commenters">💬 Commenters / Replies of a Specific Tweet (URL or ID)</option>
+          <option value="target_tweets_commenters">🔥 Commenters on Target Profile's Recent/Top Tweets</option>
+        </select>
+      </div>
+      <div class="form-group span-2" id="group-edit-target-input">
+        <label id="lbl-edit-target-input">Source Profile(s) to Scrape From</label>
         <input type="text" id="edit-c-source-profiles" placeholder="elonmusk, OpenAI"/>
+        <p class="field-hint" id="hint-edit-target-input">Comma-separated usernames.</p>
       </div>
       <div class="form-group span-2">
         <label>Follower Count Range (Consumers vs Influencers)</label>
