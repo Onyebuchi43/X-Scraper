@@ -459,10 +459,9 @@
               </div>
               <p class="field-hint">Defaults: 0 to 1,000 followers (filters out influencers & celebrities)</p>
             </div>
-            <div class="form-group">
-              <label>Target Country Filter <span class="badge-optional">optional</span></label>
-              <select id="c-country">
-                <option value="" selected>🌐 All Countries (No Filter)</option>
+            <div class="form-group span-2">
+              <label>Target Country Filter <span class="badge-optional">optional</span> <span id="c-country-badge" style="font-size:12px;margin-left:6px;color:var(--text-3);">(All Countries / No Filter)</span></label>
+              <select id="c-country" multiple class="multi-select" style="height:140px;" onchange="updateCountryBadge('c-country')">
                 <option value="Afghanistan">🇦🇫 Afghanistan</option>
                 <option value="Albania">🇦🇱 Albania</option>
                 <option value="Algeria">🇩🇿 Algeria</option>
@@ -638,7 +637,7 @@
                 <option value="Zambia">🇿🇲 Zambia</option>
                 <option value="Zimbabwe">🇿🇼 Zimbabwe</option>
               </select>
-              <p class="field-hint">Filters by X's verified "Account based in" country — not the user-typed location.</p>
+              <p class="field-hint">Hold Ctrl/Cmd or tap to select multiple target countries. Leave empty to target All Countries.</p>
             </div>
             <div class="form-group">
               <label>Campaign Execution Mode <span class="badge-required">required</span></label>
@@ -838,9 +837,8 @@ nohup python3 -m dashboard.app > app.log 2>&1 &
         </div>
       </div>
       <div class="form-group span-2">
-        <label>Target Country Filter</label>
-        <select id="edit-c-country">
-          <option value="">🌐 All Countries (No Filter)</option>
+        <label>Target Country Filter <span id="edit-c-country-badge" style="font-size:12px;margin-left:6px;color:var(--text-3);">(All Countries / No Filter)</span></label>
+        <select id="edit-c-country" multiple class="multi-select" style="height:140px;" onchange="updateCountryBadge('edit-c-country')">
           <option value="Afghanistan">🇦🇫 Afghanistan</option>
           <option value="Albania">🇦🇱 Albania</option>
           <option value="Algeria">🇩🇿 Algeria</option>
@@ -1015,7 +1013,8 @@ nohup python3 -m dashboard.app > app.log 2>&1 &
           <option value="Zambia">🇿🇲 Zambia</option>
           <option value="Zimbabwe">🇿🇼 Zimbabwe</option>
         </select>
-        <p class="field-hint">Filters by X's verified "Account based in" country.</p>
+        <p class="field-hint">Hold Ctrl/Cmd or tap to select multiple target countries. Leave empty to target All Countries.</p>
+      </div>
       <div class="form-group span-2">
         <label>Post Message Template</label>
         <textarea id="edit-c-post-template" rows="3"></textarea>

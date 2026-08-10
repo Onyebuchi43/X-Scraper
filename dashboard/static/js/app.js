@@ -146,6 +146,20 @@ function toggleCustomCountry(prefix) {
   customInp.style.display = sel.value === 'custom' ? 'block' : 'none';
 }
 
+function updateCountryBadge(id) {
+  const el = document.getElementById(id);
+  const badge = document.getElementById(`${id}-badge`);
+  if (!el || !badge) return;
+  const selected = Array.from(el.selectedOptions).map(o => o.value).filter(v => v !== '');
+  if (selected.length === 0) {
+    badge.textContent = '(All Countries / No Filter)';
+    badge.style.color = 'var(--text-3)';
+  } else {
+    badge.textContent = `(${selected.length} selected: ${selected.join(', ')})`;
+    badge.style.color = '#38ef7d';
+  }
+}
+
 function togglePostingMode(mode) {
   const normalGroup = document.getElementById('group-normal-image');
   const listFields = document.querySelectorAll('.group-list-field');
@@ -443,8 +457,9 @@ async function startCampaign() {
   if (!display_name) { toast('Name is required in Step 1', 'error'); return; }
   if (!body_text)    { toast('Body text is required in Step 1', 'error'); return; }
 
-  let countryVal = val('c-country');
-  if (countryVal === 'custom') countryVal = val('c-custom-country');
+  const countryEl = document.getElementById('c-country');
+  const selectedCountries = countryEl ? Array.from(countryEl.selectedOptions).map(o => o.value).filter(v => v !== '') : [];
+  let countryVal = selectedCountries.join(', ');
 
   const posting_mode = val('c-posting-mode') || 'list_card';
   let normal_media_data = null;
@@ -773,20 +788,13 @@ async function openEditCampaignModal(cid) {
   set('edit-c-max-followers', cfg.max_followers ?? 1000);
 
   const cVal = cfg.country_filter || '';
+  const selectedList = cVal.split(',').map(s => s.trim().toLowerCase()).filter(s => s);
   const editCountrySel = document.getElementById('edit-c-country');
   if (editCountrySel) {
-    const hasOpt = Array.from(editCountrySel.options).some(o => o.value === cVal);
-    if (hasOpt) {
-      set('edit-c-country', cVal);
-      toggleCustomCountry('edit-c');
-    } else if (cVal) {
-      set('edit-c-country', 'custom');
-      toggleCustomCountry('edit-c');
-      set('edit-c-custom-country', cVal);
-    } else {
-      set('edit-c-country', '');
-      toggleCustomCountry('edit-c');
-    }
+    Array.from(editCountrySel.options).forEach(o => {
+      o.selected = selectedList.includes(o.value.toLowerCase());
+    });
+    updateCountryBadge('edit-c-country');
   }
 
   set('edit-c-post-template', cfg.post_template || '');
@@ -801,6 +809,7 @@ async function openEditCampaignModal(cid) {
   set('edit-c-max-posts', cfg.max_posts_per_account || 30);
   set('edit-c-cooldown-mins', cfg.cooldown_minutes || 30);
 
+  // Populate accounts multi-select
   const accSel = document.getElementById('edit-c-accounts');
   if (accSel) {
     const selectedIds = cfg.account_ids || [];
@@ -829,16 +838,18 @@ async function saveCampaignEdit() {
   const account_ids = accSel ? Array.from(accSel.selectedOptions).map(o => parseInt(o.value)) : [];
   if (!account_ids.length) { toast('Select at least one posting account', 'error'); return; }
 
+  // Fetch current config to merge
   const current = await api(`/api/campaigns/${editingCampaignId}`);
   const prevConfig = current.config || {};
 
-  let editCountryVal = val('edit-c-country');
-  if (editCountryVal === 'custom') editCountryVal = val('edit-c-custom-country');
+  const editCountrySel = document.getElementById('edit-c-country');
+  const editSelectedCountries = editCountrySel ? Array.from(editCountrySel.selectedOptions).map(o => o.value).filter(v => v !== '') : [];
+  const editCountryVal = editSelectedCountries.join(', ');
 
   const updatedConfig = {
     ...prevConfig,
     account_ids,
-    posting_mode: val('edit-c-posting-mode') || 'list_card',
+    posting_mode: val('edit-c-posting-mode') || 'list',
     source_profiles: val('edit-c-source-profiles'),
     min_followers: parseInt(val('edit-c-min-followers') || '0'),
     max_followers: parseInt(val('edit-c-max-followers') || '1000'),
