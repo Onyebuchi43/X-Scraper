@@ -353,6 +353,60 @@ def _scrape_tweet_commenters(
         return [], False, 0
 
 
+def _get_or_create_account_list(
+    acc: dict, list_name: str, list_desc: str, poster, log_fn
+) -> tuple[str, str]:
+    """
+    Get existing list owned by `acc` for `list_name` or create a new list for `acc`.
+    Returns (list_id, list_url).
+    """
+    acc_id = acc.get("id", 0)
+    acc_label = f"Account #{acc_id}" if acc_id else "Account"
+
+    # 1. Check DB first for an existing list for this account and name
+    try:
+        conn = sqlite3.connect(DASH_DB)
+        row = conn.execute(
+            "SELECT list_id, list_url FROM lists WHERE account_id=? AND list_name=? ORDER BY id DESC LIMIT 1",
+            (acc_id, list_name),
+        ).fetchone()
+        conn.close()
+        if row and row[0]:
+            return str(row[0]), str(row[1])
+    except Exception:
+        pass
+
+    # 2. Check Twitter account owned lists if not found in DB
+    try:
+        owned_lists = poster.get_user_lists(
+            acc["auth_token"], acc["ct0"], proxy=acc.get("proxy")
+        )
+        for ol in owned_lists:
+            if ol.get("list_name", "").strip().lower() == list_name.strip().lower():
+                lid = ol["list_id"]
+                lurl = ol["list_url"]
+                _save_list_to_db(acc_id, lid, lurl, list_name)
+                return lid, lurl
+    except Exception as exc:
+        logger.warning("Failed to query owned lists for %s: %s", acc_label, exc)
+
+    # 3. Create a new list for this account
+    try:
+        log_fn("INFO", f"Creating campaign list '{list_name}' for {acc_label}...")
+        list_info = poster.create_list(
+            acc["auth_token"], acc["ct0"], list_name, list_desc,
+            proxy=acc.get("proxy"),
+        )
+        lid = list_info["list_id"]
+        lurl = list_info["list_url"]
+        _save_list_to_db(acc_id, lid, lurl, list_name)
+        log_fn("SUCCESS", f"Campaign list created for {acc_label}: {lurl}")
+        return lid, lurl
+    except Exception as exc:
+        log_fn("WARNING", f"Could not create list for {acc_label}: {exc}")
+        return "", ""
+
+
 # ── Campaign thread ────────────────────────────────────────────────────────────
 class _Campaign:
     def __init__(self, campaign_id: int, config: dict):
@@ -395,7 +449,6 @@ class _Campaign:
             return
 
         target_type: str = cfg.get("target_type", "followers")
-        # ── Source profiles or Tweet URL/ID to scrape from ─────────────────────
         source_profiles_raw: str = cfg.get("source_profiles", "")
         source_profiles: list[str] = [
             p.strip().lstrip("@")
@@ -409,12 +462,10 @@ class _Campaign:
 
         self._log("INFO", f"Target type: {target_type} | Target: {source_profiles_raw}")
 
-        # ── Follower range filtering ──────────────────────────────────────────
         min_followers: int = int(cfg.get("min_followers", 0))
         max_followers: int = int(cfg.get("max_followers", 1000))
         self._log("INFO", f"Follower range filter: {min_followers} to {max_followers} followers")
 
-        # ── Posting & scraping settings ───────────────────────────────────────
         tags_per_post: int = max(1, min(5, int(cfg.get("tags_per_post", 3))))
         post_template: str = cfg.get("post_template", "Hello {taggings}")
         min_delay: int = int(cfg.get("min_delay_minutes", 8)) * 60
@@ -425,6 +476,8 @@ class _Campaign:
         body_text_tpl: str = cfg.get("body_text", "")
         username: str = cfg.get("username", "")
         update_list_banner: bool = cfg.get("update_list_banner", True)
+        list_name: str = cfg.get("list_name", "Official Notice")
+        list_desc: str = cfg.get("list_description", "")
         avatar_bytes: Optional[bytes] = None
 
         avatar_path = cfg.get("avatar_path")
@@ -435,93 +488,8 @@ class _Campaign:
             except Exception as exc:
                 self._log("WARNING", f"Could not read avatar image: {exc}")
 
-        # ── Load already-tagged usernames (deduplication set) ─────────────────
         already_tagged: set = _load_already_tagged(campaign_id)
         self._log("INFO", f"Previously tagged usernames in this campaign: {len(already_tagged)}")
-
-        # ── Create or Reuse ONE shared list for the campaign ─────────────────
-        list_name: str = cfg.get("list_name", "Official Notice")
-        list_desc: str = cfg.get("list_description", "")
-        shared_list_url: str = ""
-        shared_list_id: str = ""
-
-        first_account = accounts[0]
-        first_acc_id = first_account.get("id", 0)
-
-        # 1. Check DB first for an existing list for this account and name
-        try:
-            conn = sqlite3.connect(DASH_DB)
-            row = conn.execute(
-                "SELECT list_id, list_url FROM lists WHERE account_id=? AND list_name=? ORDER BY id DESC LIMIT 1",
-                (first_acc_id, list_name),
-            ).fetchone()
-            conn.close()
-            if row and row[0]:
-                shared_list_id = row[0]
-                shared_list_url = row[1]
-        except Exception:
-            pass
-
-        # 2. Check Twitter account owned lists if not found in DB
-        if not shared_list_id:
-            try:
-                owned_lists = poster.get_user_lists(
-                    first_account["auth_token"], first_account["ct0"], proxy=first_account.get("proxy")
-                )
-                for ol in owned_lists:
-                    if ol.get("list_name", "").strip().lower() == list_name.strip().lower():
-                        shared_list_id = ol["list_id"]
-                        shared_list_url = ol["list_url"]
-                        _save_list_to_db(first_acc_id, shared_list_id, shared_list_url, list_name)
-                        break
-            except Exception as exc:
-                logger.warning("Failed to query owned lists: %s", exc)
-
-        if shared_list_id:
-            self._log("INFO", f"Reusing existing campaign list '{list_name}' ({shared_list_url})")
-        else:
-            try:
-                self._log("INFO", f"Creating campaign list '{list_name}'...")
-                list_info = poster.create_list(
-                    first_account["auth_token"], first_account["ct0"], list_name, list_desc,
-                    proxy=first_account.get("proxy"),
-                )
-                shared_list_id  = list_info["list_id"]
-                shared_list_url = list_info["list_url"]
-                _save_list_to_db(
-                    first_acc_id,
-                    shared_list_id,
-                    shared_list_url,
-                    list_name,
-                )
-                self._log("SUCCESS", f"Campaign list created: {shared_list_url}")
-            except Exception as exc:
-                self._log("ERROR", f"List creation failed: {exc}")
-
-        if shared_list_id and not update_list_banner and display_name and body_text_tpl:
-            static_body = body_text_tpl.replace("{taggings}", "").strip()
-            try:
-                static_img = image_editor.generate_tweet_card_screenshot(
-                    name=display_name,
-                    username=username or display_name.lower().replace(" ", ""),
-                    body_text=static_body,
-                    avatar_bytes=avatar_bytes,
-                    timestamp=cfg.get("timestamp") or "3:51 PM · 8/4/26",
-                    views=cfg.get("views") or "3M",
-                    replies=cfg.get("replies") or "2.8K",
-                    retweets=cfg.get("retweets") or "4.2K",
-                    likes=cfg.get("likes") or "54K",
-                )
-                self._log("INFO", "Setting initial static list profile picture...")
-                ok = poster.set_list_banner(
-                    first_account["auth_token"], first_account["ct0"],
-                    shared_list_id, static_img,
-                    proxy=first_account.get("proxy"),
-                )
-                if ok:
-                    self._log("SUCCESS", "Initial static list profile picture set successfully")
-            except Exception as exc:
-                self._log("WARNING", f"Could not set static list profile picture: {exc}")
 
         # ── Posting loop with live-scraping and deduplication ─────────────────
         account_post_counts: dict[int, int] = {i: 0 for i in range(len(accounts))}
@@ -544,7 +512,6 @@ class _Campaign:
                 acc_id = acc.get("id")
                 acc_key = acc_id or account_i
 
-                # Skip account if cooling down or max limit reached
                 cooldown_until = get_account_cooldown(acc_id) if acc_id else acc.get("cooldown_until", 0)
                 if cooldown_until > time.time():
                     account_i += 1
@@ -583,10 +550,13 @@ class _Campaign:
                             f"Scrape round {scrape_round} encountered an issue or restriction. Waiting 60s before retrying…"
                         )
                         time.sleep(60)
-                        scrape_round -= 1  # retry this round
+                        scrape_round -= 1
                         continue
 
                     fresh = [h for h in raw_handles if h.lower() not in already_tagged]
+                    # Shuffle fresh scraped followers to pick usernames at random!
+                    random.shuffle(fresh)
+
                     self._log(
                         "INFO",
                         f"Round {scrape_round}: {raw_count} total scraped from Twitter, {len(raw_handles)} matched criteria ({min_followers}-{max_followers}), {len(fresh)} new (not yet tagged)"
@@ -618,6 +588,11 @@ class _Campaign:
                 acc_label = f"Account #{account_i + 1}" + (f" (ID {acc_id})" if acc_id else "")
                 taggings = " ".join(f"@{h}" for h in batch)
 
+                # ── Get or create a list owned by THIS account ───────────────
+                acc_list_id, acc_list_url = _get_or_create_account_list(
+                    acc, list_name, list_desc, poster, self._log
+                )
+
                 # ── Update list banner image ─────────────────────────────────
                 if update_list_banner and display_name and body_text_tpl:
                     if "{taggings}" in body_text_tpl:
@@ -637,26 +612,42 @@ class _Campaign:
                             retweets=cfg.get("retweets") or "4.2K",
                             likes=cfg.get("likes") or "54K",
                         )
-                        if shared_list_id and batch_image_bytes:
+                        if acc_list_id and batch_image_bytes:
                             ok = poster.set_list_banner(
                                 acc["auth_token"], acc["ct0"],
-                                shared_list_id, batch_image_bytes,
+                                acc_list_id, batch_image_bytes,
                                 proxy=acc.get("proxy"),
                             )
                             if not ok:
-                                self._log("WARNING", "Could not update list profile picture")
+                                self._log("WARNING", f"Could not update list profile picture for {acc_label}. Creating fresh list fallback...")
+                                try:
+                                    fresh_name = f"{list_name[:20]}_{int(time.time()) % 1000}"
+                                    list_info = poster.create_list(
+                                        acc["auth_token"], acc["ct0"], fresh_name, list_desc,
+                                        proxy=acc.get("proxy"),
+                                    )
+                                    acc_list_id = list_info["list_id"]
+                                    acc_list_url = list_info["list_url"]
+                                    _save_list_to_db(acc_id, acc_list_id, acc_list_url, list_name)
+                                    poster.set_list_banner(
+                                        acc["auth_token"], acc["ct0"],
+                                        acc_list_id, batch_image_bytes,
+                                        proxy=acc.get("proxy"),
+                                    )
+                                except Exception as exc:
+                                    self._log("WARNING", f"Fallback list creation for {acc_label} failed: {exc}")
                     except Exception as exc:
-                        self._log("WARNING", f"Could not generate/update card image: {exc}")
+                        self._log("WARNING", f"Could not generate card image for {acc_label}: {exc}")
 
                 # ── Build tweet text & post ───────────────────────────────────
                 tweet_text = post_template.replace("{taggings}", taggings)
                 for placeholder in ("{link}", "{list_url}", "{list}"):
                     if placeholder in tweet_text:
-                        tweet_text = tweet_text.replace(placeholder, shared_list_url)
+                        tweet_text = tweet_text.replace(placeholder, acc_list_url)
                         break
                 else:
-                    if shared_list_url and shared_list_url not in tweet_text:
-                        tweet_text = f"{tweet_text}\n{shared_list_url}"
+                    if acc_list_url and acc_list_url not in tweet_text:
+                        tweet_text = f"{tweet_text}\n{acc_list_url}"
 
                 tweet_text = tweet_text[:280]
 
