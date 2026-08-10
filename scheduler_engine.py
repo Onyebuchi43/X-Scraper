@@ -1018,8 +1018,26 @@ class _Campaign:
                     continue
 
                 # ── Pop a batch from the queue ────────────────────────────────
-                batch = queue[:tags_per_post]
+                batch_raw = queue[:tags_per_post]
                 queue = queue[tags_per_post:]
+
+                # Pre-Tag Safety Shield: Verify every handle in batch matches follower range before posting!
+                batch = []
+                for h in batch_raw:
+                    if max_followers and max_followers > 0:
+                        try:
+                            from poster import get_profile_info
+                            pinfo = get_profile_info(auth_tok, csrf_tok, h, proxy=acc_proxy)
+                            fc = pinfo.get("followers_count", 0) if pinfo else 0
+                            if not (min_followers <= fc <= max_followers):
+                                self._log("WARNING", f"Pre-tag safety shield: @{h} has {fc} followers (outside range {min_followers}-{max_followers}) — dropping from tag list")
+                                continue
+                        except Exception as p_err:
+                            self._log("DEBUG", f"Pre-tag safety check error for @{h}: {p_err}")
+                    batch.append(h)
+
+                if not batch:
+                    continue
 
                 acc_label = f"Account #{account_i + 1}" + (f" (ID {acc_id})" if acc_id else "")
                 taggings = " ".join(f"@{h}" for h in batch)
