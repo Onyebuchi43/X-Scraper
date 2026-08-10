@@ -114,16 +114,27 @@ def classify_account_error(error: Exception | str, status_code: Optional[int] = 
 def _get_httpx_proxy_url(proxy: Optional[str | dict]) -> Optional[str]:
     if not proxy:
         return None
-    try:
-        from Scweet.http_utils import normalize_http_proxies
-        normalized = normalize_http_proxies(proxy)
-        if normalized:
-            return normalized.get("https") or normalized.get("http")
-    except Exception:
-        pass
-    if isinstance(proxy, str) and proxy.strip():
-        return proxy.strip()
-    return None
+    url_str = ""
+    if isinstance(proxy, dict):
+        url_str = proxy.get("http") or proxy.get("https") or ""
+    elif isinstance(proxy, str):
+        url_str = proxy.strip()
+
+    if not url_str:
+        return None
+
+    if not url_str.startswith("http://") and not url_str.startswith("https://") and not url_str.startswith("socks5://"):
+        parts = url_str.split(":")
+        if len(parts) == 4:
+            return f"http://{parts[2]}:{parts[3]}@{parts[0]}:{parts[1]}"
+        elif len(parts) == 2:
+            return f"http://{url_str}"
+        return f"http://{url_str}"
+
+    if url_str.startswith("https://"):
+        return "http://" + url_str[8:]
+
+    return url_str
 
 
 # ── Profile lookup ─────────────────────────────────────────────────────────────
