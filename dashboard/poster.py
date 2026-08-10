@@ -73,7 +73,8 @@ def _cookies(auth_token: str, ct0: str) -> dict:
 def classify_account_error(error: Exception | str, status_code: Optional[int] = None) -> str:
     """
     Categorize account errors:
-      - "BLOCKED": Account is blocked, suspended, locked, unauthorized (401, 403 with suspension/bad credentials) -> auto-remove from DB
+      - "PROXY_ERROR": Proxy connection, authentication, or protocol failure -> report specific proxy error
+      - "BLOCKED": Account is blocked, suspended, locked, unauthorized (401, 403) -> auto-remove from DB
       - "RATE_LIMIT": Account is rate-limited or restricted temporarily (429, 226, daily limit) -> cool down, do not remove
       - "OTHER": General error
     """
@@ -85,6 +86,15 @@ def classify_account_error(error: Exception | str, status_code: Optional[int] = 
             err_str += " " + (error.response.text or "").lower()
         except Exception:
             pass
+
+    proxy_keywords = [
+        "proxyerror", "proxyconnectionerror", "proxy connection", "proxy timeout",
+        "cannot connect to proxy", "proxy authentication", "407 proxy", "proxy auth",
+        "socks", "connecterror", "connection refused", "proxy fail", "unexpected_eof_while_reading",
+        "tunnel connection failed", "proxy connection refused", "invalidurl", "nonnumeric port"
+    ]
+    if isinstance(error, (httpx.ProxyError, httpx.ConnectError, httpx.ConnectTimeout)) or any(k in err_str for k in proxy_keywords) or code == 407:
+        return "PROXY_ERROR"
 
     if code in (429, 226) or any(k in err_str for k in ("rate limit", "too many requests", "daily limit", "throttled", "over daily", "226", "automated", "spam", "protect our users")):
         return "RATE_LIMIT"

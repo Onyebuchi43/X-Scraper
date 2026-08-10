@@ -863,6 +863,16 @@ class _Campaign:
                             _set_status(campaign_id, "error")
                             return
                         continue
+                    elif err_type == "PROXY_ERROR":
+                        cooldown_mins = int(cfg.get("cooldown_minutes", 30))
+                        proxy_str = acc.get("proxy") or "configured proxy"
+                        self._log("ERROR", f"🔌 {acc_label} PROXY FAILURE: Could not connect via proxy '{proxy_str}' ({err_msg}). Please check or update this account's proxy in the Accounts tab.")
+                        if acc_id:
+                            set_account_cooldown(acc_id, cooldown_mins * 60)
+                        acc["cooldown_until"] = time.time() + (cooldown_mins * 60)
+                        queue = batch + queue
+                        account_i += 1
+                        continue
                     else:
                         cooldown_mins = int(cfg.get("cooldown_minutes", 30))
                         self._log("WARNING", f"⏳ {acc_label} post did not complete ({err_msg}). Cooling down account for {cooldown_mins} minutes to protect account safety.")
