@@ -456,6 +456,7 @@ def _scrape_tweet_commenters(
                 break
 
         handles: List[str] = []
+        scrape_account = pool_accounts[(scrape_round - 1) % len(pool_accounts)]
         if country_keywords:
             unprocessed_candidates = [c for c in candidate_items if c["handle"] not in checked_candidates_set]
             if unprocessed_candidates:
@@ -634,6 +635,7 @@ def _scrape_target_tweets_commenters(
                                 candidate_items.append({"handle": handle, "bio_location": ""})
 
         handles: List[str] = []
+        scrape_account = pool_accounts[(scrape_round - 1) % len(pool_accounts)]
         if country_keywords:
             unprocessed_candidates = [c for c in candidate_items if c["handle"] not in checked_candidates_set]
             if unprocessed_candidates:
