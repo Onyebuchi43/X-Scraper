@@ -239,24 +239,15 @@ def _scrape_followers(
                             pass
 
                     if country_keywords:
-                        primary_loc = str(
+                        # Use only the profile location field — never bio.
+                        # If location is missing, skip this profile.
+                        profile_loc = str(
                             item.get("location")
                             or item.get("user_location")
                             or item.get("profile_location")
-                            or item.get("account_based_in")
-                            or item.get("account_location")
                             or ""
                         ).strip().lower()
-                        if primary_loc:
-                            target_loc = primary_loc
-                        else:
-                            target_loc = str(
-                                item.get("description")
-                                or item.get("bio")
-                                or item.get("profile_bio")
-                                or ""
-                            ).strip().lower()
-                        if not target_loc or not any(ck in target_loc for ck in country_keywords):
+                        if not profile_loc or not any(ck in profile_loc for ck in country_keywords):
                             continue
                 elif isinstance(item, str):
                     handle = item.strip().lstrip("@").lower()
