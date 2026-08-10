@@ -427,14 +427,18 @@ def _scrape_tweet_commenters(
                 raw_count += len(results)
                 for item in results:
                     if isinstance(item, dict):
+                        user_obj = item.get("user") or item.get("author") or item
+                        if isinstance(user_obj, str): user_obj = item
                         handle = (
-                            item.get("username")
+                            user_obj.get("username")
+                            or user_obj.get("screen_name")
+                            or user_obj.get("handle")
+                            or item.get("username")
                             or item.get("screen_name")
-                            or item.get("handle")
                             or ""
                         ).strip().lstrip("@").lower()
-                        loc_str = str(item.get("location") or "").strip().lower()
-                        fc = item.get("followers_count") or item.get("followers") or item.get("followers_cnt")
+                        loc_str = str(user_obj.get("location") or item.get("location") or "").strip().lower()
+                        fc = user_obj.get("followers_count") or user_obj.get("followers") or user_obj.get("followers_cnt")
                         if fc is not None and max_followers and max_followers > 0:
                             try:
                                 val = int(fc)
@@ -603,14 +607,18 @@ def _scrape_target_tweets_commenters(
                     raw_count += len(comment_results)
                     for item in comment_results:
                         if isinstance(item, dict):
+                            user_obj = item.get("user") or item.get("author") or item
+                            if isinstance(user_obj, str): user_obj = item
                             handle = (
-                                item.get("username")
+                                user_obj.get("username")
+                                or user_obj.get("screen_name")
+                                or user_obj.get("handle")
+                                or item.get("username")
                                 or item.get("screen_name")
-                                or item.get("handle")
                                 or ""
                             ).strip().lstrip("@").lower()
-                            loc_str = str(item.get("location") or "").strip().lower()
-                            fc = item.get("followers_count") or item.get("followers") or item.get("followers_cnt")
+                            loc_str = str(user_obj.get("location") or item.get("location") or "").strip().lower()
+                            fc = user_obj.get("followers_count") or user_obj.get("followers") or user_obj.get("followers_cnt")
                             if fc is not None and max_followers and max_followers > 0:
                                 try:
                                     val = int(fc)
