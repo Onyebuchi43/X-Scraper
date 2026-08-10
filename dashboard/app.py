@@ -134,6 +134,10 @@ def _init_db() -> None:
         );
         CREATE UNIQUE INDEX IF NOT EXISTS idx_camp_tagged ON campaign_tagged(campaign_id, username);
     """)
+    try:
+        conn.execute("ALTER TABLE lists ADD COLUMN post_count INTEGER DEFAULT 0")
+    except Exception:
+        pass
     conn.commit()
     conn.close()
 

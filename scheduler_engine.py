@@ -413,21 +413,63 @@ def _scrape_tweet_commenters(
 
 
 def _get_or_create_account_list(
-    acc: dict, list_name: str, list_desc: str, poster, log_fn
+    acc: dict, list_name: str, list_desc: str, poster, log_fn, campaign_id: int = 0
 ) -> tuple[str, str]:
     """
-    Get existing list owned by `acc` for `list_name` or create a new list for `acc`.
+    Dynamic List Rotation:
+    Gets or creates a list owned by `acc`.
+    Rotates to a fresh list per campaign run session (or when list reaches 10 posts)
+    to bypass Twitter's link preview card caching and force native List Card widget updates.
+    Recycles existing lists if create_list rate limit is hit.
     Returns (list_id, list_url).
     """
     acc_id = acc.get("id", 0)
     acc_label = f"Account #{acc_id}" if acc_id else "Account"
+    session_list_name = f"{list_name}_{campaign_id}" if campaign_id else list_name
 
-    # 1. Check DB first for an existing list for this account and name
+    # 1. Check DB for active list for this session that has posted < 10 times
     try:
         conn = sqlite3.connect(DASH_DB)
         row = conn.execute(
-            "SELECT list_id, list_url FROM lists WHERE account_id=? AND list_name=? ORDER BY id DESC LIMIT 1",
-            (acc_id, list_name),
+            """SELECT list_id, list_url, post_count FROM lists 
+               WHERE account_id=? AND list_name=? 
+               ORDER BY id DESC LIMIT 1""",
+            (acc_id, session_list_name),
+        ).fetchone()
+        conn.close()
+        if row and row[0]:
+            pcount = row[2] if len(row) > 2 and row[2] is not None else 0
+            if pcount < 10:
+                conn = sqlite3.connect(DASH_DB)
+                conn.execute("UPDATE lists SET post_count = COALESCE(post_count, 0) + 1 WHERE list_id=?", (row[0],))
+                conn.commit()
+                conn.close()
+                return str(row[0]), str(row[1])
+    except Exception:
+        pass
+
+    # 2. Try creating a fresh list for this session/batch
+    fresh_title = f"{list_name[:20]}"
+    try:
+        log_fn("INFO", f"Creating fresh session list '{fresh_title}' for {acc_label} to ensure fresh List Card preview...")
+        list_info = poster.create_list(
+            acc["auth_token"], acc["ct0"], fresh_title, list_desc,
+            proxy=acc.get("proxy"),
+        )
+        lid = list_info["list_id"]
+        lurl = list_info["list_url"]
+        _save_list_to_db(acc_id, lid, lurl, session_list_name)
+        log_fn("SUCCESS", f"Fresh campaign list created for {acc_label}: {lurl}")
+        return lid, lurl
+    except Exception as exc:
+        log_fn("WARNING", f"Could not create new list for {acc_label} ({exc}). Recycling existing list fallback...")
+
+    # 3. Fallback: Recycle existing list from DB or Twitter account if create_list rate limit hit
+    try:
+        conn = sqlite3.connect(DASH_DB)
+        row = conn.execute(
+            "SELECT list_id, list_url FROM lists WHERE account_id=? ORDER BY id DESC LIMIT 1",
+            (acc_id,),
         ).fetchone()
         conn.close()
         if row and row[0]:
@@ -435,35 +477,20 @@ def _get_or_create_account_list(
     except Exception:
         pass
 
-    # 2. Check Twitter account owned lists if not found in DB
     try:
         owned_lists = poster.get_user_lists(
             acc["auth_token"], acc["ct0"], proxy=acc.get("proxy")
         )
-        for ol in owned_lists:
-            if ol.get("list_name", "").strip().lower() == list_name.strip().lower():
-                lid = ol["list_id"]
-                lurl = ol["list_url"]
-                _save_list_to_db(acc_id, lid, lurl, list_name)
-                return lid, lurl
+        if owned_lists:
+            ol = owned_lists[0]
+            lid = ol["list_id"]
+            lurl = ol["list_url"]
+            _save_list_to_db(acc_id, lid, lurl, list_name)
+            return lid, lurl
     except Exception as exc:
-        logger.warning("Failed to query owned lists for %s: %s", acc_label, exc)
+        logger.warning("Failed to query owned lists for fallback %s: %s", acc_label, exc)
 
-    # 3. Create a new list for this account
-    try:
-        log_fn("INFO", f"Creating campaign list '{list_name}' for {acc_label}...")
-        list_info = poster.create_list(
-            acc["auth_token"], acc["ct0"], list_name, list_desc,
-            proxy=acc.get("proxy"),
-        )
-        lid = list_info["list_id"]
-        lurl = list_info["list_url"]
-        _save_list_to_db(acc_id, lid, lurl, list_name)
-        log_fn("SUCCESS", f"Campaign list created for {acc_label}: {lurl}")
-        return lid, lurl
-    except Exception as exc:
-        log_fn("WARNING", f"Could not create list for {acc_label}: {exc}")
-        return "", ""
+    return "", ""
 
 
 # ── Campaign thread ────────────────────────────────────────────────────────────
@@ -738,13 +765,12 @@ class _Campaign:
                 else:
                     # ── List Post Mode (list_card or list_static) ────────────────
                     acc_list_id, acc_list_url = _get_or_create_account_list(
-                        acc, list_name, list_desc, poster, self._log
+                        acc, list_name, list_desc, poster, self._log, campaign_id=campaign_id
                     )
 
                     should_update_banner = (posting_mode_effective == "list_card") or (update_list_banner and posting_mode == "list")
 
-                    # ── Update list banner image & attach image directly ──────
-                    list_media_id = None
+                    # ── Update list banner image ─────────────────────────────
                     if should_update_banner and display_name and body_text_tpl:
                         if "{taggings}" in body_text_tpl:
                             card_body = body_text_tpl.replace("{taggings}", taggings)
@@ -763,23 +789,12 @@ class _Campaign:
                                 retweets=cfg.get("retweets") or "4.2K",
                                 likes=cfg.get("likes") or "54K",
                             )
-                            if batch_image_bytes:
-                                # 1. Upload media directly for tweet attachment to guarantee image accuracy & bypass Twitter link preview caching
-                                try:
-                                    up_res = poster.upload_media(acc["auth_token"], acc["ct0"], batch_image_bytes, proxy=acc.get("proxy"))
-                                    list_media_id = up_res.get("media_id")
-                                    if list_media_id:
-                                        self._log("INFO", f"Uploaded fresh card image for {acc_label} list post (Media ID: {list_media_id})")
-                                except Exception as exc:
-                                    self._log("WARNING", f"Media upload for list card failed for {acc_label}: {exc}")
-
-                                # 2. Also update List banner image on Twitter
-                                if acc_list_id:
-                                    poster.set_list_banner(
-                                        acc["auth_token"], acc["ct0"],
-                                        acc_list_id, batch_image_bytes,
-                                        proxy=acc.get("proxy"),
-                                    )
+                            if acc_list_id and batch_image_bytes:
+                                poster.set_list_banner(
+                                    acc["auth_token"], acc["ct0"],
+                                    acc_list_id, batch_image_bytes,
+                                    proxy=acc.get("proxy"),
+                                )
                         except Exception as exc:
                             self._log("WARNING", f"Could not generate card image for {acc_label}: {exc}")
 
@@ -795,7 +810,7 @@ class _Campaign:
 
                     tweet_text = tweet_text[:280]
                     self._log("POST", f"{acc_label} (List Post) → {taggings[:80]}")
-                    result = poster.post_tweet(acc["auth_token"], acc["ct0"], tweet_text, media_id=list_media_id, proxy=acc.get("proxy"))
+                    result = poster.post_tweet(acc["auth_token"], acc["ct0"], tweet_text, proxy=acc.get("proxy"))
 
                 if result.get("error") or not result.get("tweet_id"):
                     err_msg = result.get("error") or "Post verification failed: No tweet ID returned"
