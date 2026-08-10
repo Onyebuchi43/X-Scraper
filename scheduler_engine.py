@@ -207,7 +207,7 @@ def _scrape_followers(
 
         # Fetch at least 100 items from Twitter so follower filter doesn't get stuck on top 20 influencers
         fetch_limit = max(limit, 100) if (max_followers and max_followers < 1000000) else limit
-        country_msg = f", countries: {country_keywords}" if country_keywords else ""
+        country_msg = f", 'Account based in' filter: {country_filter}" if country_filter else ""
         log_fn("INFO", f"Initialising streaming Scweet scraper for source profiles: {source_profiles} (fetch limit: {fetch_limit}, followers range: {min_followers}-{max_followers}{country_msg})")
         cfg = ScweetConfig(daily_requests_limit=100000, daily_tweets_limit=100000)
         s = Scweet(
