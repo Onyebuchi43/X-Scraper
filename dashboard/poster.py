@@ -170,24 +170,31 @@ def get_profile_info(auth_token: str, ct0: str, handle: str, proxy: Optional[str
             **httpx_kwargs,
         )
         resp.raise_for_status()
-        legacy = (
-            resp.json()
-            .get("data", {})
-            .get("user", {})
-            .get("result", {})
-            .get("legacy", {})
+        res_dict = resp.json().get("data", {}).get("user", {}).get("result", {})
+        legacy = res_dict.get("legacy", {}) if isinstance(res_dict, dict) else {}
+        rel_counts = res_dict.get("relationship_counts", {}) if isinstance(res_dict, dict) else {}
+        core = res_dict.get("core", {}) if isinstance(res_dict, dict) else {}
+
+        name = core.get("name") or legacy.get("name") or handle
+        screen_name = core.get("screen_name") or legacy.get("screen_name") or handle
+        followers_count = (
+            rel_counts.get("followers")
+            or legacy.get("followers_count")
+            or legacy.get("followers")
+            or 0
         )
         avatar_url = (
-            legacy.get("profile_image_url_https", "")
-            .replace("_normal", "_400x400")
-        )
+            res_dict.get("avatar", {}).get("image_url", "")
+            or legacy.get("profile_image_url_https", "")
+        ).replace("_normal", "_400x400")
+
         return {
-            "name": legacy.get("name", handle),
-            "handle": legacy.get("screen_name", handle),
-            "followers_count": legacy.get("followers_count", 0),
+            "name": name,
+            "handle": screen_name,
+            "followers_count": followers_count,
             "description": legacy.get("description", ""),
             "avatar_url": avatar_url,
-            "verified": legacy.get("verified", False),
+            "verified": res_dict.get("is_blue_verified", False) or legacy.get("verified", False),
         }
     except Exception as exc:
         logger.warning("Profile lookup failed for @%s: %s", handle, exc)

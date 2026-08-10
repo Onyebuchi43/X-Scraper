@@ -438,7 +438,12 @@ def _scrape_tweet_commenters(
                             or ""
                         ).strip().lstrip("@").lower()
                         loc_str = str(user_obj.get("location") or item.get("location") or "").strip().lower()
-                        fc = user_obj.get("followers_count") or user_obj.get("followers") or user_obj.get("followers_cnt")
+                        rel_counts = user_obj.get("relationship_counts") if isinstance(user_obj, dict) else {}
+                        fc = (
+                            user_obj.get("followers_count")
+                            or user_obj.get("followers")
+                            or (rel_counts.get("followers") if isinstance(rel_counts, dict) else None)
+                        )
                         if fc is not None and max_followers and max_followers > 0:
                             try:
                                 val = int(fc)
@@ -447,11 +452,11 @@ def _scrape_tweet_commenters(
                             except (ValueError, TypeError):
                                 pass
                         if handle and handle != target_user.lower():
-                            candidate_items.append({"handle": handle, "bio_location": loc_str})
+                            candidate_items.append({"handle": handle, "bio_location": loc_str, "followers_count": fc})
                     elif isinstance(item, str):
                         handle = item.strip().lstrip("@").lower()
                         if handle and handle != target_user.lower():
-                            candidate_items.append({"handle": handle, "bio_location": ""})
+                            candidate_items.append({"handle": handle, "bio_location": "", "followers_count": None})
             if candidate_items:
                 break
 
@@ -469,16 +474,35 @@ def _scrape_tweet_commenters(
                 def check_candidate(cand):
                     h = cand["handle"]
                     bio_loc = cand["bio_location"]
+                    cand_fc = cand.get("followers_count")
+
+                    if cand_fc is None and (min_followers > 0 or (max_followers and max_followers < 1000000)):
+                        try:
+                            from poster import get_profile_info
+                            pinfo = get_profile_info(scrape_auth, scrape_ct0, h, proxy=scrape_proxy)
+                            if pinfo and pinfo.get("followers_count") is not None:
+                                cand_fc = pinfo.get("followers_count")
+                        except Exception:
+                            pass
+
+                    if cand_fc is not None and max_followers and max_followers > 0:
+                        if not (min_followers <= cand_fc <= max_followers):
+                            return h, bio_loc, None, False, cand_fc
+
                     cntry = fetch_account_based_in(scrape_auth, scrape_ct0, h, proxy=scrape_proxy, timeout=6, accounts_pool=pool_accounts)
-                    return h, bio_loc, cntry
+                    return h, bio_loc, cntry, True, cand_fc
 
                 with ThreadPoolExecutor(max_workers=3) as executor:
                     futures = [executor.submit(check_candidate, item) for item in unprocessed_candidates]
                     checked_count = 0
                     for future in as_completed(futures):
                         checked_count += 1
-                        handle, bio_loc, account_country = future.result()
+                        handle, bio_loc, account_country, passed_fc, actual_fc = future.result()
                         checked_candidates_set.add(handle)
+                        if not passed_fc:
+                            fc_str = f"{actual_fc}" if actual_fc is not None else "unknown"
+                            log_fn("DEBUG", f"  [{checked_count}/{len(unprocessed_candidates)}] @{handle}: Followers ({fc_str}) outside range {min_followers}-{max_followers} — skip")
+                            continue
                         if account_country == "RATE_LIMITED":
                             account_country = bio_loc
                         if account_country:
@@ -613,7 +637,12 @@ def _scrape_target_tweets_commenters(
                             or ""
                         ).strip().lstrip("@").lower()
                         loc_str = str(user_obj.get("location") or item.get("location") or "").strip().lower()
-                        fc = user_obj.get("followers_count") or user_obj.get("followers") or user_obj.get("followers_cnt")
+                        rel_counts = user_obj.get("relationship_counts") if isinstance(user_obj, dict) else {}
+                        fc = (
+                            user_obj.get("followers_count")
+                            or user_obj.get("followers")
+                            or (rel_counts.get("followers") if isinstance(rel_counts, dict) else None)
+                        )
                         if fc is not None and max_followers and max_followers > 0:
                             try:
                                 val = int(fc)
@@ -622,11 +651,11 @@ def _scrape_target_tweets_commenters(
                             except (ValueError, TypeError):
                                 pass
                         if handle and handle != clean_user.lower():
-                            candidate_items.append({"handle": handle, "bio_location": loc_str})
+                            candidate_items.append({"handle": handle, "bio_location": loc_str, "followers_count": fc})
                     elif isinstance(item, str):
                         handle = item.strip().lstrip("@").lower()
                         if handle and handle != clean_user.lower():
-                            candidate_items.append({"handle": handle, "bio_location": ""})
+                            candidate_items.append({"handle": handle, "bio_location": "", "followers_count": None})
 
         handles: List[str] = []
         scrape_account = pool_accounts[(scrape_round - 1) % len(pool_accounts)]
@@ -642,16 +671,35 @@ def _scrape_target_tweets_commenters(
                 def check_candidate(cand):
                     h = cand["handle"]
                     bio_loc = cand["bio_location"]
+                    cand_fc = cand.get("followers_count")
+
+                    if cand_fc is None and (min_followers > 0 or (max_followers and max_followers < 1000000)):
+                        try:
+                            from poster import get_profile_info
+                            pinfo = get_profile_info(scrape_auth, scrape_ct0, h, proxy=scrape_proxy)
+                            if pinfo and pinfo.get("followers_count") is not None:
+                                cand_fc = pinfo.get("followers_count")
+                        except Exception:
+                            pass
+
+                    if cand_fc is not None and max_followers and max_followers > 0:
+                        if not (min_followers <= cand_fc <= max_followers):
+                            return h, bio_loc, None, False, cand_fc
+
                     cntry = fetch_account_based_in(scrape_auth, scrape_ct0, h, proxy=scrape_proxy, timeout=6, accounts_pool=pool_accounts)
-                    return h, bio_loc, cntry
+                    return h, bio_loc, cntry, True, cand_fc
 
                 with ThreadPoolExecutor(max_workers=3) as executor:
                     futures = [executor.submit(check_candidate, item) for item in unprocessed_candidates]
                     checked_count = 0
                     for future in as_completed(futures):
                         checked_count += 1
-                        handle, bio_loc, account_country = future.result()
+                        handle, bio_loc, account_country, passed_fc, actual_fc = future.result()
                         checked_candidates_set.add(handle)
+                        if not passed_fc:
+                            fc_str = f"{actual_fc}" if actual_fc is not None else "unknown"
+                            log_fn("DEBUG", f"  [{checked_count}/{len(unprocessed_candidates)}] @{handle}: Followers ({fc_str}) outside range {min_followers}-{max_followers} — skip")
+                            continue
                         if account_country == "RATE_LIMITED":
                             account_country = bio_loc
                         if account_country:
