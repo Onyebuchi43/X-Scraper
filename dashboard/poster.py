@@ -169,6 +169,9 @@ def get_profile_info(auth_token: str, ct0: str, handle: str, proxy: Optional[str
         return {"name": handle, "handle": handle, "avatar_url": "", "followers_count": 0, "description": ""}
 
 
+_ACCOUNT_LOCATION_CACHE: dict[str, Optional[str]] = {}
+
+
 def fetch_account_based_in(
     auth_token: str,
     ct0: str,
@@ -186,13 +189,17 @@ def fetch_account_based_in(
     Returns the country string (e.g. "Nigeria", "United States") or None
     on failure.
     """
-    username = username.lstrip("@")
+    clean_username = username.lstrip("@").lower()
+    if clean_username in _ACCOUNT_LOCATION_CACHE:
+        return _ACCOUNT_LOCATION_CACHE[clean_username]
+
     params = {
-        "variables": json.dumps({"screenName": username}),
+        "variables": json.dumps({"screenName": clean_username}),
     }
 
     pool = accounts_pool if accounts_pool else [{"auth_token": auth_token, "ct0": ct0, "proxy": proxy}]
 
+    hit_429 = False
     for acc in pool:
         at = acc.get("auth_token", auth_token)
         c0 = acc.get("ct0", ct0)
@@ -210,11 +217,13 @@ def fetch_account_based_in(
                 **httpx_kwargs,
             )
             if resp.status_code == 429:
-                logger.debug("AboutAccountQuery for @%s returned 429 — rotating account credential...", username)
+                hit_429 = True
+                logger.debug("AboutAccountQuery for @%s returned 429 — rotating account credential...", clean_username)
                 time.sleep(0.5)
                 continue
             if resp.status_code != 200:
-                logger.debug("AboutAccountQuery for @%s returned HTTP %s", username, resp.status_code)
+                logger.debug("AboutAccountQuery for @%s returned HTTP %s", clean_username, resp.status_code)
+                _ACCOUNT_LOCATION_CACHE[clean_username] = None
                 return None
             data = resp.json()
             country = (
@@ -224,10 +233,47 @@ def fetch_account_based_in(
                     .get("about_profile", {})
                     .get("account_based_in")
             )
-            return str(country).strip() if country else None
+            res = str(country).strip() if country else None
+            _ACCOUNT_LOCATION_CACHE[clean_username] = res
+            return res
         except Exception as exc:
-            logger.debug("fetch_account_based_in failed for @%s: %s", username, exc)
+            logger.debug("fetch_account_based_in failed for @%s: %s", clean_username, exc)
             continue
+
+    if hit_429:
+        # All pool accounts hit 429 rate limit — pause 20s for rate limit window to clear, then single retry
+        time.sleep(20.0)
+        acc = pool[0]
+        at = acc.get("auth_token", auth_token)
+        c0 = acc.get("ct0", ct0)
+        px = acc.get("proxy", proxy)
+        proxy_url = _get_httpx_proxy_url(px)
+        httpx_kwargs = {"proxy": proxy_url} if proxy_url else {}
+        try:
+            resp = httpx.get(
+                ABOUT_ACCOUNT_URL,
+                params=params,
+                headers=_headers(c0),
+                cookies=_cookies(at, c0),
+                timeout=timeout,
+                **httpx_kwargs,
+            )
+            if resp.status_code == 200:
+                data = resp.json()
+                country = (
+                    data.get("data", {})
+                        .get("user_result_by_screen_name", {})
+                        .get("result", {})
+                        .get("about_profile", {})
+                        .get("account_based_in")
+                )
+                res = str(country).strip() if country else None
+                _ACCOUNT_LOCATION_CACHE[clean_username] = res
+                return res
+        except Exception:
+            pass
+
+    _ACCOUNT_LOCATION_CACHE[clean_username] = None
     return None
 
 
