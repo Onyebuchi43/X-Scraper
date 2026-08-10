@@ -339,12 +339,22 @@ def _scrape_tweet_commenters(
     accounts: List[dict],
     limit: int,
     log_fn,
+    scrape_round: int = 1,
 ) -> Tuple[List[str], bool, int]:
     """
     Scrape handles of users who commented on / replied to a target tweet URL or ID.
     Returns (handles, ok, raw_count) tuple.
     """
-    if not accounts:
+    # Always include ALL registered active DB accounts in the scraping pool for maximum rotation
+    try:
+        conn = _db()
+        all_db_accs = conn.execute("SELECT id, auth_token, ct0, proxy FROM accounts").fetchall()
+        conn.close()
+        pool_accounts = [dict(a) for a in all_db_accs] if all_db_accs else accounts
+    except Exception:
+        pool_accounts = accounts if accounts else []
+
+    if not pool_accounts:
         log_fn("ERROR", "No accounts available for scraping.")
         return [], False, 0
 
@@ -373,7 +383,8 @@ def _scrape_tweet_commenters(
     try:
         from Scweet import Scweet, ScweetConfig  # type: ignore
 
-        scrape_account = accounts[0]
+        # Rotate primary scraping account on each round across all available pool accounts
+        scrape_account = pool_accounts[(scrape_round - 1) % len(pool_accounts)]
         cookies_entry = {
             "auth_token": scrape_account["auth_token"],
             "ct0": scrape_account["ct0"],
@@ -651,7 +662,7 @@ class _Campaign:
                     )
                     if target_type == "tweet_commenters":
                         raw_handles, ok, raw_count = _scrape_tweet_commenters(
-                            source_profiles_raw, accounts, limit_this_round, self._log
+                            source_profiles_raw, accounts, limit_this_round, self._log, scrape_round=scrape_round
                         )
                     else:
                         raw_handles, ok, raw_count = _scrape_followers(
