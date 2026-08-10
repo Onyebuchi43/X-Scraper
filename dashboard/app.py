@@ -266,10 +266,12 @@ def _run_scrape_job(job_id: str, job_type: str, params: dict) -> None:
 
             if target_type == "tweet_commenters":
                 from scheduler_engine import _scrape_tweet_commenters
-                _append_job_log(job_id, f"Scraping commenters of tweet/URL {targets} (limit={limit})")
+                _append_job_log(job_id, f"Scraping commenters of tweet/URL {targets} (limit={limit}, range: {min_followers}-{max_followers}, country: '{country_filter}')")
                 tweet_target = targets[0] if isinstance(targets, list) and targets else str(targets)
                 handles, ok, raw_count = _scrape_tweet_commenters(
-                    tweet_target, cookies_list, limit, lambda level, msg: _append_job_log(job_id, f"[{level}] {msg}")
+                    tweet_target, cookies_list, limit, lambda level, msg: _append_job_log(job_id, f"[{level}] {msg}"),
+                    min_followers=min_followers, max_followers=max_followers,
+                    country_filter=country_filter
                 )
                 results = [{"username": h} for h in handles]
 
