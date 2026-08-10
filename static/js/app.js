@@ -35,6 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   renderCountryChips('c');
   renderCountryChips('edit-c');
+  autoConnectActiveCampaign();
 });
 
 const TAB_TITLES = {
@@ -848,7 +849,30 @@ async function clearAllTagged() {
   loadCampaignDbPanel();
 }
 
+async function autoConnectActiveCampaign() {
+  try {
+    const campaigns = await api('/api/campaigns');
+    if (!campaigns || !Array.isArray(campaigns)) return;
+    const running = campaigns.find(c => c.status === 'running');
+    if (running) {
+      currentCampaignId = running.id;
+      const stopBtn = document.getElementById('stop-btn');
+      const resumeBtn = document.getElementById('resume-btn');
+      const pill = document.getElementById('camp-status-pill');
+      if (stopBtn) stopBtn.style.display = 'inline-flex';
+      if (resumeBtn) resumeBtn.style.display = 'none';
+      if (pill) { pill.textContent = 'running'; pill.setAttribute('data-s', 'running'); }
+      if (!campaignPollInterval) {
+        startCampaignPoll();
+      }
+    }
+  } catch (e) {
+    console.warn("autoConnectActiveCampaign error:", e);
+  }
+}
+
 async function loadCampaignDbPanel() {
+  await autoConnectActiveCampaign();
   const campaigns = await api('/api/campaigns');
   const container = document.getElementById('campaign-db-list');
   if (!container) return;
