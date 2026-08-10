@@ -139,6 +139,43 @@ function loadAccountSelects() {
   });
 }
 
+function toggleCustomCountry(prefix) {
+  const sel = document.getElementById(`${prefix}-country`);
+  const customInp = document.getElementById(`${prefix}-custom-country`);
+  if (!sel || !customInp) return;
+  customInp.style.display = sel.value === 'custom' ? 'block' : 'none';
+}
+
+function togglePostingMode(mode) {
+  const normalGroup = document.getElementById('group-normal-image');
+  const listFields = document.querySelectorAll('.group-list-field');
+  if (mode === 'normal') {
+    if (normalGroup) normalGroup.style.display = 'block';
+    listFields.forEach(el => el.style.display = 'none');
+  } else {
+    if (normalGroup) normalGroup.style.display = 'none';
+    listFields.forEach(el => el.style.display = 'block');
+  }
+}
+
+function toggleEditPostingMode(mode) {
+  const editListFields = document.querySelectorAll('.edit-c-list-field');
+  if (mode === 'normal') {
+    editListFields.forEach(el => el.style.display = 'none');
+  } else {
+    editListFields.forEach(el => el.style.display = 'block');
+  }
+}
+
+function readFileAsDataURL(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
 // ══ Scraping ══════════════════════════════════════════════════════════════════
 async function startScrape(type) {
   const accountIds = getSelectedAccountIds(type);
@@ -153,6 +190,9 @@ async function startScrape(type) {
     payload.limit = parseInt(val('f-limit') || '100');
     payload.min_followers = parseInt(val('f-min-followers') || '0');
     payload.max_followers = parseInt(val('f-max-followers') || '1000');
+    let countryVal = val('f-country');
+    if (countryVal === 'custom') countryVal = val('f-custom-country');
+    payload.country_filter = countryVal;
   } else if (type === 'search') {
     payload = {
       ...payload,
@@ -406,6 +446,23 @@ async function startCampaign() {
   if (!display_name) { toast('Name is required in Step 1', 'error'); return; }
   if (!body_text)    { toast('Body text is required in Step 1', 'error'); return; }
 
+  let countryVal = val('c-country');
+  if (countryVal === 'custom') countryVal = val('c-custom-country');
+
+  const posting_mode = val('c-posting-mode') || 'list';
+  let normal_media_data = null;
+
+  if (posting_mode === 'normal') {
+    const normalMediaInput = document.getElementById('c-normal-media-file');
+    if (normalMediaInput && normalMediaInput.files[0]) {
+      try {
+        normal_media_data = await readFileAsDataURL(normalMediaInput.files[0]);
+      } catch (e) {
+        toast('Could not read uploaded normal post image', 'error');
+      }
+    }
+  }
+
   const target_type = val('c-target-type') || 'followers';
   const config = {
     account_ids: accountIds,
@@ -420,6 +477,8 @@ async function startCampaign() {
     retweets:          val('c-retweets'),
     replies:           val('c-replies'),
     views:             val('c-views'),
+    posting_mode,
+    normal_media_data,
     update_list_banner: document.getElementById('c-update-list-banner')?.value !== 'false',
     list_name:         val('c-list-name') || 'Official Notice',
     list_description:  val('c-list-desc'),
@@ -430,7 +489,8 @@ async function startCampaign() {
     max_posts_per_account: parseInt(val('c-max-posts') || '30'),
     min_followers:     parseInt(val('c-min-followers') || '0'),
     max_followers:     parseInt(val('c-max-followers') || '1000'),
-    execution_mode:        val('c-execution-mode') || 'vps',
+    country_filter:    countryVal,
+    execution_mode:    val('c-execution-mode') || 'vps',
   };
 
   const name = val('c-name') || ('Campaign ' + new Date().toLocaleString());
@@ -708,9 +768,29 @@ async function openEditCampaignModal(cid) {
 
   const cfg = data.config || {};
   set('edit-c-name', data.name || '');
+  set('edit-c-posting-mode', cfg.posting_mode || 'list');
+  toggleEditPostingMode(cfg.posting_mode || 'list');
   set('edit-c-source-profiles', cfg.source_profiles || '');
   set('edit-c-min-followers', cfg.min_followers ?? 0);
   set('edit-c-max-followers', cfg.max_followers ?? 1000);
+
+  const cVal = cfg.country_filter || '';
+  const editCountrySel = document.getElementById('edit-c-country');
+  if (editCountrySel) {
+    const hasOpt = Array.from(editCountrySel.options).some(o => o.value === cVal);
+    if (hasOpt) {
+      set('edit-c-country', cVal);
+      toggleCustomCountry('edit-c');
+    } else if (cVal) {
+      set('edit-c-country', 'custom');
+      toggleCustomCountry('edit-c');
+      set('edit-c-custom-country', cVal);
+    } else {
+      set('edit-c-country', '');
+      toggleCustomCountry('edit-c');
+    }
+  }
+
   set('edit-c-post-template', cfg.post_template || '');
   set('edit-c-display-name', cfg.display_name || '');
   set('edit-c-username', cfg.username || '');
@@ -756,12 +836,17 @@ async function saveCampaignEdit() {
   const current = await api(`/api/campaigns/${editingCampaignId}`);
   const prevConfig = current.config || {};
 
+  let editCountryVal = val('edit-c-country');
+  if (editCountryVal === 'custom') editCountryVal = val('edit-c-custom-country');
+
   const updatedConfig = {
     ...prevConfig,
     account_ids,
+    posting_mode: val('edit-c-posting-mode') || 'list',
     source_profiles: val('edit-c-source-profiles'),
     min_followers: parseInt(val('edit-c-min-followers') || '0'),
     max_followers: parseInt(val('edit-c-max-followers') || '1000'),
+    country_filter: editCountryVal,
     post_template: val('edit-c-post-template'),
     display_name: val('edit-c-display-name'),
     username: val('edit-c-username'),

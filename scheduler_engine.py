@@ -177,6 +177,7 @@ def _scrape_followers(
     log_fn,
     min_followers: int = 0,
     max_followers: int = 1000,
+    country_filter: str = "",
 ) -> Tuple[List[str], bool, int]:
     """
     Scrape up to *limit* followers from *source_profiles* using Scweet in streaming mode (save=False).
@@ -198,9 +199,16 @@ def _scrape_followers(
         if scrape_account.get("proxy"):
             cookies_entry["proxy"] = scrape_account["proxy"]
 
+        country_keywords = [
+            alias.strip().lower()
+            for alias in country_filter.split(",")
+            if alias.strip()
+        ] if country_filter else []
+
         # Fetch at least 100 items from Twitter so follower filter doesn't get stuck on top 20 influencers
         fetch_limit = max(limit, 100) if (max_followers and max_followers < 1000000) else limit
-        log_fn("INFO", f"Initialising streaming Scweet scraper for source profiles: {source_profiles} (fetch limit: {fetch_limit}, followers range: {min_followers}-{max_followers})")
+        country_msg = f", countries: {country_keywords}" if country_keywords else ""
+        log_fn("INFO", f"Initialising streaming Scweet scraper for source profiles: {source_profiles} (fetch limit: {fetch_limit}, followers range: {min_followers}-{max_followers}{country_msg})")
         cfg = ScweetConfig(daily_requests_limit=100000, daily_tweets_limit=100000)
         s = Scweet(
             cookies=cookies_entry,
@@ -229,14 +237,26 @@ def _scrape_followers(
                                 continue
                         except (ValueError, TypeError):
                             pass
+
+                    if country_keywords:
+                        loc = (
+                            item.get("location")
+                            or item.get("user_location")
+                            or item.get("profile_location")
+                            or ""
+                        ).strip().lower()
+                        if not loc or not any(ck in loc for ck in country_keywords):
+                            continue
                 elif isinstance(item, str):
                     handle = item.strip().lstrip("@").lower()
+                    if country_keywords:
+                        continue
                 else:
                     handle = ""
                 if handle:
                     handles.append(handle)
 
-        log_fn("INFO", f"Scraped {raw_count} total profiles from Twitter; {len(handles)} matched follower criteria ({min_followers}-{max_followers})")
+        log_fn("INFO", f"Scraped {raw_count} total profiles from Twitter; {len(handles)} matched criteria ({min_followers}-{max_followers} followers{country_msg})")
         return handles, True, raw_count
 
     except Exception as exc:
@@ -464,7 +484,28 @@ class _Campaign:
 
         min_followers: int = int(cfg.get("min_followers", 0))
         max_followers: int = int(cfg.get("max_followers", 1000))
+        country_filter: str = cfg.get("country_filter", "")
         self._log("INFO", f"Follower range filter: {min_followers} to {max_followers} followers")
+        if country_filter:
+            self._log("INFO", f"Country/Location filter active: '{country_filter}'")
+
+        posting_mode: str = cfg.get("posting_mode", "list")
+        self._log("INFO", f"Campaign Posting Mode: {posting_mode.upper()} POST")
+
+        normal_media_data: Optional[str] = cfg.get("normal_media_data")
+        normal_media_bytes: Optional[bytes] = None
+
+        if normal_media_data:
+            try:
+                import base64
+                if "," in normal_media_data:
+                    b64_str = normal_media_data.split(",", 1)[1]
+                else:
+                    b64_str = normal_media_data
+                normal_media_bytes = base64.b64decode(b64_str)
+                self._log("INFO", "Loaded normal post media image from campaign config")
+            except Exception as exc:
+                self._log("WARNING", f"Could not decode normal post media image: {exc}")
 
         tags_per_post: int = max(1, min(5, int(cfg.get("tags_per_post", 3))))
         post_template: str = cfg.get("post_template", "Hello {taggings}")
@@ -538,6 +579,7 @@ class _Campaign:
                         raw_handles, ok, raw_count = _scrape_followers(
                             source_profiles, accounts, limit_this_round, self._log,
                             min_followers=min_followers, max_followers=max_followers,
+                            country_filter=country_filter,
                         )
 
                     if not ok:
@@ -588,71 +630,93 @@ class _Campaign:
                 acc_label = f"Account #{account_i + 1}" + (f" (ID {acc_id})" if acc_id else "")
                 taggings = " ".join(f"@{h}" for h in batch)
 
-                # ── Get or create a list owned by THIS account ───────────────
-                acc_list_id, acc_list_url = _get_or_create_account_list(
-                    acc, list_name, list_desc, poster, self._log
-                )
+                media_id = None
+                acc_list_url = ""
 
-                # ── Update list banner image ─────────────────────────────────
-                if update_list_banner and display_name and body_text_tpl:
-                    if "{taggings}" in body_text_tpl:
-                        card_body = body_text_tpl.replace("{taggings}", taggings)
-                    else:
-                        card_body = f"{body_text_tpl}\n\n{taggings}"
-
-                    try:
-                        batch_image_bytes = image_editor.generate_tweet_card_screenshot(
-                            name=display_name,
-                            username=username or display_name.lower().replace(" ", ""),
-                            body_text=card_body,
-                            avatar_bytes=avatar_bytes,
-                            timestamp=cfg.get("timestamp") or "3:51 PM · 8/4/26",
-                            views=cfg.get("views") or "3M",
-                            replies=cfg.get("replies") or "2.8K",
-                            retweets=cfg.get("retweets") or "4.2K",
-                            likes=cfg.get("likes") or "54K",
-                        )
-                        if acc_list_id and batch_image_bytes:
-                            ok = poster.set_list_banner(
-                                acc["auth_token"], acc["ct0"],
-                                acc_list_id, batch_image_bytes,
-                                proxy=acc.get("proxy"),
+                if posting_mode == "normal":
+                    if normal_media_bytes:
+                        try:
+                            up_res = poster.upload_media(
+                                acc["auth_token"], acc["ct0"], normal_media_bytes, proxy=acc.get("proxy")
                             )
-                            if not ok:
-                                self._log("WARNING", f"Could not update list profile picture for {acc_label}. Creating fresh list fallback...")
-                                try:
-                                    fresh_name = f"{list_name[:20]}_{int(time.time()) % 1000}"
-                                    list_info = poster.create_list(
-                                        acc["auth_token"], acc["ct0"], fresh_name, list_desc,
-                                        proxy=acc.get("proxy"),
-                                    )
-                                    acc_list_id = list_info["list_id"]
-                                    acc_list_url = list_info["list_url"]
-                                    _save_list_to_db(acc_id, acc_list_id, acc_list_url, list_name)
-                                    poster.set_list_banner(
-                                        acc["auth_token"], acc["ct0"],
-                                        acc_list_id, batch_image_bytes,
-                                        proxy=acc.get("proxy"),
-                                    )
-                                except Exception as exc:
-                                    self._log("WARNING", f"Fallback list creation for {acc_label} failed: {exc}")
-                    except Exception as exc:
-                        self._log("WARNING", f"Could not generate card image for {acc_label}: {exc}")
+                            media_id = up_res.get("media_id")
+                            if not media_id:
+                                self._log("WARNING", f"Could not upload media image for {acc_label}: {up_res.get('error')}")
+                            else:
+                                self._log("INFO", f"Uploaded media image for {acc_label} (Media ID: {media_id})")
+                        except Exception as exc:
+                            self._log("WARNING", f"Media upload exception for {acc_label}: {exc}")
 
-                # ── Build tweet text & post ───────────────────────────────────
-                tweet_text = post_template.replace("{taggings}", taggings)
-                for placeholder in ("{link}", "{list_url}", "{list}"):
-                    if placeholder in tweet_text:
-                        tweet_text = tweet_text.replace(placeholder, acc_list_url)
-                        break
+                    tweet_text = post_template.replace("{taggings}", taggings).strip()
+                    tweet_text = tweet_text[:280]
+                    self._log("POST", f"{acc_label} (Normal Post) → {taggings[:80]}")
+                    result = poster.post_tweet(acc["auth_token"], acc["ct0"], tweet_text, media_id=media_id, proxy=acc.get("proxy"))
                 else:
-                    if acc_list_url and acc_list_url not in tweet_text:
-                        tweet_text = f"{tweet_text}\n{acc_list_url}"
+                    # ── List Post Mode ───────────────────────────────────────
+                    acc_list_id, acc_list_url = _get_or_create_account_list(
+                        acc, list_name, list_desc, poster, self._log
+                    )
 
-                tweet_text = tweet_text[:280]
+                    # ── Update list banner image ─────────────────────────────
+                    if update_list_banner and display_name and body_text_tpl:
+                        if "{taggings}" in body_text_tpl:
+                            card_body = body_text_tpl.replace("{taggings}", taggings)
+                        else:
+                            card_body = f"{body_text_tpl}\n\n{taggings}"
 
-                self._log("POST", f"{acc_label} → {taggings[:80]}")
-                result = poster.post_tweet(acc["auth_token"], acc["ct0"], tweet_text, proxy=acc.get("proxy"))
+                        try:
+                            batch_image_bytes = image_editor.generate_tweet_card_screenshot(
+                                name=display_name,
+                                username=username or display_name.lower().replace(" ", ""),
+                                body_text=card_body,
+                                avatar_bytes=avatar_bytes,
+                                timestamp=cfg.get("timestamp") or "3:51 PM · 8/4/26",
+                                views=cfg.get("views") or "3M",
+                                replies=cfg.get("replies") or "2.8K",
+                                retweets=cfg.get("retweets") or "4.2K",
+                                likes=cfg.get("likes") or "54K",
+                            )
+                            if acc_list_id and batch_image_bytes:
+                                ok = poster.set_list_banner(
+                                    acc["auth_token"], acc["ct0"],
+                                    acc_list_id, batch_image_bytes,
+                                    proxy=acc.get("proxy"),
+                                )
+                                if not ok:
+                                    self._log("WARNING", f"Could not update list profile picture for {acc_label}. Creating fresh list fallback...")
+                                    try:
+                                        fresh_name = f"{list_name[:20]}_{int(time.time()) % 1000}"
+                                        list_info = poster.create_list(
+                                            acc["auth_token"], acc["ct0"], fresh_name, list_desc,
+                                            proxy=acc.get("proxy"),
+                                        )
+                                        acc_list_id = list_info["list_id"]
+                                        acc_list_url = list_info["list_url"]
+                                        _save_list_to_db(acc_id, acc_list_id, acc_list_url, list_name)
+                                        poster.set_list_banner(
+                                            acc["auth_token"], acc["ct0"],
+                                            acc_list_id, batch_image_bytes,
+                                            proxy=acc.get("proxy"),
+                                        )
+                                    except Exception as exc:
+                                        self._log("WARNING", f"Fallback list creation for {acc_label} failed: {exc}")
+                        except Exception as exc:
+                            self._log("WARNING", f"Could not generate card image for {acc_label}: {exc}")
+
+                    # ── Build tweet text & post ───────────────────────────────
+                    tweet_text = post_template.replace("{taggings}", taggings)
+                    for placeholder in ("{link}", "{list_url}", "{list}"):
+                        if placeholder in tweet_text:
+                            tweet_text = tweet_text.replace(placeholder, acc_list_url)
+                            break
+                    else:
+                        if acc_list_url and acc_list_url not in tweet_text:
+                            tweet_text = f"{tweet_text}\n{acc_list_url}"
+
+                    tweet_text = tweet_text[:280]
+
+                    self._log("POST", f"{acc_label} (List Post) → {taggings[:80]}")
+                    result = poster.post_tweet(acc["auth_token"], acc["ct0"], tweet_text, proxy=acc.get("proxy"))
 
                 if result.get("error") or not result.get("tweet_id"):
                     err_msg = result.get("error") or "Post verification failed: No tweet ID returned"

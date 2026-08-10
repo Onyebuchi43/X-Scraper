@@ -246,8 +246,22 @@ def _run_scrape_job(job_id: str, job_type: str, params: dict) -> None:
         if job_type == "followers":
             targets = params.get("targets", [])
             limit = int(params.get("limit", 100))
-            _append_job_log(job_id, f"Scraping followers of {targets} (limit={limit})")
+            country_filter = params.get("country_filter", "")
+            min_followers = int(params.get("min_followers", 0))
+            max_followers = int(params.get("max_followers", 1000))
+            _append_job_log(job_id, f"Scraping followers of {targets} (limit={limit}, range: {min_followers}-{max_followers})")
             results = s.get_followers(targets, limit=limit, save=True, save_name=save_name)
+
+            if country_filter and results:
+                country_keywords = [c.strip().lower() for c in country_filter.split(",") if c.strip()]
+                filtered = []
+                for r in results:
+                    if isinstance(r, dict):
+                        loc = (r.get("location") or r.get("user_location") or "").strip().lower()
+                        if loc and any(ck in loc for ck in country_keywords):
+                            filtered.append(r)
+                _append_job_log(job_id, f"Filtered by country '{country_filter}': {len(filtered)} / {len(results)} matches")
+                results = filtered
 
         elif job_type == "search":
             _append_job_log(job_id, "Running tweet search…")

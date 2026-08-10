@@ -268,7 +268,7 @@
   <section class="tab-panel" id="tab-campaign">
     <div class="panel-header">
       <h2>Post Campaign</h2>
-      <p class="panel-sub">Configure auto-posting: each account creates its own Twitter List, uploads a branded tweet-card image, then posts tweets tagging batches of followers.</p>
+      <p class="panel-sub">Configure auto-posting: post with a Twitter List (with dynamic image banner) OR a Normal Post (with uploaded image media).</p>
     </div>
 
     <div class="campaign-grid">
@@ -344,16 +344,30 @@
           </div>
         </div>
 
-        <!-- STEP 2: List settings -->
+        <!-- STEP 2: Campaign Posting Mode & List/Normal Media Settings -->
         <div class="card card-step">
           <div class="step-badge">2</div>
-          <div class="card-title">Twitter List Settings</div>
+          <div class="card-title">Campaign Type &amp; Media Settings</div>
           <div class="form-grid form-grid-2">
             <div class="form-group span-2">
+              <label>Campaign Posting Mode <span class="badge-required">required</span></label>
+              <select id="c-posting-mode" onchange="togglePostingMode(this.value)">
+                <option value="list" selected>📋 Twitter List Post (Creates List &amp; updates List profile picture)</option>
+                <option value="normal">📝 Normal Post (Direct tweet with optional image upload, no Twitter List)</option>
+              </select>
+            </div>
+            
+            <div class="form-group span-2" id="group-normal-image" style="display:none;">
+              <label>Normal Post Media Image <span class="badge-optional">optional</span></label>
+              <input type="file" id="c-normal-media-file" accept="image/*"/>
+              <p class="field-hint">Upload an image file to attach directly to normal posts (without using a Twitter List).</p>
+            </div>
+
+            <div class="form-group span-2 group-list-field">
               <label>List Name</label>
               <input type="text" id="c-list-name" value="Official Notice" maxlength="25"/>
             </div>
-            <div class="form-group span-2">
+            <div class="form-group span-2 group-list-field">
               <label>List Description</label>
               <input type="text" id="c-list-desc" placeholder="Official announcements" maxlength="100"/>
             </div>
@@ -364,7 +378,7 @@
         <div class="card card-step">
           <div class="step-badge">3</div>
           <div class="card-title">Post Message Template</div>
-          <p class="card-desc">Use <code>{taggings}</code> where the tagged handles appear. The list URL is appended automatically.</p>
+          <p class="card-desc">Use <code>{taggings}</code> where the tagged handles appear. In List mode, the list URL is appended automatically.</p>
           <div class="form-grid form-grid-1">
             <div class="form-group">
               <label>Tweet Template <span class="badge-required">required</span></label>
@@ -441,6 +455,30 @@
                 <input type="number" id="c-max-followers" value="1000" min="0" placeholder="Max (1000)"/>
               </div>
               <p class="field-hint">Defaults: 0 to 1,000 followers (filters out influencers & celebrities)</p>
+            </div>
+            <div class="form-group">
+              <label>Target Country / Location Filter <span class="badge-optional">optional</span></label>
+              <select id="c-country" onchange="toggleCustomCountry('c')">
+                <option value="" selected>🌐 All Countries / Worldwide (Any Location)</option>
+                <option value="United States, US, USA">🇺🇸 United States</option>
+                <option value="United Kingdom, UK, London, Britain">🇬🇧 United Kingdom</option>
+                <option value="Canada, CA">🇨🇦 Canada</option>
+                <option value="Australia, AU">🇦🇺 Australia</option>
+                <option value="Nigeria, NG, Lagos, Abuja">🇳🇬 Nigeria</option>
+                <option value="Germany, DE, Berlin">🇩🇪 Germany</option>
+                <option value="France, FR, Paris">🇫🇷 France</option>
+                <option value="India, IN, Mumbai, Delhi">🇮🇳 India</option>
+                <option value="Brazil, BR">🇧🇷 Brazil</option>
+                <option value="Spain, ES">🇪🇸 Spain</option>
+                <option value="Netherlands, NL, Amsterdam">🇳🇱 Netherlands</option>
+                <option value="South Africa, ZA">🇿🇦 South Africa</option>
+                <option value="Singapore, SG">🇸🇬 Singapore</option>
+                <option value="Japan, JP, Tokyo">🇯🇵 Japan</option>
+                <option value="United Arab Emirates, UAE, Dubai">🇦🇪 United Arab Emirates</option>
+                <option value="custom">✏ Custom Location Keyword...</option>
+              </select>
+              <input type="text" id="c-custom-country" placeholder="e.g. California, Texas, Toronto, Lagos" style="display:none;margin-top:6px;"/>
+              <p class="field-hint">Filters scraped followers based on location string in their bio.</p>
             </div>
             <div class="form-group">
               <label>Campaign Execution Mode <span class="badge-required">required</span></label>
@@ -618,6 +656,13 @@ nohup python3 -m dashboard.app > app.log 2>&1 &
         <input type="text" id="edit-c-name"/>
       </div>
       <div class="form-group span-2">
+        <label>Campaign Posting Mode</label>
+        <select id="edit-c-posting-mode" onchange="toggleEditPostingMode(this.value)">
+          <option value="list">📋 Twitter List Post (Creates List &amp; updates List image)</option>
+          <option value="normal">📝 Normal Post (Direct tweet with optional image upload, no Twitter List)</option>
+        </select>
+      </div>
+      <div class="form-group span-2">
         <label>Source Profile(s) to Scrape From</label>
         <input type="text" id="edit-c-source-profiles" placeholder="elonmusk, OpenAI"/>
       </div>
@@ -628,6 +673,29 @@ nohup python3 -m dashboard.app > app.log 2>&1 &
           <span>to</span>
           <input type="number" id="edit-c-max-followers" value="1000" min="0" placeholder="Max"/>
         </div>
+      </div>
+      <div class="form-group span-2">
+        <label>Target Country / Location Filter</label>
+        <select id="edit-c-country" onchange="toggleCustomCountry('edit-c')">
+          <option value="">🌐 All Countries / Worldwide (Any Location)</option>
+          <option value="United States, US, USA">🇺🇸 United States</option>
+          <option value="United Kingdom, UK, London, Britain">🇬🇧 United Kingdom</option>
+          <option value="Canada, CA">🇨🇦 Canada</option>
+          <option value="Australia, AU">🇦🇺 Australia</option>
+          <option value="Nigeria, NG, Lagos, Abuja">🇳🇬 Nigeria</option>
+          <option value="Germany, DE, Berlin">🇩🇪 Germany</option>
+          <option value="France, FR, Paris">🇫🇷 France</option>
+          <option value="India, IN, Mumbai, Delhi">🇮🇳 India</option>
+          <option value="Brazil, BR">🇧🇷 Brazil</option>
+          <option value="Spain, ES">🇪🇸 Spain</option>
+          <option value="Netherlands, NL, Amsterdam">🇳🇱 Netherlands</option>
+          <option value="South Africa, ZA">🇿🇦 South Africa</option>
+          <option value="Singapore, SG">🇸🇬 Singapore</option>
+          <option value="Japan, JP, Tokyo">🇯🇵 Japan</option>
+          <option value="United Arab Emirates, UAE, Dubai">🇦🇪 United Arab Emirates</option>
+          <option value="custom">✏ Custom Location Keyword...</option>
+        </select>
+        <input type="text" id="edit-c-custom-country" placeholder="e.g. California, Texas, Toronto" style="display:none;margin-top:6px;"/>
       </div>
       <div class="form-group span-2">
         <label>Post Message Template</label>
@@ -645,14 +713,14 @@ nohup python3 -m dashboard.app > app.log 2>&1 &
         <label>Tweet Body Text (Card Image)</label>
         <textarea id="edit-c-body-text" rows="2"></textarea>
       </div>
-      <div class="form-group span-2">
+      <div class="form-group span-2 edit-c-list-field">
         <label>Update List Image Per Post?</label>
         <select id="edit-c-update-list-banner">
           <option value="true">Yes — Update list image for every post</option>
           <option value="false">No — Use static list image</option>
         </select>
       </div>
-      <div class="form-group">
+      <div class="form-group edit-c-list-field">
         <label>List Name</label>
         <input type="text" id="edit-c-list-name"/>
       </div>
