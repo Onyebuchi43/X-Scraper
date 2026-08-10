@@ -192,20 +192,30 @@ def _scrape_followers(
     min_followers: int = 0,
     max_followers: int = 1000,
     country_filter: str = "",
+    scrape_round: int = 1,
 ) -> Tuple[List[str], bool, int]:
     """
-    Scrape up to *limit* followers from *source_profiles* using Scweet in streaming mode (save=False).
-    Returns (handles, ok, raw_count) tuple.
-    Uses the first account's credentials for scraping.
+    Scrape follower handles from `source_profiles`.
+    Returns (handles_list, success_bool, total_scraped_raw_count).
     """
-    if not accounts:
+    # Always include ALL registered active DB accounts in the scraping pool for maximum rotation
+    try:
+        conn = _db()
+        all_db_accs = conn.execute("SELECT id, auth_token, ct0, proxy FROM accounts").fetchall()
+        conn.close()
+        pool_accounts = [dict(a) for a in all_db_accs] if all_db_accs else accounts
+    except Exception:
+        pool_accounts = accounts if accounts else []
+
+    if not pool_accounts:
         log_fn("ERROR", "No accounts available for scraping.")
         return [], False, 0
 
     try:
         from Scweet import Scweet, ScweetConfig  # type: ignore
 
-        scrape_account = accounts[0]
+        # Rotate primary scraping account on each round across all available pool accounts
+        scrape_account = pool_accounts[(scrape_round - 1) % len(pool_accounts)]
         cookies_entry = {
             "auth_token": scrape_account["auth_token"],
             "ct0": scrape_account["ct0"],
@@ -270,7 +280,7 @@ def _scrape_followers(
             scrape_auth  = scrape_account["auth_token"]
             scrape_ct0   = scrape_account["ct0"]
             scrape_proxy = scrape_account.get("proxy")
-            log_fn("INFO", f"Country filter active — checking location for {len(candidate_items)} candidates...")
+            log_fn("INFO", f"Country filter active — checking location for {len(candidate_items)} candidates across account pool...")
 
             def check_candidate(cand):
                 h = cand["handle"]
@@ -647,7 +657,7 @@ class _Campaign:
                         raw_handles, ok, raw_count = _scrape_followers(
                             source_profiles, accounts, limit_this_round, self._log,
                             min_followers=min_followers, max_followers=max_followers,
-                            country_filter=country_filter,
+                            country_filter=country_filter, scrape_round=scrape_round,
                         )
 
                     if not ok:
