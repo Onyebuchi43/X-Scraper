@@ -350,17 +350,20 @@
           <div class="card-title">Campaign Type &amp; Media Settings</div>
           <div class="form-grid form-grid-2">
             <div class="form-group span-2">
-              <label>Campaign Posting Mode <span class="badge-required">required</span></label>
+              <label>Campaign Posting Mode &amp; Image Strategy <span class="badge-required">required</span></label>
               <select id="c-posting-mode" onchange="togglePostingMode(this.value)">
-                <option value="list" selected>📋 Twitter List Post (Creates List &amp; updates List profile picture)</option>
-                <option value="normal">📝 Normal Post (Direct tweet with optional image upload, no Twitter List)</option>
+                <option value="list_card" selected>📋 List Post — Update List Profile Picture with Generated Image per post (integrates {taggings})</option>
+                <option value="list_static">📋 List Post — Use Static List Profile Picture (no image updates per post)</option>
+                <option value="normal_card">🖼 Normal Post — Attach Generated Card Image per post (integrates {taggings}, no Twitter List)</option>
+                <option value="normal_custom">🖼 Normal Post — Attach Uploaded Custom Image (uploaded file below, no Twitter List)</option>
+                <option value="normal_text">📝 Normal Post — Text Only (direct tweet, no image, no Twitter List)</option>
               </select>
             </div>
             
             <div class="form-group span-2" id="group-normal-image" style="display:none;">
               <label>Normal Post Media Image <span class="badge-optional">optional</span></label>
               <input type="file" id="c-normal-media-file" accept="image/*"/>
-              <p class="field-hint">Upload an image file to attach directly to normal posts (without using a Twitter List).</p>
+              <p class="field-hint">Upload an image file to attach directly to normal posts when mode is set to Custom Image.</p>
             </div>
 
             <div class="form-group span-2 group-list-field">
@@ -656,10 +659,13 @@ nohup python3 -m dashboard.app > app.log 2>&1 &
         <input type="text" id="edit-c-name"/>
       </div>
       <div class="form-group span-2">
-        <label>Campaign Posting Mode</label>
+        <label>Campaign Posting Mode &amp; Image Strategy</label>
         <select id="edit-c-posting-mode" onchange="toggleEditPostingMode(this.value)">
-          <option value="list">📋 Twitter List Post (Creates List &amp; updates List image)</option>
-          <option value="normal">📝 Normal Post (Direct tweet with optional image upload, no Twitter List)</option>
+          <option value="list_card">📋 List Post — Update List Profile Picture with Generated Image per post (integrates {taggings})</option>
+          <option value="list_static">📋 List Post — Use Static List Profile Picture (no image updates per post)</option>
+          <option value="normal_card">🖼 Normal Post — Attach Generated Card Image per post (integrates {taggings}, no Twitter List)</option>
+          <option value="normal_custom">🖼 Normal Post — Attach Uploaded Custom Image (no Twitter List)</option>
+          <option value="normal_text">📝 Normal Post — Text Only (direct tweet, no image, no Twitter List)</option>
         </select>
       </div>
       <div class="form-group span-2">

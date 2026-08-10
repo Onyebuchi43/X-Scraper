@@ -633,7 +633,52 @@ class _Campaign:
                 media_id = None
                 acc_list_url = ""
 
+                # Handle legacy posting_mode names for backwards compatibility
                 if posting_mode == "normal":
+                    if normal_media_bytes:
+                        posting_mode_effective = "normal_custom"
+                    elif display_name and body_text_tpl:
+                        posting_mode_effective = "normal_card"
+                    else:
+                        posting_mode_effective = "normal_text"
+                elif posting_mode == "list":
+                    posting_mode_effective = "list_card" if update_list_banner else "list_static"
+                else:
+                    posting_mode_effective = posting_mode
+
+                if posting_mode_effective == "normal_card":
+                    card_bytes = None
+                    if display_name and body_text_tpl:
+                        card_body = body_text_tpl.replace("{taggings}", taggings) if "{taggings}" in body_text_tpl else f"{body_text_tpl}\n\n{taggings}"
+                        try:
+                            card_bytes = image_editor.generate_tweet_card_screenshot(
+                                name=display_name,
+                                username=username or display_name.lower().replace(" ", ""),
+                                body_text=card_body,
+                                avatar_bytes=avatar_bytes,
+                                timestamp=cfg.get("timestamp") or "3:51 PM · 8/4/26",
+                                views=cfg.get("views") or "3M",
+                                replies=cfg.get("replies") or "2.8K",
+                                retweets=cfg.get("retweets") or "4.2K",
+                                likes=cfg.get("likes") or "54K",
+                            )
+                        except Exception as exc:
+                            self._log("WARNING", f"Could not generate card image for {acc_label}: {exc}")
+
+                    if card_bytes:
+                        try:
+                            up_res = poster.upload_media(acc["auth_token"], acc["ct0"], card_bytes, proxy=acc.get("proxy"))
+                            media_id = up_res.get("media_id")
+                            if media_id:
+                                self._log("INFO", f"Uploaded generated card image for {acc_label} (Media ID: {media_id})")
+                        except Exception as exc:
+                            self._log("WARNING", f"Media upload failed for {acc_label}: {exc}")
+
+                    tweet_text = post_template.replace("{taggings}", taggings).strip()[:280]
+                    self._log("POST", f"{acc_label} (Normal Post + Generated Card) → {taggings[:80]}")
+                    result = poster.post_tweet(acc["auth_token"], acc["ct0"], tweet_text, media_id=media_id, proxy=acc.get("proxy"))
+
+                elif posting_mode_effective == "normal_custom":
                     if normal_media_bytes:
                         try:
                             up_res = poster.upload_media(
@@ -641,24 +686,31 @@ class _Campaign:
                             )
                             media_id = up_res.get("media_id")
                             if not media_id:
-                                self._log("WARNING", f"Could not upload media image for {acc_label}: {up_res.get('error')}")
+                                self._log("WARNING", f"Could not upload custom media image for {acc_label}: {up_res.get('error')}")
                             else:
-                                self._log("INFO", f"Uploaded media image for {acc_label} (Media ID: {media_id})")
+                                self._log("INFO", f"Uploaded custom media image for {acc_label} (Media ID: {media_id})")
                         except Exception as exc:
                             self._log("WARNING", f"Media upload exception for {acc_label}: {exc}")
 
-                    tweet_text = post_template.replace("{taggings}", taggings).strip()
-                    tweet_text = tweet_text[:280]
-                    self._log("POST", f"{acc_label} (Normal Post) → {taggings[:80]}")
+                    tweet_text = post_template.replace("{taggings}", taggings).strip()[:280]
+                    self._log("POST", f"{acc_label} (Normal Post + Custom Media) → {taggings[:80]}")
                     result = poster.post_tweet(acc["auth_token"], acc["ct0"], tweet_text, media_id=media_id, proxy=acc.get("proxy"))
+
+                elif posting_mode_effective == "normal_text":
+                    tweet_text = post_template.replace("{taggings}", taggings).strip()[:280]
+                    self._log("POST", f"{acc_label} (Normal Post Text Only) → {taggings[:80]}")
+                    result = poster.post_tweet(acc["auth_token"], acc["ct0"], tweet_text, proxy=acc.get("proxy"))
+
                 else:
-                    # ── List Post Mode ───────────────────────────────────────
+                    # ── List Post Mode (list_card or list_static) ────────────────
                     acc_list_id, acc_list_url = _get_or_create_account_list(
                         acc, list_name, list_desc, poster, self._log
                     )
 
+                    should_update_banner = (posting_mode_effective == "list_card") or (update_list_banner and posting_mode == "list")
+
                     # ── Update list banner image ─────────────────────────────
-                    if update_list_banner and display_name and body_text_tpl:
+                    if should_update_banner and display_name and body_text_tpl:
                         if "{taggings}" in body_text_tpl:
                             card_body = body_text_tpl.replace("{taggings}", taggings)
                         else:
@@ -714,7 +766,6 @@ class _Campaign:
                             tweet_text = f"{tweet_text}\n{acc_list_url}"
 
                     tweet_text = tweet_text[:280]
-
                     self._log("POST", f"{acc_label} (List Post) → {taggings[:80]}")
                     result = poster.post_tweet(acc["auth_token"], acc["ct0"], tweet_text, proxy=acc.get("proxy"))
 

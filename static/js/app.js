@@ -149,22 +149,19 @@ function toggleCustomCountry(prefix) {
 function togglePostingMode(mode) {
   const normalGroup = document.getElementById('group-normal-image');
   const listFields = document.querySelectorAll('.group-list-field');
-  if (mode === 'normal') {
-    if (normalGroup) normalGroup.style.display = 'block';
-    listFields.forEach(el => el.style.display = 'none');
-  } else {
-    if (normalGroup) normalGroup.style.display = 'none';
-    listFields.forEach(el => el.style.display = 'block');
+  if (normalGroup) {
+    normalGroup.style.display = (mode === 'normal_custom') ? 'block' : 'none';
   }
+  listFields.forEach(el => {
+    el.style.display = mode.startsWith('list') ? 'block' : 'none';
+  });
 }
 
 function toggleEditPostingMode(mode) {
   const editListFields = document.querySelectorAll('.edit-c-list-field');
-  if (mode === 'normal') {
-    editListFields.forEach(el => el.style.display = 'none');
-  } else {
-    editListFields.forEach(el => el.style.display = 'block');
-  }
+  editListFields.forEach(el => {
+    el.style.display = mode.startsWith('list') ? 'block' : 'none';
+  });
 }
 
 function readFileAsDataURL(file) {
@@ -449,10 +446,10 @@ async function startCampaign() {
   let countryVal = val('c-country');
   if (countryVal === 'custom') countryVal = val('c-custom-country');
 
-  const posting_mode = val('c-posting-mode') || 'list';
+  const posting_mode = val('c-posting-mode') || 'list_card';
   let normal_media_data = null;
 
-  if (posting_mode === 'normal') {
+  if (posting_mode === 'normal_custom') {
     const normalMediaInput = document.getElementById('c-normal-media-file');
     if (normalMediaInput && normalMediaInput.files[0]) {
       try {
@@ -768,8 +765,9 @@ async function openEditCampaignModal(cid) {
 
   const cfg = data.config || {};
   set('edit-c-name', data.name || '');
-  set('edit-c-posting-mode', cfg.posting_mode || 'list');
-  toggleEditPostingMode(cfg.posting_mode || 'list');
+  const modeVal = cfg.posting_mode || (cfg.update_list_banner !== false ? 'list_card' : 'list_static');
+  set('edit-c-posting-mode', modeVal);
+  toggleEditPostingMode(modeVal);
   set('edit-c-source-profiles', cfg.source_profiles || '');
   set('edit-c-min-followers', cfg.min_followers ?? 0);
   set('edit-c-max-followers', cfg.max_followers ?? 1000);
