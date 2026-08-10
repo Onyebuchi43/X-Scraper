@@ -143,6 +143,10 @@ def _init_db() -> None:
         conn.execute("ALTER TABLE lists ADD COLUMN post_count INTEGER DEFAULT 0")
     except Exception:
         pass
+    try:
+        conn.execute("DELETE FROM account_locations WHERE country IS NULL OR country = ''")
+    except Exception:
+        pass
     conn.commit()
     conn.close()
 

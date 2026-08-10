@@ -175,21 +175,26 @@ _ACCOUNT_LOCATION_CACHE: dict[str, Optional[str]] = {}
 def _get_cached_location_from_db(username: str) -> Optional[str]:
     try:
         conn = sqlite3.connect(DASH_DB)
-        row = conn.execute("SELECT country FROM account_locations WHERE username=?", (username.lower(),)).fetchone()
+        row = conn.execute(
+            "SELECT country FROM account_locations WHERE username=? AND country != '' AND country IS NOT NULL",
+            (username.lower(),)
+        ).fetchone()
         conn.close()
-        if row and row[0] is not None:
-            return row[0]
+        if row and row[0]:
+            return str(row[0]).strip()
     except Exception:
         pass
     return None
 
 
 def _save_location_to_db(username: str, country: Optional[str]) -> None:
+    if not country or not country.strip():
+        return  # NEVER save empty or null locations to DB! Only save valid verified countries!
     try:
         conn = sqlite3.connect(DASH_DB)
         conn.execute(
             "INSERT OR REPLACE INTO account_locations (username, country) VALUES (?, ?)",
-            (username.lower(), country if country is not None else "")
+            (username.lower(), country.strip())
         )
         conn.commit()
         conn.close()
@@ -211,18 +216,19 @@ def fetch_account_based_in(
     'About this account' panel. This is based on the phone/app country used
     to register the account, NOT the user-typed profile location.
 
-    Returns the country string (e.g. "Nigeria", "United States") or None
-    on failure.
+    Returns:
+    - Country string (e.g. "Nigeria", "United States")
+    - "RATE_LIMITED" if Twitter rate-limited all accounts in the pool
+    - None if query succeeded but no country data is present on account
     """
     clean_username = username.lstrip("@").lower()
-    if clean_username in _ACCOUNT_LOCATION_CACHE:
+    if clean_username in _ACCOUNT_LOCATION_CACHE and _ACCOUNT_LOCATION_CACHE[clean_username] is not None:
         return _ACCOUNT_LOCATION_CACHE[clean_username]
 
     db_loc = _get_cached_location_from_db(clean_username)
-    if db_loc is not None:
-        val = db_loc if db_loc != "" else None
-        _ACCOUNT_LOCATION_CACHE[clean_username] = val
-        return val
+    if db_loc:
+        _ACCOUNT_LOCATION_CACHE[clean_username] = db_loc
+        return db_loc
 
     params = {
         "variables": json.dumps({"screenName": clean_username}),
@@ -250,11 +256,10 @@ def fetch_account_based_in(
             if resp.status_code == 429:
                 hit_429 = True
                 logger.debug("AboutAccountQuery for @%s returned 429 — rotating account credential...", clean_username)
-                time.sleep(0.5)
+                time.sleep(0.3)
                 continue
             if resp.status_code != 200:
                 logger.debug("AboutAccountQuery for @%s returned HTTP %s", clean_username, resp.status_code)
-                _ACCOUNT_LOCATION_CACHE[clean_username] = None
                 return None
             data = resp.json()
             country = (
@@ -265,48 +270,17 @@ def fetch_account_based_in(
                     .get("account_based_in")
             )
             res = str(country).strip() if country else None
-            _ACCOUNT_LOCATION_CACHE[clean_username] = res
-            _save_location_to_db(clean_username, res)
+            if res:
+                _ACCOUNT_LOCATION_CACHE[clean_username] = res
+                _save_location_to_db(clean_username, res)
             return res
         except Exception as exc:
             logger.debug("fetch_account_based_in failed for @%s: %s", clean_username, exc)
             continue
 
     if hit_429:
-        # All pool accounts hit 429 rate limit — pause 20s for rate limit window to clear, then single retry
-        time.sleep(20.0)
-        acc = pool[0]
-        at = acc.get("auth_token", auth_token)
-        c0 = acc.get("ct0", ct0)
-        px = acc.get("proxy", proxy)
-        proxy_url = _get_httpx_proxy_url(px)
-        httpx_kwargs = {"proxy": proxy_url} if proxy_url else {}
-        try:
-            resp = httpx.get(
-                ABOUT_ACCOUNT_URL,
-                params=params,
-                headers=_headers(c0),
-                cookies=_cookies(at, c0),
-                timeout=timeout,
-                **httpx_kwargs,
-            )
-            if resp.status_code == 200:
-                data = resp.json()
-                country = (
-                    data.get("data", {})
-                        .get("user_result_by_screen_name", {})
-                        .get("result", {})
-                        .get("about_profile", {})
-                        .get("account_based_in")
-                )
-                res = str(country).strip() if country else None
-                _ACCOUNT_LOCATION_CACHE[clean_username] = res
-                _save_location_to_db(clean_username, res)
-                return res
-        except Exception:
-            pass
+        return "RATE_LIMITED"
 
-    _ACCOUNT_LOCATION_CACHE[clean_username] = None
     return None
 
 

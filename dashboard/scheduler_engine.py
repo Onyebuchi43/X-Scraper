@@ -285,6 +285,13 @@ def _scrape_followers(
                 for future in as_completed(futures):
                     checked_count += 1
                     handle, bio_loc, account_country = future.result()
+                    if account_country == "RATE_LIMITED":
+                        log_fn("WARNING", f" ⏳ Location queries rate-limited by Twitter on @{handle}. Pausing 45s for Twitter rate-limit window to clear…")
+                        _time.sleep(45.0)
+                        account_country = fetch_account_based_in(scrape_auth, scrape_ct0, handle, proxy=scrape_proxy, timeout=8, accounts_pool=accounts)
+                        if account_country == "RATE_LIMITED":
+                            account_country = None
+
                     if account_country:
                         country_lower = account_country.lower()
                         if any(ck in country_lower for ck in country_keywords):
