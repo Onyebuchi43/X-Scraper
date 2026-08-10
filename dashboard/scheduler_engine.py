@@ -286,37 +286,37 @@ def _scrape_followers(
             scrape_auth  = scrape_account["auth_token"]
             scrape_ct0   = scrape_account["ct0"]
             scrape_proxy = scrape_account.get("proxy")
-            log_fn("INFO", f"Country filter active — checking location for {len(candidate_items)} candidates across account pool...")
+            skipped_cnt = len(candidate_items) - len(unprocessed_candidates)
+            skip_msg = f" ({skipped_cnt} previously checked handles skipped)" if skipped_cnt > 0 else ""
+            log_fn("INFO", f"Country filter active — checking location for {len(unprocessed_candidates)} new candidates{skip_msg}...")
 
             def check_candidate(cand):
                 h = cand["handle"]
                 bio_loc = cand["bio_location"]
-                _time.sleep(0.8)  # smooth pacing to prevent 429 rate limit
-                cntry = fetch_account_based_in(scrape_auth, scrape_ct0, h, proxy=scrape_proxy, timeout=8, accounts_pool=accounts)
+                cntry = fetch_account_based_in(scrape_auth, scrape_ct0, h, proxy=scrape_proxy, timeout=6, accounts_pool=pool_accounts)
                 return h, bio_loc, cntry
 
-            with ThreadPoolExecutor(max_workers=2) as executor:
-                futures = [executor.submit(check_candidate, item) for item in candidate_items]
+            with ThreadPoolExecutor(max_workers=3) as executor:
+                futures = [executor.submit(check_candidate, item) for item in unprocessed_candidates]
                 checked_count = 0
                 for future in as_completed(futures):
                     checked_count += 1
                     handle, bio_loc, account_country = future.result()
+                    checked_handles_set.add(handle)
+
                     if account_country == "RATE_LIMITED":
-                        log_fn("WARNING", f" ⏳ Location queries rate-limited by Twitter on @{handle}. Pausing 45s for Twitter rate-limit window to clear…")
-                        _time.sleep(45.0)
-                        account_country = fetch_account_based_in(scrape_auth, scrape_ct0, handle, proxy=scrape_proxy, timeout=8, accounts_pool=accounts)
-                        if account_country == "RATE_LIMITED":
-                            account_country = None
+                        # AboutAccountQuery rate limited — fallback instantly to bio location without 45s delay!
+                        account_country = bio_loc
 
                     if account_country:
                         country_lower = account_country.lower()
                         if any(ck in country_lower for ck in country_keywords):
                             handles.append(handle)
-                            log_fn("INFO", f"  [{checked_count}/{len(candidate_items)}] @{handle}: Account based in '{account_country}' ✓ MATCH")
+                            log_fn("INFO", f"  [{checked_count}/{len(unprocessed_candidates)}] @{handle}: Location '{account_country}' ✓ MATCH")
                         else:
-                            log_fn("DEBUG", f"  [{checked_count}/{len(candidate_items)}] @{handle}: Account based in '{account_country}' — skip")
+                            log_fn("DEBUG", f"  [{checked_count}/{len(unprocessed_candidates)}] @{handle}: Location '{account_country}' — skip")
                     else:
-                        log_fn("DEBUG", f"  [{checked_count}/{len(candidate_items)}] @{handle}: Account based in unavailable — skip")
+                        log_fn("DEBUG", f"  [{checked_count}/{len(unprocessed_candidates)}] @{handle}: Location unavailable — skip")
         else:
             handles = [c["handle"] for c in candidate_items]
 
