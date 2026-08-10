@@ -215,11 +215,15 @@ def _scrape_followers(
             config=cfg,
         )
 
+        import time as _time
+
         handles: List[str] = []
         # save=False to stream results in memory without creating CSV files
         results = s.get_followers(source_profiles, limit=fetch_limit, save=False)
         raw_count = len(results) if results else 0
 
+        # ── Step 1: follower count filter (fast, no extra API calls) ─────────
+        candidate_handles: List[str] = []
         if results:
             for item in results:
                 if isinstance(item, dict):
@@ -237,26 +241,37 @@ def _scrape_followers(
                                 continue
                         except (ValueError, TypeError):
                             pass
-
-                    if country_keywords:
-                        # Use only the profile location field — never bio.
-                        # If location is missing, skip this profile.
-                        profile_loc = str(
-                            item.get("location")
-                            or item.get("user_location")
-                            or item.get("profile_location")
-                            or ""
-                        ).strip().lower()
-                        if not profile_loc or not any(ck in profile_loc for ck in country_keywords):
-                            continue
+                    if handle:
+                        candidate_handles.append(handle)
                 elif isinstance(item, str):
                     handle = item.strip().lstrip("@").lower()
-                    if country_keywords:
-                        continue
+                    if handle:
+                        candidate_handles.append(handle)
+
+        # ── Step 2: "Account based in" country filter (AboutAccountQuery) ────
+        if country_keywords and candidate_handles:
+            from .poster import fetch_account_based_in  # type: ignore
+            scrape_auth  = scrape_account["auth_token"]
+            scrape_ct0   = scrape_account["ct0"]
+            scrape_proxy = scrape_account.get("proxy")
+            log_fn("INFO", f"Country filter active — fetching 'Account based in' for {len(candidate_handles)} candidates via AboutAccountQuery...")
+
+            for handle in candidate_handles:
+                account_country = fetch_account_based_in(
+                    scrape_auth, scrape_ct0, handle, proxy=scrape_proxy
+                )
+                if account_country:
+                    country_lower = account_country.lower()
+                    if any(ck in country_lower for ck in country_keywords):
+                        handles.append(handle)
+                        log_fn("DEBUG", f"  @{handle}: account_based_in='{account_country}' ✓ match")
+                    else:
+                        log_fn("DEBUG", f"  @{handle}: account_based_in='{account_country}' — skip")
                 else:
-                    handle = ""
-                if handle:
-                    handles.append(handle)
+                    log_fn("DEBUG", f"  @{handle}: account_based_in=unavailable — skip")
+                _time.sleep(0.3)  # avoid rate-limiting AboutAccountQuery
+        else:
+            handles = candidate_handles
 
         log_fn("INFO", f"Scraped {raw_count} total profiles from Twitter; {len(handles)} matched criteria ({min_followers}-{max_followers} followers{country_msg})")
         return handles, True, raw_count

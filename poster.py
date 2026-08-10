@@ -27,6 +27,10 @@ CREATE_TWEET_URL       = f"https://x.com/i/api/graphql/{CREATE_TWEET_QUERY_ID}/C
 GQL_API                = "https://x.com/i/api/graphql"
 EDIT_LIST_BANNER_QID   = "Uk0ZwKSMYng56aQdeJD1yw"
 USER_LOOKUP_URL        = "https://x.com/i/api/graphql/Gb-d6r0vxPOADdG62OEBpQ/UserByScreenName"
+# AboutAccountQuery — returns data.user_result_by_screen_name.result.about_profile.account_based_in
+# This is the same data shown in X's "About this account" panel (verified by phone/app country)
+ABOUT_ACCOUNT_QUERY_ID = "zs_jFPFT78rBpXv9Z3U2YQ"
+ABOUT_ACCOUNT_URL      = f"https://x.com/i/api/graphql/{ABOUT_ACCOUNT_QUERY_ID}/AboutAccountQuery"
 
 
 # ── Auth helpers ───────────────────────────────────────────────────────────────
@@ -163,6 +167,54 @@ def get_profile_info(auth_token: str, ct0: str, handle: str, proxy: Optional[str
     except Exception as exc:
         logger.warning("Profile lookup failed for @%s: %s", handle, exc)
         return {"name": handle, "handle": handle, "avatar_url": "", "followers_count": 0, "description": ""}
+
+
+def fetch_account_based_in(
+    auth_token: str,
+    ct0: str,
+    username: str,
+    proxy: Optional[str | dict] = None,
+    timeout: int = 15,
+) -> Optional[str]:
+    """
+    Fetch the 'Account based in' country for *username* using X's internal
+    AboutAccountQuery GraphQL endpoint — the same data shown in X's
+    'About this account' panel. This is based on the phone/app country used
+    to register the account, NOT the user-typed profile location.
+
+    Returns the country string (e.g. "Nigeria", "United States") or None
+    on failure.
+    """
+    username = username.lstrip("@")
+    params = {
+        "variables": json.dumps({"screenName": username}),
+    }
+    try:
+        proxy_url = _get_httpx_proxy_url(proxy)
+        httpx_kwargs = {"proxy": proxy_url} if proxy_url else {}
+        resp = httpx.get(
+            ABOUT_ACCOUNT_URL,
+            params=params,
+            headers=_headers(ct0),
+            cookies=_cookies(auth_token, ct0),
+            timeout=timeout,
+            **httpx_kwargs,
+        )
+        if resp.status_code != 200:
+            logger.debug("AboutAccountQuery for @%s returned HTTP %s", username, resp.status_code)
+            return None
+        data = resp.json()
+        country = (
+            data.get("data", {})
+                .get("user_result_by_screen_name", {})
+                .get("result", {})
+                .get("about_profile", {})
+                .get("account_based_in")
+        )
+        return str(country).strip() if country else None
+    except Exception as exc:
+        logger.debug("fetch_account_based_in failed for @%s: %s", username, exc)
+        return None
 
 
 def get_user_lists(auth_token: str, ct0: str, proxy: Optional[str | dict] = None) -> list[dict]:
