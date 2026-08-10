@@ -275,8 +275,8 @@ def _scrape_followers(
             def check_candidate(cand):
                 h = cand["handle"]
                 bio_loc = cand["bio_location"]
-                _time.sleep(0.15)  # throttle to avoid 429 rate limit
-                cntry = fetch_account_based_in(scrape_auth, scrape_ct0, h, proxy=scrape_proxy, timeout=8)
+                _time.sleep(0.2)  # throttle to avoid 429 rate limit
+                cntry = fetch_account_based_in(scrape_auth, scrape_ct0, h, proxy=scrape_proxy, timeout=8, accounts_pool=accounts)
                 return h, bio_loc, cntry
 
             with ThreadPoolExecutor(max_workers=2) as executor:

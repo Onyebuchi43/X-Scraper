@@ -174,7 +174,8 @@ def fetch_account_based_in(
     ct0: str,
     username: str,
     proxy: Optional[str | dict] = None,
-    timeout: int = 15,
+    timeout: float = 10.0,
+    accounts_pool: Optional[list[dict]] = None,
 ) -> Optional[str]:
     """
     Fetch the 'Account based in' country for *username* using X's internal
@@ -189,21 +190,28 @@ def fetch_account_based_in(
     params = {
         "variables": json.dumps({"screenName": username}),
     }
-    proxy_url = _get_httpx_proxy_url(proxy)
-    httpx_kwargs = {"proxy": proxy_url} if proxy_url else {}
 
-    for attempt in range(2):
+    pool = accounts_pool if accounts_pool else [{"auth_token": auth_token, "ct0": ct0, "proxy": proxy}]
+
+    for acc in pool:
+        at = acc.get("auth_token", auth_token)
+        c0 = acc.get("ct0", ct0)
+        px = acc.get("proxy", proxy)
+        proxy_url = _get_httpx_proxy_url(px)
+        httpx_kwargs = {"proxy": proxy_url} if proxy_url else {}
+
         try:
             resp = httpx.get(
                 ABOUT_ACCOUNT_URL,
                 params=params,
-                headers=_headers(ct0),
-                cookies=_cookies(auth_token, ct0),
+                headers=_headers(c0),
+                cookies=_cookies(at, c0),
                 timeout=timeout,
                 **httpx_kwargs,
             )
-            if resp.status_code == 429 and attempt == 0:
-                time.sleep(1.2)
+            if resp.status_code == 429:
+                logger.debug("AboutAccountQuery for @%s returned 429 — rotating account credential...", username)
+                time.sleep(0.5)
                 continue
             if resp.status_code != 200:
                 logger.debug("AboutAccountQuery for @%s returned HTTP %s", username, resp.status_code)
@@ -219,7 +227,7 @@ def fetch_account_based_in(
             return str(country).strip() if country else None
         except Exception as exc:
             logger.debug("fetch_account_based_in failed for @%s: %s", username, exc)
-            return None
+            continue
     return None
 
 
