@@ -91,7 +91,10 @@ function renderAccounts(list) {
       <td><code>${esc(a.token_preview)}</code></td>
       <td>${a.proxy ? `<code>${esc(a.proxy)}</code>` : '—'}</td>
       <td>${fmtDate(a.created_at)}</td>
-      <td><button class="btn btn-sm btn-danger" onclick="deleteAccount(${a.id})">✕ Remove</button></td>
+      <td>
+        <button class="btn btn-sm btn-ghost" onclick="openEditAccountModal(${a.id})" style="margin-right:4px;">✏️ Edit</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteAccount(${a.id})">✕ Remove</button>
+      </td>
     </tr>
   `).join('');
 }
@@ -112,6 +115,54 @@ async function addAccount() {
   if (res.error) { toast(res.error, 'error'); return; }
   toast('Account added!', 'success');
   ['inp-auth-token', 'inp-ct0', 'inp-proxy', 'inp-label'].forEach(id => set(id, ''));
+  loadAccounts();
+}
+
+async function openEditAccountModal(id) {
+  const acc = await api(`/api/accounts/${id}`);
+  if (!acc || acc.error) {
+    toast(acc.error || 'Failed to fetch account details', 'error');
+    return;
+  }
+  set('edit-acc-id', acc.id);
+  set('edit-acc-label', acc.label || '');
+  set('edit-acc-auth-token', acc.auth_token || '');
+  set('edit-acc-ct0', acc.ct0 || '');
+  set('edit-acc-proxy', acc.proxy || '');
+  
+  const modal = document.getElementById('editAccountModal');
+  if (modal) modal.style.display = 'block';
+}
+
+function closeEditAccountModal() {
+  const modal = document.getElementById('editAccountModal');
+  if (modal) modal.style.display = 'none';
+}
+
+async function saveAccountEdit() {
+  const id = val('edit-acc-id');
+  const auth_token = val('edit-acc-auth-token');
+  const ct0 = val('edit-acc-ct0');
+  const proxy = val('edit-acc-proxy');
+  const label = val('edit-acc-label');
+
+  if (!auth_token || !ct0) {
+    toast('auth_token and ct0 are required', 'error');
+    return;
+  }
+
+  const res = await api(`/api/accounts/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify({ auth_token, ct0, proxy, label }),
+  });
+
+  if (res.error) {
+    toast(res.error, 'error');
+    return;
+  }
+
+  toast('Account updated successfully!', 'success');
+  closeEditAccountModal();
   loadAccounts();
 }
 

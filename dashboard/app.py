@@ -372,13 +372,41 @@ def add_account():
     return jsonify({"id": account_id, "msg": "Account added"})
 
 
-@app.route("/api/accounts/<int:account_id>", methods=["DELETE"])
-def delete_account(account_id: int):
-    conn = _db()
-    conn.execute("DELETE FROM accounts WHERE id=?", (account_id,))
-    conn.commit()
-    conn.close()
-    return jsonify({"msg": "Deleted"})
+@app.route("/api/accounts/<int:account_id>", methods=["GET", "PUT", "DELETE"])
+def handle_account(account_id: int):
+    if request.method == "GET":
+        conn = _db()
+        row = conn.execute("SELECT id, auth_token, ct0, proxy, label, created_at FROM accounts WHERE id=?", (account_id,)).fetchone()
+        conn.close()
+        if not row:
+            return jsonify({"error": "Account not found"}), 404
+        return jsonify(dict(row))
+
+    elif request.method == "PUT":
+        data = request.json or {}
+        auth_token = (data.get("auth_token") or "").strip()
+        ct0 = (data.get("ct0") or "").strip()
+        proxy = (data.get("proxy") or "").strip() or None
+        label = (data.get("label") or "").strip() or None
+
+        if not auth_token or not ct0:
+            return jsonify({"error": "auth_token and ct0 are required"}), 400
+
+        conn = _db()
+        conn.execute(
+            "UPDATE accounts SET auth_token=?, ct0=?, proxy=?, label=? WHERE id=?",
+            (auth_token, ct0, proxy, label, account_id),
+        )
+        conn.commit()
+        conn.close()
+        return jsonify({"msg": "Account updated successfully"})
+
+    elif request.method == "DELETE":
+        conn = _db()
+        conn.execute("DELETE FROM accounts WHERE id=?", (account_id,))
+        conn.commit()
+        conn.close()
+        return jsonify({"msg": "Deleted"})
 
 
 # ── Scrape jobs ────────────────────────────────────────────────────────────────

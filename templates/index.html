@@ -804,6 +804,40 @@ nohup python3 -m dashboard.app > app.log 2>&1 &
 
 </main>
 
+<!-- EDIT ACCOUNT MODAL -->
+<div id="editAccountModal" class="modal-backdrop" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:9999;overflow-y:auto;padding:20px;">
+  <div class="modal-content card" style="max-width:550px;margin:50px auto;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:24px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:12px;">
+      <h3 style="margin:0;">✏️ Edit Account Credentials &amp; Proxy</h3>
+      <button class="btn btn-sm btn-ghost" onclick="closeEditAccountModal()" style="font-size:16px;">✕</button>
+    </div>
+    <input type="hidden" id="edit-acc-id"/>
+    <div class="form-grid form-grid-2">
+      <div class="form-group span-2">
+        <label>Account Label <span class="badge-optional">optional</span></label>
+        <input type="text" id="edit-acc-label" placeholder="Account #1 - Main"/>
+      </div>
+      <div class="form-group span-2">
+        <label>Auth Token <span class="badge-required">required</span></label>
+        <input type="password" id="edit-acc-auth-token" placeholder="6b832b12eb0d082ca93..." autocomplete="off"/>
+      </div>
+      <div class="form-group span-2">
+        <label>ct0 (CSRF Token) <span class="badge-required">required</span></label>
+        <input type="password" id="edit-acc-ct0" placeholder="633172eddbaa..." autocomplete="off"/>
+      </div>
+      <div class="form-group span-2">
+        <label>Proxy URL <span class="badge-optional">optional</span></label>
+        <input type="text" id="edit-acc-proxy" placeholder="http://user:pass@host:port or host:port:user:pass"/>
+        <p class="field-hint">Format: <code>http://user:pass@host:port</code> or <code>host:port:user:pass</code>. Leave empty to use VPS IP directly.</p>
+      </div>
+    </div>
+    <div class="form-actions" style="margin-top:20px;display:flex;justify-content:flex-end;gap:10px;">
+      <button class="btn btn-ghost" onclick="closeEditAccountModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveAccountEdit()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
 <!-- EDIT CAMPAIGN MODAL -->
 <div id="editCampaignModal" class="modal-backdrop" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:9999;overflow-y:auto;padding:20px;">
   <div class="modal-content card" style="max-width:700px;margin:30px auto;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:24px;">
