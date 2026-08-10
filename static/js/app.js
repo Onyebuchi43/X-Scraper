@@ -31,6 +31,8 @@ document.addEventListener('DOMContentLoaded', () => {
     area.addEventListener('dragover', e => { e.preventDefault(); area.classList.add('drag-over'); });
     area.addEventListener('dragleave', () => area.classList.remove('drag-over'));
     area.addEventListener('drop', e => area.classList.remove('drag-over'));
+  }
+
   renderCountryChips('c');
   renderCountryChips('edit-c');
 });
