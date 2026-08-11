@@ -15,9 +15,28 @@ DASH_DB = "dashboard.db"
 def create_temp_email() -> tuple[Optional[str], Optional[str], str]:
     """
     Creates a temporary email address.
-    Returns (email_address, token_or_sid, provider_type) where provider_type is 'guerrilla' or 'mailtm'.
+    Returns (email_address, cred_dir_or_token, provider_type) where provider_type is 'atomicmail', 'guerrilla', or 'mailtm'.
     """
-    # Try Guerrilla Mail first (high reputation, active since 2006)
+    # 1. Try Atomic Mail first (high reputation @atomicmail.ai)
+    try:
+        uname = f"usr{secrets.token_hex(4)}"
+        cred_dir = f"/tmp/atomic_{uname}"
+        cmd = f"npx --package=@atomicmail/agent-skill atomicmail register --username '{uname}' --watch on-demand --forced --credentials-dir '{cred_dir}'"
+        res = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=30)
+        if res.returncode == 0 and res.stdout:
+            try:
+                data = json.loads(res.stdout.strip())
+                inbox = data.get("inbox") or data.get("accountId")
+                if inbox:
+                    email = f"{inbox}@atomicmail.ai"
+                    logger.info("Generated Atomic Mail temp address: %s", email)
+                    return email, cred_dir, "atomicmail"
+            except Exception:
+                pass
+    except Exception as exc:
+        logger.warning("Atomic Mail generation failed: %s — trying Guerrilla Mail fallback", exc)
+
+    # 2. Try Guerrilla Mail fallback
     try:
         r = httpx.get("https://api.guerrillamail.com/ajax.php?f=get_email_address", timeout=10)
         if r.status_code == 200:
@@ -30,7 +49,7 @@ def create_temp_email() -> tuple[Optional[str], Optional[str], str]:
     except Exception as exc:
         logger.warning("Guerrilla Mail generation failed: %s — trying mail.tm fallback", exc)
 
-    # Fallback to mail.tm
+    # 3. Fallback to mail.tm
     try:
         d_res = httpx.get("https://api.mail.tm/domains", timeout=10)
         domains = d_res.json().get("hydra:member", [])
@@ -52,7 +71,23 @@ def create_temp_email() -> tuple[Optional[str], Optional[str], str]:
 
 def poll_twitter_code(email_token: str, provider_type: str, timeout_sec: int = 90) -> Optional[str]:
     start = time.time()
-    if provider_type == "guerrilla":
+    if provider_type == "atomicmail":
+        cmd = f"npx --package=@atomicmail/agent-skill atomicmail jmap_request --ops-file list_inbox.json --credentials-dir '{email_token}'"
+        while time.time() - start < timeout_sec:
+            try:
+                res = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=15)
+                if res.returncode == 0 and res.stdout:
+                    text = res.stdout
+                    # Search for Twitter verification email code (excluding welcome msg)
+                    matches = re.findall(r"\b\d{6}\b", text)
+                    if matches:
+                        # Return the first 6-digit code found in the JMAP response
+                        return matches[0]
+            except Exception as exc:
+                logger.warning("Error polling Atomic Mail inbox: %s", exc)
+            time.sleep(3)
+        return None
+    elif provider_type == "guerrilla":
         url = f"https://api.guerrillamail.com/ajax.php?f=get_email_list&sid_token={email_token}&offset=0"
         while time.time() - start < timeout_sec:
             try:
