@@ -12,50 +12,96 @@ logger = logging.getLogger(__name__)
 
 DASH_DB = "dashboard.db"
 
-def create_temp_email() -> tuple[Optional[str], Optional[str]]:
+def create_temp_email() -> tuple[Optional[str], Optional[str], str]:
+    """
+    Creates a temporary email address.
+    Returns (email_address, token_or_sid, provider_type) where provider_type is 'guerrilla' or 'mailtm'.
+    """
+    # Try Guerrilla Mail first (high reputation, active since 2006)
+    try:
+        r = httpx.get("https://api.guerrillamail.com/ajax.php?f=get_email_address", timeout=10)
+        if r.status_code == 200:
+            data = r.json()
+            email = data.get("email_addr")
+            sid_token = data.get("sid_token")
+            if email and sid_token:
+                logger.info("Generated Guerrilla Mail temp address: %s", email)
+                return email, sid_token, "guerrilla"
+    except Exception as exc:
+        logger.warning("Guerrilla Mail generation failed: %s — trying mail.tm fallback", exc)
+
+    # Fallback to mail.tm
     try:
         d_res = httpx.get("https://api.mail.tm/domains", timeout=10)
         domains = d_res.json().get("hydra:member", [])
-        if not domains:
-            return None, None
-        domain = domains[0]["domain"]
-        username = f"usr_{secrets.token_hex(4)}"
-        email = f"{username}@{domain}"
-        password = f"P@ss{secrets.token_hex(6)}"
-        r = httpx.post("https://api.mail.tm/accounts", json={"address": email, "password": password}, timeout=10)
-        if r.status_code not in (200, 201):
-            return None, None
-        t_res = httpx.post("https://api.mail.tm/token", json={"address": email, "password": password}, timeout=10)
-        token = t_res.json().get("token")
-        return email, token
+        if domains:
+            domain = domains[0]["domain"]
+            username = f"usr_{secrets.token_hex(4)}"
+            email = f"{username}@{domain}"
+            password = f"P@ss{secrets.token_hex(6)}"
+            r = httpx.post("https://api.mail.tm/accounts", json={"address": email, "password": password}, timeout=10)
+            if r.status_code in (200, 201):
+                t_res = httpx.post("https://api.mail.tm/token", json={"address": email, "password": password}, timeout=10)
+                token = t_res.json().get("token")
+                if token:
+                    return email, token, "mailtm"
     except Exception as exc:
-        logger.error("create_temp_email failed: %s", exc)
-        return None, None
+        logger.error("mail.tm fallback failed: %s", exc)
 
-def poll_twitter_code(jwt_token: str, timeout_sec: int = 90) -> Optional[str]:
-    headers = {"Authorization": f"Bearer {jwt_token}"}
+    return None, None, ""
+
+def poll_twitter_code(email_token: str, provider_type: str, timeout_sec: int = 90) -> Optional[str]:
     start = time.time()
-    while time.time() - start < timeout_sec:
-        try:
-            r = httpx.get("https://api.mail.tm/messages", headers=headers, timeout=10)
-            msgs = r.json().get("hydra:member", [])
-            if msgs:
-                msg_id = msgs[0]["id"]
-                detail = httpx.get(f"https://api.mail.tm/messages/{msg_id}", headers=headers, timeout=10).json()
-                text = str(detail.get("text", "")) + str(detail.get("html", ""))
-                codes = re.findall(r"\b\d{6}\b", text)
-                if codes:
-                    return codes[0]
-        except Exception as exc:
-            logger.warning("Error checking email inbox: %s", exc)
-        time.sleep(3)
-    return None
+    if provider_type == "guerrilla":
+        url = f"https://api.guerrillamail.com/ajax.php?f=get_email_list&sid_token={email_token}&offset=0"
+        while time.time() - start < timeout_sec:
+            try:
+                r = httpx.get(url, timeout=10)
+                if r.status_code == 200:
+                    data = r.json()
+                    mail_list = data.get("list", [])
+                    for item in mail_list:
+                        subject = str(item.get("mail_subject", ""))
+                        excerpt = str(item.get("mail_excerpt", ""))
+                        text = f"{subject} {excerpt}"
+                        codes = re.findall(r"\b\d{6}\b", text)
+                        if codes:
+                            return codes[0]
+                        mail_id = item.get("mail_id")
+                        if mail_id:
+                            f_res = httpx.get(f"https://api.guerrillamail.com/ajax.php?f=fetch_email&sid_token={email_token}&email_id={mail_id}", timeout=10)
+                            if f_res.status_code == 200:
+                                body = str(f_res.json().get("mail_body", ""))
+                                codes = re.findall(r"\b\d{6}\b", body)
+                                if codes:
+                                    return codes[0]
+            except Exception as exc:
+                logger.warning("Error polling Guerrilla Mail inbox: %s", exc)
+            time.sleep(3)
+        return None
+    else:
+        headers = {"Authorization": f"Bearer {email_token}"}
+        while time.time() - start < timeout_sec:
+            try:
+                r = httpx.get("https://api.mail.tm/messages", headers=headers, timeout=10)
+                msgs = r.json().get("hydra:member", [])
+                if msgs:
+                    msg_id = msgs[0]["id"]
+                    detail = httpx.get(f"https://api.mail.tm/messages/{msg_id}", headers=headers, timeout=10).json()
+                    text = str(detail.get("text", "")) + str(detail.get("html", ""))
+                    codes = re.findall(r"\b\d{6}\b", text)
+                    if codes:
+                        return codes[0]
+            except Exception as exc:
+                logger.warning("Error polling mail.tm inbox: %s", exc)
+            time.sleep(3)
+        return None
 
 async def register_single_twitter_account_async(
     name: str,
     proxy_url: Optional[str] = None
 ) -> Optional[Dict[str, str]]:
-    email, mail_token = create_temp_email()
+    email, mail_token, provider_type = create_temp_email()
     if not email or not mail_token:
         logger.error("Failed to generate temp email for automated Twitter registration")
         return None
@@ -168,7 +214,7 @@ async def register_single_twitter_account_async(
                 await asyncio.sleep(3)
 
             logger.info("Waiting for Twitter 6-digit confirmation code on %s...", email)
-            code = poll_twitter_code(mail_token, timeout_sec=90)
+            code = poll_twitter_code(mail_token, provider_type=provider_type, timeout_sec=90)
             if code:
                 logger.info("Retrieved Twitter verification code: %s", code)
                 code_inp = page.locator('input[name="verification_code"], input[autocomplete="one-time-code"]')
