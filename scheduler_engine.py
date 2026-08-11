@@ -9,6 +9,7 @@ user is ever tagged twice for the same campaign, even across restarts.
 """
 from __future__ import annotations
 
+import httpx
 import json
 import logging
 import os
@@ -17,7 +18,7 @@ import sqlite3
 import sys
 import threading
 import time
-from typing import List, Optional, Tuple
+from typing import Callable, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
