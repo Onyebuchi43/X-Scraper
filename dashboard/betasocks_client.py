@@ -164,27 +164,49 @@ class BetaSocksClient:
             if resp.status_code != 200:
                 return []
 
-            # Extract IP:PORT or IP:PORT:USER:PASS patterns
             raw_text = resp.text
-            proxy_matches = re.findall(
-                r"\b(?:\d{1,3}\.){3}\d{1,3}:\d{2,5}(?::[^\s<'\"]+:[^\s<'\"]+)?\b",
-                raw_text,
-            )
+            sock_ids = list(dict.fromkeys(re.findall(r'onclick="socks\((\d+)\)"', raw_text)))
 
             formatted_proxies = []
-            for p in proxy_matches:
-                parts = p.split(":")
-                if len(parts) == 4:
-                    proxy_url = f"socks5://{parts[2]}:{parts[3]}@{parts[0]}:{parts[1]}"
-                elif len(parts) == 2:
-                    proxy_url = f"http://{p}"
-                else:
-                    proxy_url = f"http://{p}"
 
-                if proxy_url not in formatted_proxies:
-                    formatted_proxies.append(proxy_url)
+            for sid in sock_ids:
                 if len(formatted_proxies) >= limit:
                     break
+                check_resp = self.client.get(f"https://betasocks.com/user/check_ip/{sid}")
+                if "Package expired" in check_resp.text or "buy a package" in check_resp.text:
+                    logger.warning("BetaSocks Package Expired: Please renew your subscription on BetaSocks.com")
+                    break
+
+                ip_text = check_resp.text.strip()
+                matches = re.findall(
+                    r"\b(?:\d{1,3}\.){3}\d{1,3}:\d{2,5}(?::[^\s<'\"]+:[^\s<'\"]+)?\b",
+                    ip_text,
+                )
+                for p in matches:
+                    parts = p.split(":")
+                    if len(parts) == 4:
+                        proxy_url = f"socks5://{parts[2]}:{parts[3]}@{parts[0]}:{parts[1]}"
+                    else:
+                        proxy_url = f"socks5://{p}"
+                    if proxy_url not in formatted_proxies:
+                        formatted_proxies.append(proxy_url)
+                        break
+
+            if not formatted_proxies and not sock_ids:
+                proxy_matches = re.findall(
+                    r"\b(?:\d{1,3}\.){3}\d{1,3}:\d{2,5}(?::[^\s<'\"]+:[^\s<'\"]+)?\b",
+                    raw_text,
+                )
+                for p in proxy_matches:
+                    parts = p.split(":")
+                    if len(parts) == 4:
+                        proxy_url = f"socks5://{parts[2]}:{parts[3]}@{parts[0]}:{parts[1]}"
+                    else:
+                        proxy_url = f"socks5://{p}"
+                    if proxy_url not in formatted_proxies:
+                        formatted_proxies.append(proxy_url)
+                    if len(formatted_proxies) >= limit:
+                        break
 
             if formatted_proxies:
                 increment_daily_fetch_count(len(formatted_proxies))
