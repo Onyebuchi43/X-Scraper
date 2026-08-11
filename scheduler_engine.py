@@ -945,95 +945,93 @@ class _Campaign:
                     account_i += 1
                     continue
 
-                # ── Refill queue when empty ──────────────────────────────────
-                if not queue:
-                    scrape_round += 1
-                    limit_this_round = max(tags_per_post * 10, 50) * scrape_round
-                    self._log(
-                        "INFO",
-                        f"Scrape round {scrape_round} ({target_type}): fetching up to {limit_this_round} users "
-                        f"for target {source_profiles_raw}…"
-                    )
-                    if target_type == "tweet_commenters":
-                        raw_handles, ok, raw_count = _scrape_tweet_commenters(
-                            source_profiles_raw, accounts, limit_this_round, self._log,
-                            min_followers=min_followers, max_followers=max_followers,
-                            country_filter=country_filter, scrape_round=scrape_round,
-                            checked_candidates_set=checked_candidates_set,
-                        )
-                    elif target_type == "target_tweets_commenters":
-                        raw_handles, ok, raw_count = _scrape_target_tweets_commenters(
-                            source_profiles, accounts, limit_this_round, self._log,
-                            min_followers=min_followers, max_followers=max_followers,
-                            country_filter=country_filter, scrape_round=scrape_round,
-                            checked_candidates_set=checked_candidates_set,
-                        )
-                    else:
-                        raw_handles, ok, raw_count = _scrape_followers(
-                            source_profiles, accounts, limit_this_round, self._log,
-                            min_followers=min_followers, max_followers=max_followers,
-                            country_filter=country_filter, scrape_round=scrape_round,
-                            checked_handles_set=checked_candidates_set,
-                        )
-
-                    if not ok:
-                        if not accounts:
-                            self._log("ERROR", "No active accounts left for scraping — campaign stopping.")
-                            _set_status(campaign_id, "error")
-                            break
+                # ── Fill batch up to tags_per_post with verified handles ─────
+                batch = []
+                while len(batch) < tags_per_post and not self._stop_event.is_set():
+                    if not queue:
+                        scrape_round += 1
+                        limit_this_round = max(tags_per_post * 10, 50) * scrape_round
                         self._log(
-                            "WARNING",
-                            f"Scrape round {scrape_round} encountered an issue or restriction. Waiting 60s before retrying…"
+                            "INFO",
+                            f"Scrape round {scrape_round} ({target_type}): fetching up to {limit_this_round} users "
+                            f"for target {source_profiles_raw}…"
                         )
-                        time.sleep(60)
-                        scrape_round -= 1
-                        continue
+                        if target_type == "tweet_commenters":
+                            raw_handles, ok, raw_count = _scrape_tweet_commenters(
+                                source_profiles_raw, accounts, limit_this_round, self._log,
+                                min_followers=min_followers, max_followers=max_followers,
+                                country_filter=country_filter, scrape_round=scrape_round,
+                                checked_candidates_set=checked_candidates_set,
+                            )
+                        elif target_type == "target_tweets_commenters":
+                            raw_handles, ok, raw_count = _scrape_target_tweets_commenters(
+                                source_profiles, accounts, limit_this_round, self._log,
+                                min_followers=min_followers, max_followers=max_followers,
+                                country_filter=country_filter, scrape_round=scrape_round,
+                                checked_candidates_set=checked_candidates_set,
+                            )
+                        else:
+                            raw_handles, ok, raw_count = _scrape_followers(
+                                source_profiles, accounts, limit_this_round, self._log,
+                                min_followers=min_followers, max_followers=max_followers,
+                                country_filter=country_filter, scrape_round=scrape_round,
+                                checked_handles_set=checked_candidates_set,
+                            )
 
-                    fresh = [h for h in raw_handles if h.lower() not in already_tagged]
-                    # Shuffle fresh scraped followers to pick usernames at random!
-                    random.shuffle(fresh)
-
-                    self._log(
-                        "INFO",
-                        f"Round {scrape_round}: {raw_count} total scraped from Twitter, {len(raw_handles)} matched criteria ({min_followers}-{max_followers}), {len(fresh)} new (not yet tagged)"
-                    )
-
-                    if not fresh:
-                        if raw_count == 0:
+                        if not ok:
+                            if not accounts:
+                                self._log("ERROR", "No active accounts left for scraping — campaign stopping.")
+                                _set_status(campaign_id, "error")
+                                break
                             self._log(
                                 "WARNING",
-                                "No candidates returned from target profiles/tweets. Target profiles or tweets may be exhausted or private. Campaign complete."
+                                f"Scrape round {scrape_round} encountered an issue or restriction. Waiting 60s before retrying…"
                             )
+                            time.sleep(60)
+                            scrape_round -= 1
                             break
-                        else:
-                            self._log(
-                                "INFO",
-                                f"Round {scrape_round}: {raw_count} profiles scraped, 0 passed criteria/new. Fetching deeper in next round…"
-                            )
-                            continue
 
-                    queue = fresh
+                        fresh = [h for h in raw_handles if h.lower() not in already_tagged and h.lower() not in batch]
+                        random.shuffle(fresh)
 
-                if not queue:
-                    continue
+                        self._log(
+                            "INFO",
+                            f"Round {scrape_round}: {raw_count} total scraped from Twitter, {len(raw_handles)} matched criteria ({min_followers}-{max_followers}), {len(fresh)} new (not yet tagged)"
+                        )
 
-                # ── Pop a batch from the queue ────────────────────────────────
-                batch_raw = queue[:tags_per_post]
-                queue = queue[tags_per_post:]
+                        if not fresh:
+                            if raw_count == 0:
+                                self._log(
+                                    "WARNING",
+                                    "No candidates returned from target profiles/tweets. Target profiles or tweets may be exhausted or private. Campaign complete."
+                                )
+                                break
+                            else:
+                                self._log(
+                                    "INFO",
+                                    f"Round {scrape_round}: {raw_count} profiles scraped, 0 passed criteria/new. Fetching deeper in next round…"
+                                )
+                                continue
 
-                # Pre-Tag Safety Shield: Verify every handle in batch matches follower range before posting!
-                batch = []
-                for h in batch_raw:
+                        queue = fresh
+
+                    if not queue:
+                        break
+
+                    h = queue.pop(0)
+
+                    # Pre-Tag Safety Shield: Verify handle matches follower range before adding to post!
                     if max_followers and max_followers > 0:
                         try:
                             from poster import get_profile_info
                             pinfo = get_profile_info(acc.get("auth_token", ""), acc.get("ct0", ""), h, proxy=acc.get("proxy"))
                             fc = pinfo.get("followers_count", 0) if pinfo else 0
                             if not (min_followers <= fc <= max_followers):
-                                self._log("WARNING", f"Pre-tag safety shield: @{h} has {fc} followers (outside range {min_followers}-{max_followers}) — dropping from tag list")
+                                self._log("WARNING", f"Pre-tag safety shield: @{h} has {fc} followers (outside range {min_followers}-{max_followers}) — dropping")
                                 continue
                         except Exception as p_err:
                             self._log("WARNING", f"Pre-tag safety check error for @{h}: {p_err}")
+
                     batch.append(h)
 
                 if not batch:
