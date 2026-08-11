@@ -201,6 +201,98 @@ def get_profile_info(auth_token: str, ct0: str, handle: str, proxy: Optional[str
         return {"name": handle, "handle": handle, "avatar_url": "", "followers_count": 0, "description": ""}
 
 
+def update_profile_text(
+    auth_token: str,
+    ct0: str,
+    name: Optional[str] = None,
+    description: Optional[str] = None,
+    location: Optional[str] = None,
+    url: Optional[str] = None,
+    proxy: Optional[str | dict] = None,
+) -> bool:
+    """Update profile text fields (Name, Bio, Location, Website) via Twitter REST API."""
+    data = {}
+    if name is not None: data["name"] = name
+    if description is not None: data["description"] = description
+    if location is not None: data["location"] = location
+    if url is not None: data["url"] = url
+
+    if not data:
+        return True
+
+    try:
+        proxy_url = _get_httpx_proxy_url(proxy)
+        httpx_kwargs = {"proxy": proxy_url} if proxy_url else {}
+        resp = httpx.post(
+            "https://x.com/i/api/1.1/account/update_profile.json",
+            data=data,
+            headers=_headers(ct0, {"Content-Type": "application/x-www-form-urlencoded"}),
+            cookies=_cookies(auth_token, ct0),
+            timeout=20,
+            **httpx_kwargs,
+        )
+        if resp.status_code in (200, 204):
+            logger.info("Profile updated successfully")
+            return True
+        logger.warning("update_profile returned HTTP %d: %s", resp.status_code, resp.text[:200])
+        return False
+    except Exception as exc:
+        logger.error("update_profile_text failed: %s", exc)
+        return False
+
+
+def update_profile_image(auth_token: str, ct0: str, image_bytes: bytes, proxy: Optional[str | dict] = None) -> bool:
+    """Upload image and set it as the Twitter/X profile avatar picture."""
+    try:
+        media_id = upload_media(auth_token, ct0, image_bytes, proxy=proxy)
+        if not media_id:
+            return False
+        proxy_url = _get_httpx_proxy_url(proxy)
+        httpx_kwargs = {"proxy": proxy_url} if proxy_url else {}
+        resp = httpx.post(
+            "https://x.com/i/api/1.1/account/update_profile_image.json",
+            data={"media_id": media_id},
+            headers=_headers(ct0, {"Content-Type": "application/x-www-form-urlencoded"}),
+            cookies=_cookies(auth_token, ct0),
+            timeout=25,
+            **httpx_kwargs,
+        )
+        if resp.status_code in (200, 204):
+            logger.info("Profile avatar updated successfully")
+            return True
+        logger.warning("update_profile_image returned HTTP %d: %s", resp.status_code, resp.text[:200])
+        return False
+    except Exception as exc:
+        logger.error("update_profile_image failed: %s", exc)
+        return False
+
+
+def update_profile_banner(auth_token: str, ct0: str, image_bytes: bytes, proxy: Optional[str | dict] = None) -> bool:
+    """Upload image and set it as the Twitter/X profile header banner."""
+    try:
+        media_id = upload_media(auth_token, ct0, image_bytes, proxy=proxy)
+        if not media_id:
+            return False
+        proxy_url = _get_httpx_proxy_url(proxy)
+        httpx_kwargs = {"proxy": proxy_url} if proxy_url else {}
+        resp = httpx.post(
+            "https://x.com/i/api/1.1/account/update_profile_banner.json",
+            data={"media_id": media_id},
+            headers=_headers(ct0, {"Content-Type": "application/x-www-form-urlencoded"}),
+            cookies=_cookies(auth_token, ct0),
+            timeout=25,
+            **httpx_kwargs,
+        )
+        if resp.status_code in (200, 204):
+            logger.info("Profile banner updated successfully")
+            return True
+        logger.warning("update_profile_banner returned HTTP %d: %s", resp.status_code, resp.text[:200])
+        return False
+    except Exception as exc:
+        logger.error("update_profile_banner failed: %s", exc)
+        return False
+
+
 _ACCOUNT_LOCATION_CACHE: dict[str, Optional[str]] = {}
 
 

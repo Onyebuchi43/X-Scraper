@@ -21,6 +21,12 @@
     <li class="nav-item active" data-tab="accounts" onclick="switchTab('accounts',this)">
       <span class="nav-icon">&#128100;</span><span class="nav-label">Accounts</span>
     </li>
+    <li class="nav-item" data-tab="creator" onclick="switchTab('creator',this)">
+      <span class="nav-icon">✨</span><span class="nav-label">Account Creator</span>
+    </li>
+    <li class="nav-item" data-tab="proxy" onclick="switchTab('proxy',this)">
+      <span class="nav-icon">🛡️</span><span class="nav-label">Proxy Settings</span>
+    </li>
     <li class="nav-item" data-tab="scraper" onclick="switchTab('scraper',this)">
       <span class="nav-icon">&#128269;</span><span class="nav-label">Scraper</span>
     </li>
@@ -93,6 +99,83 @@
             <tr><td colspan="6" class="empty-row">No accounts yet</td></tr>
           </tbody>
         </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======= TAB: ACCOUNT CREATOR ======= -->
+  <section class="tab-panel" id="tab-creator">
+    <div class="panel-header">
+      <h2>Account Creator & Bulk Tools</h2>
+      <p class="panel-sub">Register new email-only accounts, import pre-made token lists, or bulk update profile credentials.</p>
+    </div>
+
+    <div class="card card-form">
+      <div class="card-title">✨ Email-Only Account Registration</div>
+      <div class="form-grid form-grid-2">
+        <div class="form-group">
+          <label>Username / Handle <span class="badge-required">required</span></label>
+          <input type="text" id="cr-username" placeholder="crypto_trader99"/>
+        </div>
+        <div class="form-group">
+          <label>Email Address <span class="badge-optional">optional</span></label>
+          <input type="email" id="cr-email" placeholder="user@domain.com"/>
+        </div>
+        <div class="form-group">
+          <label>Auth Token (auth_token) <span class="badge-required">required</span></label>
+          <input type="password" id="cr-auth-token" placeholder="6b832b12eb0d082ca93..."/>
+        </div>
+        <div class="form-group">
+          <label>CSRF Token (ct0) <span class="badge-required">required</span></label>
+          <input type="password" id="cr-ct0" placeholder="633172eddbaa..."/>
+        </div>
+        <div class="form-group span-2">
+          <label>Proxy <span class="badge-optional">optional (auto-fetched from BetaSocks if empty)</span></label>
+          <input type="text" id="cr-proxy" placeholder="socks5://user:pass@host:port"/>
+        </div>
+      </div>
+      <div class="form-actions" style="display:flex;gap:10px;">
+        <button class="btn btn-primary" onclick="createAccountSubmit()">Save Registered Account</button>
+        <button class="btn btn-ghost" onclick="openBulkImportModal()">📥 Bulk Import Accounts (CSV/Text)</button>
+        <button class="btn btn-ghost" onclick="openBulkEditModal()">✏️ Bulk Profile Editor</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======= TAB: PROXY SETTINGS ======= -->
+  <section class="tab-panel" id="tab-proxy">
+    <div class="panel-header">
+      <h2>Proxy & BetaSocks Settings</h2>
+      <p class="panel-sub">Manage your BetaSocks account credentials, set daily proxy limits, and test proxy connectivity.</p>
+    </div>
+
+    <div class="card card-form">
+      <div class="card-title">🛡️ BetaSocks.com Account Credentials</div>
+      <div class="form-grid form-grid-2">
+        <div class="form-group">
+          <label>BetaSocks Account Email <span class="badge-required">required</span></label>
+          <input type="email" id="px-email" placeholder="mentlinda38@gmail.com"/>
+        </div>
+        <div class="form-group">
+          <label>BetaSocks Password <span class="badge-required">required</span></label>
+          <input type="password" id="px-password" placeholder="••••••••"/>
+        </div>
+        <div class="form-group">
+          <label>Daily Max Proxy Fetch Limit</label>
+          <input type="number" id="px-daily-limit" value="50" min="1" max="1000"/>
+          <p class="field-hint">Max fresh proxies allowed to be drawn from BetaSocks per 24 hours.</p>
+        </div>
+        <div class="form-group">
+          <label>Today's Proxy Usage</label>
+          <div style="font-size:16px;font-weight:700;color:var(--primary);padding:10px;background:var(--bg-tertiary);border-radius:6px;" id="px-usage-display">
+            Fetched 0 / 50 proxies today
+          </div>
+        </div>
+      </div>
+      <div class="form-actions" style="display:flex;gap:10px;">
+        <button class="btn btn-primary" onclick="saveProxySettings()">💾 Save Settings</button>
+        <button class="btn btn-ghost" onclick="testBetaSocksConnection()">⚡ Test BetaSocks Connection</button>
+        <button class="btn btn-ghost" onclick="fetchBetaSocksProxiesNow()">🔄 Fetch Fresh USA Proxies</button>
       </div>
     </div>
   </section>

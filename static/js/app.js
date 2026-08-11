@@ -40,6 +40,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
 const TAB_TITLES = {
   accounts: 'Account Manager',
+  creator: 'Account Creator & Bulk Tools',
+  proxy: 'Proxy & BetaSocks Settings',
   scraper: 'Twitter Scraper',
   campaign: 'Post Campaign',
   results: 'Results & Files',
@@ -49,12 +51,15 @@ const TAB_TITLES = {
 function switchTab(tab, el) {
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.getElementById('tab-' + tab).classList.add('active');
+  const target = document.getElementById('tab-' + tab);
+  if (target) target.classList.add('active');
   if (el) el.classList.add('active');
   document.getElementById('tabTitle').textContent = TAB_TITLES[tab] || tab;
   currentTab = tab;
 
   if (tab === 'accounts') loadAccounts();
+  if (tab === 'creator') loadAccounts();
+  if (tab === 'proxy') loadProxySettings();
   if (tab === 'scraper') { loadAccountSelects(); loadCSVFiles(); }
   if (tab === 'campaign') { loadAccountSelects(); loadCampaignDbPanel(); loadVpsStatus(); }
   if (tab === 'results') { loadJobs(); loadCSVFiles(); }
@@ -1197,4 +1202,91 @@ function esc(s) { return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&
 function fmtDate(s) {
   if (!s) return '—';
   try { return new Date(s).toLocaleString(); } catch (e) { return s; }
+}
+
+// ══ Proxy Settings & BetaSocks ═════════════════════════════════════════════════
+async function loadProxySettings() {
+  const cfg = await api('/api/proxy/settings');
+  if (cfg && !cfg.error) {
+    if (document.getElementById('px-email')) document.getElementById('px-email').value = cfg.betasocks_email || '';
+    if (document.getElementById('px-password')) document.getElementById('px-password').value = cfg.betasocks_password || '';
+    if (document.getElementById('px-daily-limit')) document.getElementById('px-daily-limit').value = cfg.daily_limit || 50;
+    if (document.getElementById('px-usage-display')) {
+      document.getElementById('px-usage-display').textContent = `Fetched ${cfg.fetched_today_count || 0} / ${cfg.daily_limit || 50} proxies today`;
+    }
+  }
+}
+
+async function saveProxySettings() {
+  const email = document.getElementById('px-email').value;
+  const password = document.getElementById('px-password').value;
+  const daily_limit = parseInt(document.getElementById('px-daily-limit').value || 50);
+
+  const res = await api('/api/proxy/settings', {
+    method: 'POST',
+    body: JSON.stringify({ betasocks_email: email, betasocks_password: password, daily_limit: daily_limit })
+  });
+  if (res && res.msg) {
+    toast(res.msg, 'success');
+    loadProxySettings();
+  }
+}
+
+async function testBetaSocksConnection() {
+  const email = document.getElementById('px-email').value;
+  const password = document.getElementById('px-password').value;
+  toast('Connecting to BetaSocks...', 'info');
+  const res = await api('/api/proxy/test', {
+    method: 'POST',
+    body: JSON.stringify({ betasocks_email: email, betasocks_password: password })
+  });
+  if (res && res.success) {
+    toast('🟢 ' + res.message, 'success');
+  } else {
+    toast('🔴 ' + (res.message || 'Connection failed'), 'error');
+  }
+}
+
+async function fetchBetaSocksProxiesNow() {
+  toast('Fetching fresh proxies from BetaSocks...', 'info');
+  const res = await api('/api/proxy/fetch', {
+    method: 'POST',
+    body: JSON.stringify({ country: 'usa', limit: 5 })
+  });
+  if (res && res.proxies && res.proxies.length > 0) {
+    toast(`🟢 Successfully retrieved ${res.proxies.length} fresh proxies!`, 'success');
+    loadProxySettings();
+  } else {
+    toast('⚠️ Could not fetch proxies (daily limit reached or account error)', 'warning');
+  }
+}
+
+// ══ Account Creator Submit ═════════════════════════════════════════════════════
+async function createAccountSubmit() {
+  const username = document.getElementById('cr-username').value;
+  const email = document.getElementById('cr-email').value;
+  const auth_token = document.getElementById('cr-auth-token').value;
+  const ct0 = document.getElementById('cr-ct0').value;
+  const proxy = document.getElementById('cr-proxy').value;
+
+  if (!auth_token || !ct0) {
+    toast('Auth Token and CSRF Token (ct0) are required', 'error');
+    return;
+  }
+
+  const res = await api('/api/accounts/create', {
+    method: 'POST',
+    body: JSON.stringify({ username: username, email: email, auth_token: auth_token, ct0: ct0, proxy: proxy })
+  });
+
+  if (res && res.success) {
+    toast('🟢 ' + res.message, 'success');
+    document.getElementById('cr-username').value = '';
+    document.getElementById('cr-auth-token').value = '';
+    document.getElementById('cr-ct0').value = '';
+    document.getElementById('cr-proxy').value = '';
+    loadAccounts();
+  } else {
+    toast('🔴 ' + (res.error || 'Account creation failed'), 'error');
+  }
 }

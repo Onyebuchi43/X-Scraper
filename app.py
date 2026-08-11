@@ -804,6 +804,15 @@ def get_campaign(cid: int):
 @app.route("/api/campaigns/<int:cid>/resume", methods=["POST"])
 def start_campaign(cid: int):
     conn = _db()
+
+    # Enforce maximum 3 active concurrent campaigns
+    active_count = conn.execute("SELECT COUNT(*) FROM campaigns WHERE status='running' AND id != ?", (cid,)).fetchone()[0]
+    if active_count >= 3:
+        conn.close()
+        return jsonify({
+            "error": "Maximum limit of 3 concurrent active campaigns reached. Please stop an active campaign before starting a new one."
+        }), 400
+
     row = conn.execute("SELECT * FROM campaigns WHERE id=?", (cid,)).fetchone()
     conn.close()
     if not row:
@@ -933,6 +942,176 @@ def vps_status():
         "python_version": platform.python_version(),
         "active_campaigns": active_camps,
     })
+
+
+# ── Proxy Management Endpoints ────────────────────────────────────────────────
+@app.route("/api/proxy/settings", methods=["GET", "POST"])
+def proxy_settings_api():
+    try:
+        from betasocks_client import get_proxy_settings, update_proxy_settings
+    except ImportError:
+        from dashboard.betasocks_client import get_proxy_settings, update_proxy_settings  # type: ignore
+
+    if request.method == "POST":
+        data = request.json or {}
+        email = data.get("betasocks_email", "")
+        password = data.get("betasocks_password", "")
+        daily_limit = int(data.get("daily_limit", 50))
+        update_proxy_settings(email, password, daily_limit)
+        return jsonify({"msg": "Proxy settings updated successfully!"})
+
+    return jsonify(get_proxy_settings())
+
+
+@app.route("/api/proxy/test", methods=["POST"])
+def proxy_test_api():
+    data = request.json or {}
+    email = data.get("betasocks_email", "")
+    password = data.get("betasocks_password", "")
+    try:
+        from betasocks_client import test_betasocks_credentials
+    except ImportError:
+        from dashboard.betasocks_client import test_betasocks_credentials  # type: ignore
+
+    res = test_betasocks_credentials(email, password)
+    return jsonify(res)
+
+
+@app.route("/api/proxy/fetch", methods=["POST"])
+def proxy_fetch_api():
+    data = request.json or {}
+    country = data.get("country", "usa")
+    limit = int(data.get("limit", 5))
+    try:
+        from betasocks_client import BetaSocksClient
+    except ImportError:
+        from dashboard.betasocks_client import BetaSocksClient  # type: ignore
+
+    client = BetaSocksClient()
+    proxies = client.fetch_available_proxies(country=country, limit=limit)
+    return jsonify({"proxies": proxies, "count": len(proxies)})
+
+
+# ── Account Creator & Bulk Importer Endpoints ───────────────────────────────
+@app.route("/api/accounts/create", methods=["POST"])
+def create_account_api():
+    data = request.json or {}
+    email = data.get("email", "").strip()
+    name = data.get("name", "").strip()
+    password = data.get("password", "").strip()
+    auth_token = data.get("auth_token", "").strip()
+    ct0 = data.get("ct0", "").strip()
+    proxy = data.get("proxy", "").strip()
+    username = data.get("username", "").strip()
+
+    if not auth_token or not ct0:
+        return jsonify({"error": "auth_token and ct0 are required"}), 400
+
+    try:
+        from account_creator import register_email_account
+    except ImportError:
+        from dashboard.account_creator import register_email_account  # type: ignore
+
+    res = register_email_account(email, name, password, auth_token, ct0, proxy=proxy, username=username)
+    return jsonify(res)
+
+
+@app.route("/api/accounts/bulk-import", methods=["POST"])
+def bulk_import_accounts_api():
+    data = request.json or {}
+    raw_text = data.get("text", "").strip()
+    lines = [line.strip() for line in raw_text.splitlines() if line.strip()]
+
+    imported = 0
+    errors = []
+
+    try:
+        from account_creator import register_email_account
+    except ImportError:
+        from dashboard.account_creator import register_email_account  # type: ignore
+
+    for idx, line in enumerate(lines, 1):
+        parts = line.split(":")
+        if len(parts) >= 2:
+            auth_token = parts[0].strip()
+            ct0 = parts[1].strip()
+            username = parts[2].strip() if len(parts) > 2 else f"user_{uuid.uuid4().hex[:6]}"
+            proxy = parts[3].strip() if len(parts) > 3 else None
+            try:
+                register_email_account(
+                    email="", name=username, password="",
+                    auth_token=auth_token, ct0=ct0, proxy=proxy, username=username
+                )
+                imported += 1
+            except Exception as e:
+                errors.append(f"Line {idx}: {e}")
+        else:
+            errors.append(f"Line {idx}: Invalid format (expected auth_token:ct0)")
+
+    return jsonify({"imported": imported, "total": len(lines), "errors": errors})
+
+
+# ── Bulk Profile Editor Endpoint ─────────────────────────────────────────────
+@app.route("/api/accounts/bulk-edit", methods=["POST"])
+def bulk_edit_profiles_api():
+    data = request.form if request.form else (request.json or {})
+    account_ids_raw = data.get("account_ids", "[]")
+    if isinstance(account_ids_raw, str):
+        try:
+            account_ids = json.loads(account_ids_raw)
+        except Exception:
+            account_ids = []
+    else:
+        account_ids = account_ids_raw
+
+    name = data.get("name")
+    description = data.get("description")
+    location = data.get("location")
+    url = data.get("url")
+
+    avatar_file = request.files.get("avatar")
+    banner_file = request.files.get("banner")
+
+    avatar_bytes = avatar_file.read() if avatar_file else None
+    banner_bytes = banner_file.read() if banner_file else None
+
+    if not account_ids:
+        return jsonify({"error": "No accounts selected for bulk update"}), 400
+
+    conn = _db()
+    accounts = []
+    for aid in account_ids:
+        a = conn.execute("SELECT * FROM accounts WHERE id=?", (aid,)).fetchone()
+        if a: accounts.append(dict(a))
+    conn.close()
+
+    try:
+        from poster import update_profile_text, update_profile_image, update_profile_banner
+    except ImportError:
+        from dashboard.poster import update_profile_text, update_profile_image, update_profile_banner  # type: ignore
+
+    updated_count = 0
+    results = []
+
+    for acc in accounts:
+        at = acc.get("auth_token", "")
+        c0 = acc.get("ct0", "")
+        px = acc.get("proxy")
+        uname = acc.get("username", "")
+
+        ok_text = update_profile_text(at, c0, name=name, description=description, location=location, url=url, proxy=px) if (name or description or location or url) else True
+        ok_img = update_profile_image(at, c0, avatar_bytes, proxy=px) if avatar_bytes else True
+        ok_bnr = update_profile_banner(at, c0, banner_bytes, proxy=px) if banner_bytes else True
+
+        if ok_text and ok_img and ok_bnr:
+            updated_count += 1
+            results.append({"username": uname, "status": "success"})
+        else:
+            results.append({"username": uname, "status": "failed"})
+
+        time.sleep(2)  # Safe delay between bulk profile edits
+
+    return jsonify({"updated": updated_count, "total": len(accounts), "results": results})
 
 
 if __name__ == "__main__":
