@@ -995,24 +995,34 @@ def proxy_fetch_api():
 # ── Account Creator & Bulk Importer Endpoints ───────────────────────────────
 @app.route("/api/accounts/create", methods=["POST"])
 def create_account_api():
-    data = request.json or {}
-    email = data.get("email", "").strip()
-    name = data.get("name", "").strip()
-    password = data.get("password", "").strip()
-    auth_token = data.get("auth_token", "").strip()
-    ct0 = data.get("ct0", "").strip()
-    proxy = data.get("proxy", "").strip()
-    username = data.get("username", "").strip()
+    data = request.form if request.form else (request.json or {})
+    name = (data.get("name") or "").strip()
+    description = (data.get("description") or "").strip()
+    location = (data.get("location") or "").strip()
+    url = (data.get("url") or "").strip()
 
-    if not auth_token or not ct0:
-        return jsonify({"error": "auth_token and ct0 are required"}), 400
+    avatar_file = request.files.get("avatar")
+    banner_file = request.files.get("banner")
+
+    avatar_bytes = avatar_file.read() if avatar_file else None
+    banner_bytes = banner_file.read() if banner_file else None
+
+    if not name:
+        return jsonify({"error": "Display Name is required"}), 400
 
     try:
-        from account_creator import register_email_account
+        from account_creator import execute_automated_account_creation
     except ImportError:
-        from dashboard.account_creator import register_email_account  # type: ignore
+        from dashboard.account_creator import execute_automated_account_creation  # type: ignore
 
-    res = register_email_account(email, name, password, auth_token, ct0, proxy=proxy, username=username)
+    res = execute_automated_account_creation(
+        name=name,
+        description=description,
+        location=location,
+        url=url,
+        avatar_bytes=avatar_bytes,
+        banner_bytes=banner_bytes,
+    )
     return jsonify(res)
 
 

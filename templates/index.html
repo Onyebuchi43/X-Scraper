@@ -111,34 +111,41 @@
     </div>
 
     <div class="card card-form">
-      <div class="card-title">✨ Email-Only Account Registration</div>
-      <div class="form-grid form-grid-2">
-        <div class="form-group">
-          <label>Username / Handle <span class="badge-required">required</span></label>
-          <input type="text" id="cr-username" placeholder="crypto_trader99"/>
+      <div class="card-title">✨ Automated Account Creator</div>
+      <form id="form-account-creator" onsubmit="createAccountSubmit(event)">
+        <div class="form-grid form-grid-2">
+          <div class="form-group span-2">
+            <label>Display Name <span class="badge-required">required</span></label>
+            <input type="text" id="cr-name" placeholder="Alex Rivers" required/>
+            <p class="field-hint">Twitter/X will automatically generate a matching username for this name.</p>
+          </div>
+          <div class="form-group span-2">
+            <label>Bio / Description <span class="badge-optional">optional</span></label>
+            <textarea id="cr-bio" rows="2" placeholder="Crypto investor & Web3 developer..."></textarea>
+          </div>
+          <div class="form-group">
+            <label>Location <span class="badge-optional">optional</span></label>
+            <input type="text" id="cr-location" placeholder="New York, USA"/>
+          </div>
+          <div class="form-group">
+            <label>Website URL <span class="badge-optional">optional</span></label>
+            <input type="url" id="cr-url" placeholder="https://mywebsite.com"/>
+          </div>
+          <div class="form-group">
+            <label>Profile Picture (Avatar) <span class="badge-optional">optional</span></label>
+            <input type="file" id="cr-avatar" accept="image/*"/>
+          </div>
+          <div class="form-group">
+            <label>Header Banner Image <span class="badge-optional">optional</span></label>
+            <input type="file" id="cr-banner" accept="image/*"/>
+          </div>
         </div>
-        <div class="form-group">
-          <label>Email Address <span class="badge-optional">optional</span></label>
-          <input type="email" id="cr-email" placeholder="user@domain.com"/>
+        <div class="form-actions" style="display:flex;gap:10px;margin-top:15px;">
+          <button type="submit" class="btn btn-primary">✨ Create & Register Account</button>
+          <button type="button" class="btn btn-ghost" onclick="openBulkImportModal()">📥 Bulk Token Importer</button>
+          <button type="button" class="btn btn-ghost" onclick="openBulkEditModal()">✏️ Bulk Profile Editor</button>
         </div>
-        <div class="form-group">
-          <label>Auth Token (auth_token) <span class="badge-required">required</span></label>
-          <input type="password" id="cr-auth-token" placeholder="6b832b12eb0d082ca93..."/>
-        </div>
-        <div class="form-group">
-          <label>CSRF Token (ct0) <span class="badge-required">required</span></label>
-          <input type="password" id="cr-ct0" placeholder="633172eddbaa..."/>
-        </div>
-        <div class="form-group span-2">
-          <label>Proxy <span class="badge-optional">optional (auto-fetched from BetaSocks if empty)</span></label>
-          <input type="text" id="cr-proxy" placeholder="socks5://user:pass@host:port"/>
-        </div>
-      </div>
-      <div class="form-actions" style="display:flex;gap:10px;">
-        <button class="btn btn-primary" onclick="createAccountSubmit()">Save Registered Account</button>
-        <button class="btn btn-ghost" onclick="openBulkImportModal()">📥 Bulk Import Accounts (CSV/Text)</button>
-        <button class="btn btn-ghost" onclick="openBulkEditModal()">✏️ Bulk Profile Editor</button>
-      </div>
+      </form>
     </div>
   </section>
 
