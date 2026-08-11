@@ -341,6 +341,54 @@ def _scrape_followers(
 
 _TESTED_PROXY_HEALTH_CACHE: dict[str, float] = {}
 
+def _auto_heal_account_proxy(account_id: int, log_fn: Callable) -> Optional[str]:
+    """
+    When an account encounters a proxy error during scraping or posting:
+    1. Fetches fresh SOCKS5 proxy from BetaSocks.
+    2. Tests proxy connectivity to api.ipify.org.
+    3. Updates database accounts table for account_id with new proxy.
+    4. Returns new proxy string.
+    """
+    try:
+        log_fn("INFO", f"⚡ Auto-Healing Triggered: Fetching fresh proxy from BetaSocks for Account (ID {account_id})…")
+        try:
+            from betasocks_client import BetaSocksClient
+        except ImportError:
+            from dashboard.betasocks_client import BetaSocksClient  # type: ignore
+
+        client = BetaSocksClient()
+        fresh_proxies = client.fetch_available_proxies(country="usa", limit=3)
+
+        working_proxy = None
+        for px in fresh_proxies:
+            try:
+                parts = str(px).split(":")
+                if len(parts) == 4:
+                    px_url = f"http://{parts[2]}:{parts[3]}@{parts[0]}:{parts[1]}"
+                else:
+                    px_url = f"http://{px}"
+                t_resp = httpx.get("https://api.ipify.org?format=json", proxy=px_url, timeout=5)
+                if t_resp.status_code == 200:
+                    working_proxy = px
+                    break
+            except Exception:
+                continue
+
+        if working_proxy:
+            conn = _db()
+            conn.execute("UPDATE accounts SET proxy=? WHERE id=?", (working_proxy, account_id))
+            conn.commit()
+            conn.close()
+            log_fn("INFO", f"✅ AUTO-HEAL SUCCESS: Account (ID {account_id}) assigned fresh working BetaSocks proxy ({working_proxy})!")
+            return working_proxy
+        else:
+            log_fn("WARNING", f"⚠️ Auto-Healing: Could not find working BetaSocks proxy for Account (ID {account_id}) right now.")
+            return None
+    except Exception as exc:
+        log_fn("WARNING", f"Auto-healing failed for Account (ID {account_id}): {exc}")
+        return None
+
+
 def _check_and_log_account_proxy_health(accounts: List[dict], log_fn: Callable) -> None:
     """Pre-flight check for account proxies to log explicit errors when a proxy fails."""
     now = time.time()
@@ -364,8 +412,11 @@ def _check_and_log_account_proxy_health(accounts: List[dict], log_fn: Callable) 
             httpx.get("https://api.ipify.org?format=json", proxy=px_url, timeout=5)
         except Exception as exc:
             err_str = str(exc)
-            if "407" in err_str or "Proxy Authentication" in err_str:
-                log_fn("WARNING", f"🔌 Account (ID {aid}) PROXY FAILURE: Could not connect via proxy '{px}' (407 Proxy Authentication Required). Please update this account's proxy in the Accounts tab.")
+            if "407" in err_str or "Proxy Authentication" in err_str or "tunnel" in err_str:
+                log_fn("WARNING", f"🔌 Account (ID {aid}) PROXY FAILURE: Proxy '{px}' failed (407 Auth Required). Triggering auto-healing...")
+                healed_px = _auto_heal_account_proxy(aid, log_fn)
+                if healed_px:
+                    acc["proxy"] = healed_px
             else:
                 log_fn("WARNING", f"🔌 Account (ID {aid}) PROXY WARNING: Failed proxy check '{px}': {exc}")
 

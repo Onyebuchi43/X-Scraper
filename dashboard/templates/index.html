@@ -114,10 +114,15 @@
       <div class="card-title">✨ Automated Account Creator</div>
       <form id="form-account-creator" onsubmit="createAccountSubmit(event)">
         <div class="form-grid form-grid-2">
-          <div class="form-group span-2">
+          <div class="form-group">
             <label>Display Name <span class="badge-required">required</span></label>
             <input type="text" id="cr-name" placeholder="Alex Rivers" required/>
             <p class="field-hint">Twitter/X will automatically generate a matching username for this name.</p>
+          </div>
+          <div class="form-group">
+            <label>Number of Accounts to Create <span class="badge-required">required</span></label>
+            <input type="number" id="cr-quantity" value="1" min="1" max="50"/>
+            <p class="field-hint">Set how many accounts to create automatically (1 to 50).</p>
           </div>
           <div class="form-group span-2">
             <label>Bio / Description <span class="badge-optional">optional</span></label>

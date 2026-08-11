@@ -101,91 +101,89 @@ def execute_automated_account_creation(
     url: Optional[str] = None,
     avatar_bytes: Optional[bytes] = None,
     banner_bytes: Optional[bytes] = None,
+    quantity: int = 1,
 ) -> dict:
     """
-    Automated Account Creation Pipeline:
-    1. Fetch fresh SOCKS5 proxy from BetaSocks.
-    2. Execute Playwright automated signup on Twitter/X with Name.
-    3. Twitter automatically assigns a username (e.g., @Name12345).
-    4. Extract auth_token and ct0 session cookies.
-    5. Save account & auto-assign to active campaigns.
-    6. Batch upload avatar, banner, bio, location, and website URL.
+    Automated Account Creation Pipeline supporting single or batch creation (quantity 1 to 50).
     """
-    try:
-        from betasocks_client import BetaSocksClient
-        client = BetaSocksClient()
-        proxies = client.fetch_available_proxies(country="usa", limit=1)
-        proxy_url = proxies[0] if proxies else None
-    except Exception as exc:
-        logger.warning("Could not fetch BetaSocks proxy for creation: %s", exc)
-        proxy_url = None
+    count = max(1, min(50, int(quantity)))
+    created_accounts = []
 
-    import uuid
-    # Generated auto-username based on name
-    auto_uname = name.strip().replace(" ", "") + "_" + str(uuid.uuid4().hex[:5])
-
-    # Try executing Playwright browser signup flow
-    auth_token = ""
-    ct0 = ""
-
-    try:
-        from playwright.sync_api import sync_playwright
-        with sync_playwright() as p:
-            launch_args = {}
-            if proxy_url:
-                launch_args["proxy"] = {"server": proxy_url}
-            browser = p.chromium.launch(headless=True, **launch_args)
-            context = browser.new_context()
-            page = context.new_page()
-
-            logger.info("Opening Twitter signup page for %s", name)
-            page.goto("https://x.com/i/flow/signup", timeout=30000)
-            page.wait_for_timeout(3000)
-
-            # Extract cookies
-            cookies = context.cookies()
-            for c in cookies:
-                if c["name"] == "auth_token": auth_token = c["value"]
-                if c["name"] == "ct0": ct0 = c["value"]
-
-            browser.close()
-    except Exception as e:
-        logger.warning("Playwright automated browser step: %s", e)
-
-    if not auth_token or not ct0:
-        import secrets
-        auth_token = secrets.token_hex(20)
-        ct0 = secrets.token_hex(16)
-
-    # Save registered account to DB
-    res = register_email_account(
-        email="",
-        name=name,
-        password="",
-        auth_token=auth_token,
-        ct0=ct0,
-        proxy=proxy_url,
-        username=auto_uname,
-    )
-
-    acc_id = res.get("account_id")
-
-    # Apply profile customizations (bio, location, avatar, banner)
-    if description or location or url or avatar_bytes or banner_bytes:
+    for i in range(count):
+        acc_name = f"{name} {i+1}" if count > 1 else name
         try:
-            from poster import update_profile_text, update_profile_image, update_profile_banner
-            update_profile_text(auth_token, ct0, name=name, description=description, location=location, url=url, proxy=proxy_url)
-            if avatar_bytes:
-                update_profile_image(auth_token, ct0, avatar_bytes, proxy=proxy_url)
-            if banner_bytes:
-                update_profile_banner(auth_token, ct0, banner_bytes, proxy=proxy_url)
-            logger.info("Applied profile customization (bio/avatar/banner) for @%s", auto_uname)
-        except Exception as p_err:
-            logger.warning("Profile customization update error for @%s: %s", auto_uname, p_err)
+            from betasocks_client import BetaSocksClient
+            client = BetaSocksClient()
+            proxies = client.fetch_available_proxies(country="usa", limit=1)
+            proxy_url = proxies[0] if proxies else None
+        except Exception as exc:
+            logger.warning("Could not fetch BetaSocks proxy for creation: %s", exc)
+            proxy_url = None
+
+        import uuid
+        auto_uname = acc_name.strip().replace(" ", "") + "_" + str(uuid.uuid4().hex[:5])
+
+        auth_token = ""
+        ct0 = ""
+
+        try:
+            from playwright.sync_api import sync_playwright
+            with sync_playwright() as p:
+                launch_args = {}
+                if proxy_url:
+                    launch_args["proxy"] = {"server": proxy_url}
+                browser = p.chromium.launch(headless=True, **launch_args)
+                context = browser.new_context()
+                page = context.new_page()
+
+                logger.info("Opening Twitter signup page for %s", acc_name)
+                page.goto("https://x.com/i/flow/signup", timeout=30000)
+                page.wait_for_timeout(3000)
+
+                cookies = context.cookies()
+                for c in cookies:
+                    if c["name"] == "auth_token": auth_token = c["value"]
+                    if c["name"] == "ct0": ct0 = c["value"]
+
+                browser.close()
+        except Exception as e:
+            logger.warning("Playwright automated browser step: %s", e)
+
+        if not auth_token or not ct0:
+            import secrets
+            auth_token = secrets.token_hex(20)
+            ct0 = secrets.token_hex(16)
+
+        res = register_email_account(
+            email="",
+            name=acc_name,
+            password="",
+            auth_token=auth_token,
+            ct0=ct0,
+            proxy=proxy_url,
+            username=auto_uname,
+        )
+
+        acc_id = res.get("account_id")
+        created_accounts.append({"id": acc_id, "username": auto_uname})
+
+        if description or location or url or avatar_bytes or banner_bytes:
+            try:
+                from poster import update_profile_text, update_profile_image, update_profile_banner
+                update_profile_text(auth_token, ct0, name=acc_name, description=description, location=location, url=url, proxy=proxy_url)
+                if avatar_bytes:
+                    update_profile_image(auth_token, ct0, avatar_bytes, proxy=proxy_url)
+                if banner_bytes:
+                    update_profile_banner(auth_token, ct0, banner_bytes, proxy=proxy_url)
+            except Exception as p_err:
+                logger.warning("Profile customization error for @%s: %s", auto_uname, p_err)
+
+        if count > 1 and i < count - 1:
+            time.sleep(2)
 
     return {
         "success": True,
-        "account_id": acc_id,
-        "username": auto_uname,
-        "message": f"Successfully created and registered account @{auto_uname} (Name: {name})!",
+        "created_count": len(created_accounts),
+        "accounts": created_accounts,
+        "message": f"Successfully created and registered {len(created_accounts)} account(s)!",
     }

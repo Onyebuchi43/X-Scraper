@@ -1015,6 +1015,8 @@ def create_account_api():
     except ImportError:
         from dashboard.account_creator import execute_automated_account_creation  # type: ignore
 
+    quantity = int(data.get("quantity", 1))
+
     res = execute_automated_account_creation(
         name=name,
         description=description,
@@ -1022,6 +1024,7 @@ def create_account_api():
         url=url,
         avatar_bytes=avatar_bytes,
         banner_bytes=banner_bytes,
+        quantity=quantity,
     )
     return jsonify(res)
 
