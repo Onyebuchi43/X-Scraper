@@ -81,19 +81,52 @@ async def register_single_twitter_account_async(
         )
         page = await context.new_page()
 
+        async def js_click(locator):
+            """Click via JS dispatchEvent to bypass overlay masks."""
+            el = await locator.element_handle()
+            if el:
+                await page.evaluate("el => el.dispatchEvent(new MouseEvent('click', {bubbles: true, cancelable: true}))", el)
+
+        async def dismiss_overlay():
+            """Dismiss any modal overlay blocking pointer events."""
+            mask = page.locator('[data-testid="mask"]')
+            if await mask.count() > 0:
+                logger.info("Overlay mask detected — dismissing with Escape key")
+                await page.keyboard.press("Escape")
+                await asyncio.sleep(1)
+                try:
+                    await mask.first.click(timeout=2000)
+                except Exception:
+                    pass
+                await asyncio.sleep(1)
+
         try:
             await page.goto("https://x.com/i/flow/signup", wait_until="domcontentloaded", timeout=30000)
             await asyncio.sleep(4)
 
+            # Dismiss any cookie consent or loading overlay before interacting
+            await dismiss_overlay()
+
             btn_phone = page.locator('text="Continue with phone"')
             if await btn_phone.count() > 0:
-                await btn_phone.first.click()
+                await dismiss_overlay()
+                try:
+                    await btn_phone.first.click(timeout=5000)
+                except Exception:
+                    logger.info("Pointer click blocked — using JS click on 'Continue with phone'")
+                    await js_click(btn_phone.first)
                 await asyncio.sleep(2)
 
             btn_email = page.locator('text="Use email instead"')
             if await btn_email.count() > 0:
-                await btn_email.first.click()
+                await dismiss_overlay()
+                try:
+                    await btn_email.first.click(timeout=5000)
+                except Exception:
+                    await js_click(btn_email.first)
                 await asyncio.sleep(2)
+
+            await dismiss_overlay()
 
             name_inp = page.locator('input[name="name"]')
             if await name_inp.count() > 0:
@@ -112,17 +145,26 @@ async def register_single_twitter_account_async(
             await asyncio.sleep(1)
             btn_next = page.locator('button:has-text("Next")')
             if await btn_next.count() > 0:
-                await btn_next.first.click()
+                try:
+                    await btn_next.first.click(timeout=5000)
+                except Exception:
+                    await js_click(btn_next.first)
                 await asyncio.sleep(2)
 
             btn_next2 = page.locator('button:has-text("Next")')
             if await btn_next2.count() > 0:
-                await btn_next2.first.click()
+                try:
+                    await btn_next2.first.click(timeout=5000)
+                except Exception:
+                    await js_click(btn_next2.first)
                 await asyncio.sleep(2)
 
             btn_signup = page.locator('button:has-text("Sign up")')
             if await btn_signup.count() > 0:
-                await btn_signup.first.click()
+                try:
+                    await btn_signup.first.click(timeout=5000)
+                except Exception:
+                    await js_click(btn_signup.first)
                 await asyncio.sleep(3)
 
             logger.info("Waiting for Twitter 6-digit confirmation code on %s...", email)
@@ -132,14 +174,20 @@ async def register_single_twitter_account_async(
                 code_inp = page.locator('input[name="verification_code"], input[autocomplete="one-time-code"]')
                 if await code_inp.count() > 0:
                     await code_inp.fill(code)
-                    await page.locator('button:has-text("Next")').first.click()
+                    try:
+                        await page.locator('button:has-text("Next")').first.click(timeout=5000)
+                    except Exception:
+                        await js_click(page.locator('button:has-text("Next")').first)
                     await asyncio.sleep(3)
 
                     pwd_inp = page.locator('input[name="password"]')
                     if await pwd_inp.count() > 0:
                         account_password = f"Pass{secrets.token_hex(6)}!"
                         await pwd_inp.fill(account_password)
-                        await page.locator('button:has-text("Next")').first.click()
+                        try:
+                            await page.locator('button:has-text("Next")').first.click(timeout=5000)
+                        except Exception:
+                            await js_click(page.locator('button:has-text("Next")').first)
                         await asyncio.sleep(5)
 
                     cookies = await context.cookies()
