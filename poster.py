@@ -220,7 +220,25 @@ def fetch_real_twitter_username(auth_token: str, ct0: str, proxy: Optional[str |
                 logger.info("Retrieved real Twitter screen_name: @%s", screen_name)
                 return screen_name
     except Exception as exc:
-        logger.warning("verify_credentials failed to retrieve screen_name: %s", exc)
+        logger.warning("verify_credentials failed via proxy: %s", exc)
+
+    if proxy:
+        try:
+            resp = httpx.get(
+                "https://x.com/i/api/1.1/account/verify_credentials.json",
+                headers=_headers(ct0),
+                cookies=_cookies(auth_token, ct0),
+                timeout=15,
+            )
+            if resp.status_code == 200:
+                data = resp.json()
+                screen_name = data.get("screen_name")
+                if screen_name:
+                    logger.info("Retrieved real Twitter screen_name (direct fallback): @%s", screen_name)
+                    return screen_name
+        except Exception as exc:
+            logger.warning("verify_credentials direct fallback failed: %s", exc)
+
     return None
 
 
