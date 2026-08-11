@@ -1027,13 +1027,13 @@ class _Campaign:
                     if max_followers and max_followers > 0:
                         try:
                             from poster import get_profile_info
-                            pinfo = get_profile_info(auth_tok, csrf_tok, h, proxy=acc_proxy)
+                            pinfo = get_profile_info(acc.get("auth_token", ""), acc.get("ct0", ""), h, proxy=acc.get("proxy"))
                             fc = pinfo.get("followers_count", 0) if pinfo else 0
                             if not (min_followers <= fc <= max_followers):
                                 self._log("WARNING", f"Pre-tag safety shield: @{h} has {fc} followers (outside range {min_followers}-{max_followers}) — dropping from tag list")
                                 continue
                         except Exception as p_err:
-                            self._log("DEBUG", f"Pre-tag safety check error for @{h}: {p_err}")
+                            self._log("WARNING", f"Pre-tag safety check error for @{h}: {p_err}")
                     batch.append(h)
 
                 if not batch:
