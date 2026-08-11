@@ -149,6 +149,7 @@ def execute_automated_account_creation(
         acc_ct0 = (ct0 or "").strip()
 
         if not acc_token or not acc_ct0:
+            reg_data = None
             try:
                 from twitter_email_registrar import register_live_twitter_account
                 reg_data = register_live_twitter_account(acc_name, proxy_url=proxy_url)
@@ -156,12 +157,13 @@ def execute_automated_account_creation(
                     acc_token = reg_data["auth_token"]
                     acc_ct0 = reg_data["ct0"]
             except Exception as exc:
-                logger.warning("Automated Playwright signup fallback: %s", exc)
+                logger.warning("Automated Playwright signup error: %s", exc)
 
-        if not acc_token:
-            acc_token = secrets.token_hex(20)
-        if not acc_ct0:
-            acc_ct0 = secrets.token_hex(16)
+            if not reg_data or not acc_token or not acc_ct0:
+                return {
+                    "success": False,
+                    "error": "Automated Twitter registration could not be completed on X (Twitter requested phone/CAPTCHA verification). Please import active account cookies via Bulk Token Importer or paste valid auth_token & ct0."
+                }
 
         res = register_email_account(
             email="",
