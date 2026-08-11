@@ -66,8 +66,15 @@ async def register_single_twitter_account_async(
     if proxy_url:
         pw_kwargs["proxy"] = {"server": proxy_url}
 
+    args = [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+        "--disable-accelerated-2d-canvas",
+        "--disable-gpu",
+    ]
     async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True, **pw_kwargs)
+        browser = await p.chromium.launch(headless=True, args=args, **pw_kwargs)
         context = await browser.new_context(
             user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
             viewport={"width": 1280, "height": 800}
