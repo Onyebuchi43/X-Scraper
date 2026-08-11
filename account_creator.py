@@ -105,9 +105,11 @@ def execute_automated_account_creation(
     avatar_bytes: Optional[bytes] = None,
     banner_bytes: Optional[bytes] = None,
     quantity: int = 1,
+    username: Optional[str] = None,
 ) -> dict:
     """
     Automated Account Creation Pipeline supporting single or batch creation (quantity 1 to 50).
+    Sets the database account label strictly to their username.
     """
     count = max(1, min(50, int(quantity)))
     created_accounts = []
@@ -124,7 +126,12 @@ def execute_automated_account_creation(
             proxy_url = None
 
         import uuid
-        auto_uname = acc_name.strip().replace(" ", "") + "_" + str(uuid.uuid4().hex[:5])
+        if username and username.strip():
+            u_base = username.strip().lstrip("@")
+            auto_uname = f"{u_base}_{i+1}" if count > 1 else u_base
+        else:
+            n_base = name.strip().replace(" ", "")
+            auto_uname = f"{n_base}_{i+1}" if count > 1 else n_base
 
         import secrets
         auth_token = secrets.token_hex(20)

@@ -997,6 +997,7 @@ def proxy_fetch_api():
 def create_account_api():
     data = request.form if request.form else (request.json or {})
     name = (data.get("name") or "").strip()
+    username = (data.get("username") or "").strip()
     description = (data.get("description") or "").strip()
     location = (data.get("location") or "").strip()
     url = (data.get("url") or "").strip()
@@ -1007,8 +1008,11 @@ def create_account_api():
     avatar_bytes = avatar_file.read() if avatar_file else None
     banner_bytes = banner_file.read() if banner_file else None
 
+    if not name and not username:
+        return jsonify({"error": "Display Name or Username is required"}), 400
+
     if not name:
-        return jsonify({"error": "Display Name is required"}), 400
+        name = username
 
     try:
         from account_creator import execute_automated_account_creation
@@ -1025,6 +1029,7 @@ def create_account_api():
         avatar_bytes=avatar_bytes,
         banner_bytes=banner_bytes,
         quantity=quantity,
+        username=username if username else None,
     )
     return jsonify(res)
 
