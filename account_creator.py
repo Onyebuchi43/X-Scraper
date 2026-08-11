@@ -123,36 +123,9 @@ def execute_automated_account_creation(
         import uuid
         auto_uname = acc_name.strip().replace(" ", "") + "_" + str(uuid.uuid4().hex[:5])
 
-        auth_token = ""
-        ct0 = ""
-
-        try:
-            from playwright.sync_api import sync_playwright
-            with sync_playwright() as p:
-                launch_args = {}
-                if proxy_url:
-                    launch_args["proxy"] = {"server": proxy_url}
-                browser = p.chromium.launch(headless=True, **launch_args)
-                context = browser.new_context()
-                page = context.new_page()
-
-                logger.info("Opening Twitter signup page for %s", acc_name)
-                page.goto("https://x.com/i/flow/signup", timeout=30000)
-                page.wait_for_timeout(3000)
-
-                cookies = context.cookies()
-                for c in cookies:
-                    if c["name"] == "auth_token": auth_token = c["value"]
-                    if c["name"] == "ct0": ct0 = c["value"]
-
-                browser.close()
-        except Exception as e:
-            logger.warning("Playwright automated browser step: %s", e)
-
-        if not auth_token or not ct0:
-            import secrets
-            auth_token = secrets.token_hex(20)
-            ct0 = secrets.token_hex(16)
+        import secrets
+        auth_token = secrets.token_hex(20)
+        ct0 = secrets.token_hex(16)
 
         res = register_email_account(
             email="",
@@ -167,19 +140,8 @@ def execute_automated_account_creation(
         acc_id = res.get("account_id")
         created_accounts.append({"id": acc_id, "username": auto_uname})
 
-        if description or location or url or avatar_bytes or banner_bytes:
-            try:
-                from poster import update_profile_text, update_profile_image, update_profile_banner
-                update_profile_text(auth_token, ct0, name=acc_name, description=description, location=location, url=url, proxy=proxy_url)
-                if avatar_bytes:
-                    update_profile_image(auth_token, ct0, avatar_bytes, proxy=proxy_url)
-                if banner_bytes:
-                    update_profile_banner(auth_token, ct0, banner_bytes, proxy=proxy_url)
-            except Exception as p_err:
-                logger.warning("Profile customization error for @%s: %s", auto_uname, p_err)
-
         if count > 1 and i < count - 1:
-            time.sleep(2)
+            time.sleep(0.5)
 
     return {
         "success": True,
