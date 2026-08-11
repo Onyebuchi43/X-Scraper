@@ -1262,31 +1262,65 @@ async function fetchBetaSocksProxiesNow() {
 }
 
 // ══ Account Creator Submit ═════════════════════════════════════════════════════
-async function createAccountSubmit() {
-  const username = document.getElementById('cr-username').value;
-  const email = document.getElementById('cr-email').value;
-  const auth_token = document.getElementById('cr-auth-token').value;
-  const ct0 = document.getElementById('cr-ct0').value;
-  const proxy = document.getElementById('cr-proxy').value;
+async function createAccountSubmit(e) {
+  if (e) e.preventDefault();
 
-  if (!auth_token || !ct0) {
-    toast('Auth Token and CSRF Token (ct0) are required', 'error');
+  const nameInput = document.getElementById('cr-name');
+  const name = nameInput ? nameInput.value.trim() : '';
+  const quantity = document.getElementById('cr-quantity') ? document.getElementById('cr-quantity').value : '1';
+  const description = document.getElementById('cr-bio') ? document.getElementById('cr-bio').value : '';
+  const location = document.getElementById('cr-location') ? document.getElementById('cr-location').value : '';
+  const url = document.getElementById('cr-url') ? document.getElementById('cr-url').value : '';
+  const avatarFile = document.getElementById('cr-avatar') && document.getElementById('cr-avatar').files[0];
+  const bannerFile = document.getElementById('cr-banner') && document.getElementById('cr-banner').files[0];
+
+  if (!name) {
+    toast('Display Name is required', 'error');
     return;
   }
 
-  const res = await api('/api/accounts/create', {
-    method: 'POST',
-    body: JSON.stringify({ username: username, email: email, auth_token: auth_token, ct0: ct0, proxy: proxy })
-  });
+  const submitBtn = document.querySelector('#form-account-creator button[type="submit"]');
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '⌛ Creating Account(s)...';
+  }
 
-  if (res && res.success) {
-    toast('🟢 ' + res.message, 'success');
-    document.getElementById('cr-username').value = '';
-    document.getElementById('cr-auth-token').value = '';
-    document.getElementById('cr-ct0').value = '';
-    document.getElementById('cr-proxy').value = '';
-    loadAccounts();
-  } else {
-    toast('🔴 ' + (res.error || 'Account creation failed'), 'error');
+  const formData = new FormData();
+  formData.append('name', name);
+  formData.append('quantity', quantity);
+  if (description) formData.append('description', description);
+  if (location) formData.append('location', location);
+  if (url) formData.append('url', url);
+  if (avatarFile) formData.append('avatar', avatarFile);
+  if (bannerFile) formData.append('banner', bannerFile);
+
+  try {
+    const resp = await fetch('/api/accounts/create', {
+      method: 'POST',
+      body: formData
+    });
+    const res = await resp.json();
+
+    if (res && res.success) {
+      toast('🟢 ' + res.message, 'success');
+      if (nameInput) nameInput.value = '';
+      if (document.getElementById('cr-bio')) document.getElementById('cr-bio').value = '';
+      if (document.getElementById('cr-location')) document.getElementById('cr-location').value = '';
+      if (document.getElementById('cr-url')) document.getElementById('cr-url').value = '';
+      if (document.getElementById('cr-avatar')) document.getElementById('cr-avatar').value = '';
+      if (document.getElementById('cr-banner')) document.getElementById('cr-banner').value = '';
+
+      if (typeof loadAccounts === 'function') loadAccounts();
+      if (typeof switchTab === 'function') switchTab('accounts');
+    } else {
+      toast('🔴 ' + (res.error || res.message || 'Account creation failed'), 'error');
+    }
+  } catch (err) {
+    toast('🔴 Network error during account creation: ' + err.message, 'error');
+  } finally {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = '✨ Create & Register Account';
+    }
   }
 }
