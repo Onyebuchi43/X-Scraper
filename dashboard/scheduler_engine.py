@@ -282,6 +282,7 @@ def _scrape_followers(
             if unprocessed_candidates:
                 from concurrent.futures import ThreadPoolExecutor, as_completed
 
+                scrape_account = pool_accounts[(scrape_round - 1) % len(pool_accounts)]
                 scrape_auth  = scrape_account["auth_token"]
                 scrape_ct0   = scrape_account["ct0"]
                 scrape_proxy = scrape_account.get("proxy")
