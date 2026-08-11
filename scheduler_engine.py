@@ -1271,8 +1271,18 @@ class _Campaign:
                             return
                         continue
                     elif err_type == "PROXY_ERROR":
-                        cooldown_mins = int(cfg.get("cooldown_minutes", 30))
                         proxy_str = acc.get("proxy") or "configured proxy"
+                        new_proxy = None
+                        if acc_id:
+                            new_proxy = _auto_heal_account_proxy(acc_id, self._log)
+
+                        if new_proxy:
+                            acc["proxy"] = new_proxy
+                            self._log("INFO", f"🔄 Retrying post for {acc_label} using newly healed proxy ({new_proxy})!")
+                            queue = batch + queue
+                            continue
+
+                        cooldown_mins = int(cfg.get("cooldown_minutes", 30))
                         self._log("ERROR", f"🔌 {acc_label} PROXY FAILURE: Could not connect via proxy '{proxy_str}' ({err_msg}). Please check or update this account's proxy in the Accounts tab.")
                         if acc_id:
                             set_account_cooldown(acc_id, cooldown_mins * 60)
