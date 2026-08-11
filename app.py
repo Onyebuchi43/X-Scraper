@@ -709,12 +709,32 @@ def image_preview(filename: str):
 # ── Campaigns ──────────────────────────────────────────────────────────────────
 @app.route("/api/campaigns", methods=["GET"])
 def list_campaigns():
+    engine = _get_scheduler_engine()
     conn = _db()
     rows = conn.execute(
-        "SELECT id, name, status, created_at, updated_at FROM campaigns ORDER BY id DESC LIMIT 20"
+        "SELECT id, name, status, created_at, updated_at FROM campaigns ORDER BY id DESC LIMIT 50"
     ).fetchall()
+
+    result = []
+    for r in rows:
+        d = dict(r)
+        cid = d["id"]
+        c_obj = engine.get_campaign(cid) if hasattr(engine, "get_campaign") else None
+        is_running = c_obj.is_running() if c_obj else False
+
+        if is_running and d["status"] != "running":
+            d["status"] = "running"
+            conn.execute("UPDATE campaigns SET status='running', updated_at=CURRENT_TIMESTAMP WHERE id=?", (cid,))
+            conn.commit()
+        elif not is_running and d["status"] == "running":
+            d["status"] = "stopped"
+            conn.execute("UPDATE campaigns SET status='stopped', updated_at=CURRENT_TIMESTAMP WHERE id=?", (cid,))
+            conn.commit()
+
+        result.append(d)
+
     conn.close()
-    return jsonify([dict(r) for r in rows])
+    return jsonify(result)
 
 
 @app.route("/api/campaigns", methods=["POST"])
@@ -793,8 +813,21 @@ def get_campaign(cid: int):
         return jsonify({"id": cid, "msg": "Campaign updated"})
 
     # GET
-    conn.close()
+    engine = _get_scheduler_engine()
+    c_obj = engine.get_campaign(cid) if hasattr(engine, "get_campaign") else None
+    is_running = c_obj.is_running() if c_obj else False
+
     d = dict(row)
+    if is_running and d.get("status") != "running":
+        d["status"] = "running"
+        conn.execute("UPDATE campaigns SET status='running', updated_at=CURRENT_TIMESTAMP WHERE id=?", (cid,))
+        conn.commit()
+    elif not is_running and d.get("status") == "running":
+        d["status"] = "stopped"
+        conn.execute("UPDATE campaigns SET status='stopped', updated_at=CURRENT_TIMESTAMP WHERE id=?", (cid,))
+        conn.commit()
+
+    conn.close()
     d["log"] = json.loads(d.get("log") or "[]")
     d["config"] = json.loads(d.get("config") or "{}")
     return jsonify(d)
@@ -814,9 +847,14 @@ def start_campaign(cid: int):
         }), 400
 
     row = conn.execute("SELECT * FROM campaigns WHERE id=?", (cid,)).fetchone()
-    conn.close()
     if not row:
+        conn.close()
         return jsonify({"error": "not found"}), 404
+
+    # Immediately mark campaign as 'running' in database
+    conn.execute("UPDATE campaigns SET status='running', updated_at=CURRENT_TIMESTAMP WHERE id=?", (cid,))
+    conn.commit()
+    conn.close()
 
     config = json.loads(row["config"] or "{}")
 
@@ -848,13 +886,29 @@ def stop_campaign(cid: int):
 
 @app.route("/api/campaigns/<int:cid>/log")
 def campaign_log(cid: int):
+    engine = _get_scheduler_engine()
+    c_obj = engine.get_campaign(cid) if hasattr(engine, "get_campaign") else None
+    is_running = c_obj.is_running() if c_obj else False
+
     conn = _db()
     row = conn.execute("SELECT status, log FROM campaigns WHERE id=?", (cid,)).fetchone()
-    conn.close()
     if not row:
+        conn.close()
         return jsonify({"error": "not found"}), 404
+
+    st = row["status"]
+    if is_running and st != "running":
+        st = "running"
+        conn.execute("UPDATE campaigns SET status='running', updated_at=CURRENT_TIMESTAMP WHERE id=?", (cid,))
+        conn.commit()
+    elif not is_running and st == "running":
+        st = "stopped"
+        conn.execute("UPDATE campaigns SET status='stopped', updated_at=CURRENT_TIMESTAMP WHERE id=?", (cid,))
+        conn.commit()
+
+    conn.close()
     return jsonify({
-        "status": row["status"],
+        "status": st,
         "log": json.loads(row["log"] or "[]"),
     })
 

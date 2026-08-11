@@ -869,16 +869,28 @@ async function autoConnectActiveCampaign() {
     const campaigns = await api('/api/campaigns');
     if (!campaigns || !Array.isArray(campaigns)) return;
     const running = campaigns.find(c => c.status === 'running');
+    const stopBtn = document.getElementById('stop-btn');
+    const resumeBtn = document.getElementById('resume-btn');
+    const pill = document.getElementById('camp-status-pill');
+
     if (running) {
       currentCampaignId = running.id;
-      const stopBtn = document.getElementById('stop-btn');
-      const resumeBtn = document.getElementById('resume-btn');
-      const pill = document.getElementById('camp-status-pill');
       if (stopBtn) stopBtn.style.display = 'inline-flex';
       if (resumeBtn) resumeBtn.style.display = 'none';
       if (pill) { pill.textContent = 'running'; pill.setAttribute('data-s', 'running'); }
       if (!campaignPollInterval) {
         startCampaignPoll();
+      }
+    } else if (!currentCampaignId && campaigns.length > 0) {
+      currentCampaignId = campaigns[0].id;
+      const st = campaigns[0].status || 'stopped';
+      if (pill) { pill.textContent = st; pill.setAttribute('data-s', st); }
+      if (st === 'running') {
+        if (stopBtn) stopBtn.style.display = 'inline-flex';
+        if (resumeBtn) resumeBtn.style.display = 'none';
+      } else {
+        if (stopBtn) stopBtn.style.display = 'none';
+        if (resumeBtn) resumeBtn.style.display = 'inline-flex';
       }
     }
   } catch (e) {
@@ -921,6 +933,7 @@ async function loadCampaignDbPanel() {
             mode = cfg.execution_mode || 'vps';
           } catch(e){}
           const modeLabel = mode === 'local' ? '💻 Local PC' : '🌐 24/7 VPS Cloud';
+          const isRunning = c.status === 'running';
           return `
             <tr>
               <td>${c.id}</td>
@@ -930,7 +943,11 @@ async function loadCampaignDbPanel() {
               <td><strong>${c.tagged_count.toLocaleString()}</strong></td>
               <td style="display:flex;gap:4px;flex-wrap:wrap;">
                 <button class="btn btn-sm btn-ghost" onclick="openEditCampaignModal(${c.id})">✏ Edit</button>
-                <button class="btn btn-sm btn-success" onclick="resumeCampaign(${c.id})">▶ Resume</button>
+                ${isRunning 
+                  ? `<button class="btn btn-sm btn-danger" onclick="stopCampaignId(${c.id})">⏹ Stop</button>`
+                  : `<button class="btn btn-sm btn-success" onclick="resumeCampaign(${c.id})">▶ Resume</button>`
+                }
+                <button class="btn btn-sm btn-ghost" onclick="selectCampaignForLogs(${c.id})">📋 Logs</button>
                 <button class="btn btn-sm btn-ghost" onclick="clearCampaignTagged(${c.id})">🗑 Clear</button>
                 <button class="btn btn-sm btn-danger" onclick="deleteCampaign(${c.id})">✕ Delete</button>
               </td>
