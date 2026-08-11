@@ -201,6 +201,29 @@ def get_profile_info(auth_token: str, ct0: str, handle: str, proxy: Optional[str
         return {"name": handle, "handle": handle, "avatar_url": "", "followers_count": None, "description": "", "error": str(exc)}
 
 
+def fetch_real_twitter_username(auth_token: str, ct0: str, proxy: Optional[str | dict] = None) -> Optional[str]:
+    """Fetch exact real handle (screen_name) of the authenticated Twitter account from Twitter API."""
+    try:
+        proxy_url = _get_httpx_proxy_url(proxy)
+        httpx_kwargs = {"proxy": proxy_url} if proxy_url else {}
+        resp = httpx.get(
+            "https://x.com/i/api/1.1/account/verify_credentials.json",
+            headers=_headers(ct0),
+            cookies=_cookies(auth_token, ct0),
+            timeout=15,
+            **httpx_kwargs,
+        )
+        if resp.status_code == 200:
+            data = resp.json()
+            screen_name = data.get("screen_name")
+            if screen_name:
+                logger.info("Retrieved real Twitter screen_name: @%s", screen_name)
+                return screen_name
+    except Exception as exc:
+        logger.warning("verify_credentials failed to retrieve screen_name: %s", exc)
+    return None
+
+
 def update_profile_text(
     auth_token: str,
     ct0: str,

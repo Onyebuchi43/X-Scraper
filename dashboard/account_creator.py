@@ -70,7 +70,14 @@ def register_email_account(
     conn = sqlite3.connect(DASH_DB)
     c = conn.cursor()
 
-    uname = (username or name.lower().replace(" ", "")).strip().lstrip("@")
+    real_uname = None
+    try:
+        from poster import fetch_real_twitter_username
+        real_uname = fetch_real_twitter_username(auth_token.strip(), ct0.strip(), proxy=px)
+    except Exception:
+        real_uname = None
+
+    uname = (real_uname or username or name.lower().replace(" ", "")).strip().lstrip("@")
     px = (proxy or "").strip()
 
     c.execute(
