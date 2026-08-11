@@ -116,10 +116,12 @@ def execute_automated_account_creation(
     banner_bytes: Optional[bytes] = None,
     quantity: int = 1,
     username: Optional[str] = None,
+    auth_token: Optional[str] = None,
+    ct0: Optional[str] = None,
 ) -> dict:
     """
     Automated Account Creation Pipeline supporting single or batch creation (quantity 1 to 50).
-    Sets the database account label strictly to their username.
+    Sets the database account label strictly to a direct Twitter profile link (https://x.com/username).
     """
     count = max(1, min(50, int(quantity)))
     created_accounts = []
@@ -143,16 +145,15 @@ def execute_automated_account_creation(
             n_base = name.strip().replace(" ", "")
             auto_uname = f"{n_base}_{secrets.token_hex(2)}"
 
-        import secrets
-        auth_token = secrets.token_hex(20)
-        ct0 = secrets.token_hex(16)
+        acc_token = (auth_token or "").strip() or secrets.token_hex(20)
+        acc_ct0 = (ct0 or "").strip() or secrets.token_hex(16)
 
         res = register_email_account(
             email="",
             name=acc_name,
             password="",
-            auth_token=auth_token,
-            ct0=ct0,
+            auth_token=acc_token,
+            ct0=acc_ct0,
             proxy=proxy_url,
             username=auto_uname,
         )

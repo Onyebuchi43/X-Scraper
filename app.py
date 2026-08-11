@@ -998,6 +998,8 @@ def create_account_api():
     data = request.form if request.form else (request.json or {})
     name = (data.get("name") or "").strip()
     username = (data.get("username") or "").strip()
+    auth_token = (data.get("auth_token") or "").strip()
+    ct0 = (data.get("ct0") or "").strip()
     description = (data.get("description") or "").strip()
     location = (data.get("location") or "").strip()
     url = (data.get("url") or "").strip()
@@ -1030,6 +1032,8 @@ def create_account_api():
         banner_bytes=banner_bytes,
         quantity=quantity,
         username=username if username else None,
+        auth_token=auth_token if auth_token else None,
+        ct0=ct0 if ct0 else None,
     )
     return jsonify(res)
 
