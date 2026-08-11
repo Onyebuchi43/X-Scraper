@@ -26,23 +26,26 @@ def auto_assign_account_to_active_campaigns(account_id: int):
         c = conn.cursor()
 
         campaigns = c.execute(
-            "SELECT id, account_ids, auto_assign_new_accounts FROM campaigns WHERE status='running'"
+            "SELECT id, config FROM campaigns WHERE status='running'"
         ).fetchall()
 
+        import json
         for camp in campaigns:
-            auto_assign = camp["auto_assign_new_accounts"] if "auto_assign_new_accounts" in camp.keys() else 1
+            raw_cfg = camp["config"] or "{}"
+            try:
+                cfg = json.loads(raw_cfg)
+            except Exception:
+                cfg = {}
+
+            auto_assign = cfg.get("auto_assign_new_accounts", True)
             if auto_assign:
-                raw_ids = camp["account_ids"] or "[]"
-                try:
-                    import json
-                    ids = json.loads(raw_ids)
-                except Exception:
-                    ids = []
-                if account_id not in ids:
-                    ids.append(account_id)
+                acc_ids = cfg.get("accounts", [])
+                if account_id not in acc_ids:
+                    acc_ids.append(account_id)
+                    cfg["accounts"] = acc_ids
                     c.execute(
-                        "UPDATE campaigns SET account_ids=? WHERE id=?",
-                        (json.dumps(ids), camp["id"]),
+                        "UPDATE campaigns SET config=? WHERE id=?",
+                        (json.dumps(cfg), camp["id"]),
                     )
                     logger.info("Auto-assigned Account #%d to Campaign #%d", account_id, camp["id"])
 
@@ -72,7 +75,7 @@ def register_email_account(
 
     c.execute(
         """
-        INSERT INTO accounts (username, auth_token, ct0, proxy, created_at)
+        INSERT INTO accounts (label, auth_token, ct0, proxy, created_at)
         VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
         """,
         (uname, auth_token.strip(), ct0.strip(), px),

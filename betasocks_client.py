@@ -139,6 +139,7 @@ class BetaSocksClient:
     def fetch_available_proxies(self, country: str = "usa", limit: int = 10) -> List[str]:
         cfg = get_proxy_settings()
         daily_limit = cfg.get("daily_limit", 50)
+        fetched_today = cfg.get("fetched_today_count", 0)
         allowed = max(0, daily_limit - fetched_today)
         if allowed <= 0:
             logger.warning("Daily BetaSocks proxy fetch limit (%d/%d) reached", fetched_today, daily_limit)
