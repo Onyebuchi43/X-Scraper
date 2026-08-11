@@ -23,8 +23,8 @@ def create_temp_email() -> tuple[Optional[str], Optional[str], str]:
     try:
         uname = f"usr{secrets.token_hex(4)}"
         cred_dir = f"/tmp/atomic_{uname}"
-        cmd = f"npx --package=@atomicmail/agent-skill atomicmail register --username '{uname}' --watch on-demand --forced --credentials-dir '{cred_dir}'"
-        res = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=30)
+        cmd = f"/usr/bin/node /usr/lib/node_modules/@atomicmail/agent-skill/esm/skill/cli.js register --username '{uname}' --watch on-demand --forced --credentials-dir '{cred_dir}'"
+        res = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=35)
         if res.returncode == 0 and res.stdout:
             try:
                 data = json.loads(res.stdout.strip())
@@ -74,16 +74,14 @@ def create_temp_email() -> tuple[Optional[str], Optional[str], str]:
 def poll_twitter_code(email_token: str, provider_type: str, timeout_sec: int = 90) -> Optional[str]:
     start = time.time()
     if provider_type == "atomicmail":
-        cmd = f"npx --package=@atomicmail/agent-skill atomicmail jmap_request --ops-file list_inbox.json --credentials-dir '{email_token}'"
+        cmd = f"/usr/bin/node /usr/lib/node_modules/@atomicmail/agent-skill/esm/skill/cli.js jmap_request --ops-file list_inbox.json --credentials-dir '{email_token}'"
         while time.time() - start < timeout_sec:
             try:
                 res = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=15)
                 if res.returncode == 0 and res.stdout:
                     text = res.stdout
-                    # Search for Twitter verification email code (excluding welcome msg)
                     matches = re.findall(r"\b\d{6}\b", text)
                     if matches:
-                        # Return the first 6-digit code found in the JMAP response
                         return matches[0]
             except Exception as exc:
                 logger.warning("Error polling Atomic Mail inbox: %s", exc)
