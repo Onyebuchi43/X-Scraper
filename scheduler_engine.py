@@ -339,11 +339,42 @@ def _scrape_followers(
         return [], False, 0
 
 
+_TESTED_PROXY_HEALTH_CACHE: dict[str, float] = {}
+
+def _check_and_log_account_proxy_health(accounts: List[dict], log_fn: Callable) -> None:
+    """Pre-flight check for account proxies to log explicit errors when a proxy fails."""
+    now = time.time()
+    for acc in accounts:
+        aid = acc.get("id")
+        px = acc.get("proxy")
+        if not px:
+            continue
+        cache_key = f"{aid}:{px}"
+        if now - _TESTED_PROXY_HEALTH_CACHE.get(cache_key, 0) < 300:
+            continue
+
+        _TESTED_PROXY_HEALTH_CACHE[cache_key] = now
+        try:
+            parts = str(px).split(":")
+            if len(parts) == 4:
+                px_url = f"http://{parts[2]}:{parts[3]}@{parts[0]}:{parts[1]}"
+            else:
+                px_url = f"http://{px}"
+
+            httpx.get("https://api.ipify.org?format=json", proxy=px_url, timeout=5)
+        except Exception as exc:
+            err_str = str(exc)
+            if "407" in err_str or "Proxy Authentication" in err_str:
+                log_fn("WARNING", f"🔌 Account (ID {aid}) PROXY FAILURE: Could not connect via proxy '{px}' (407 Proxy Authentication Required). Please update this account's proxy in the Accounts tab.")
+            else:
+                log_fn("WARNING", f"🔌 Account (ID {aid}) PROXY WARNING: Failed proxy check '{px}': {exc}")
+
+
 def _scrape_tweet_commenters(
     tweet_target: str,
     accounts: List[dict],
-    limit: int,
-    log_fn,
+    limit: int = 100,
+    log_fn: Callable = logger.info,
     min_followers: int = 0,
     max_followers: int = 1000,
     country_filter: str = "",
@@ -370,6 +401,8 @@ def _scrape_tweet_commenters(
     if not pool_accounts:
         log_fn("ERROR", "No accounts available for scraping.")
         return [], False, 0
+
+    _check_and_log_account_proxy_health(pool_accounts, log_fn)
 
     target_clean = tweet_target.strip()
     tweet_id = ""
