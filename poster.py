@@ -198,7 +198,7 @@ def get_profile_info(auth_token: str, ct0: str, handle: str, proxy: Optional[str
         }
     except Exception as exc:
         logger.warning("Profile lookup failed for @%s: %s", handle, exc)
-        return {"name": handle, "handle": handle, "avatar_url": "", "followers_count": 0, "description": ""}
+        return {"name": handle, "handle": handle, "avatar_url": "", "followers_count": None, "description": "", "error": str(exc)}
 
 
 def update_profile_text(

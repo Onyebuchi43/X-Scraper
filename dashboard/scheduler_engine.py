@@ -1060,17 +1060,22 @@ class _Campaign:
                         try:
                             from poster import get_profile_info
                             pinfo = get_profile_info(acc.get("auth_token", ""), acc.get("ct0", ""), h, proxy=acc.get("proxy"))
-                            fc = pinfo.get("followers_count", 0) if pinfo else 0
-                            if not (min_followers <= fc <= max_followers):
+                            fc = pinfo.get("followers_count") if (pinfo and isinstance(pinfo, dict)) else None
+                            if fc is None or (isinstance(pinfo, dict) and pinfo.get("error")):
+                                self._log("WARNING", f"Pre-tag safety shield: Could not verify follower count for @{h} — dropping")
+                                continue
+                            if not (min_followers <= int(fc) <= max_followers):
                                 self._log("WARNING", f"Pre-tag safety shield: @{h} has {fc} followers (outside range {min_followers}-{max_followers}) — dropping")
                                 continue
                         except Exception as p_err:
                             self._log("WARNING", f"Pre-tag safety check error for @{h}: {p_err}")
+                            continue
 
                     batch.append(h)
 
-                if not batch:
-                    time.sleep(30)
+                if len(batch) < tags_per_post:
+                    self._log("INFO", f"Batch has {len(batch)}/{tags_per_post} verified candidates. Waiting to refill full batch before posting…")
+                    time.sleep(15)
                     continue
 
                 acc_label = f"Account #{account_i + 1}" + (f" (ID {acc_id})" if acc_id else "")
