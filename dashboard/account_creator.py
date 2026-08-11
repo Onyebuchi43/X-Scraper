@@ -145,8 +145,23 @@ def execute_automated_account_creation(
             n_base = name.strip().replace(" ", "")
             auto_uname = f"{n_base}_{secrets.token_hex(2)}"
 
-        acc_token = (auth_token or "").strip() or secrets.token_hex(20)
-        acc_ct0 = (ct0 or "").strip() or secrets.token_hex(16)
+        acc_token = (auth_token or "").strip()
+        acc_ct0 = (ct0 or "").strip()
+
+        if not acc_token or not acc_ct0:
+            try:
+                from twitter_email_registrar import register_live_twitter_account
+                reg_data = register_live_twitter_account(acc_name, proxy_url=proxy_url)
+                if reg_data and reg_data.get("auth_token"):
+                    acc_token = reg_data["auth_token"]
+                    acc_ct0 = reg_data["ct0"]
+            except Exception as exc:
+                logger.warning("Automated Playwright signup fallback: %s", exc)
+
+        if not acc_token:
+            acc_token = secrets.token_hex(20)
+        if not acc_ct0:
+            acc_ct0 = secrets.token_hex(16)
 
         res = register_email_account(
             email="",
