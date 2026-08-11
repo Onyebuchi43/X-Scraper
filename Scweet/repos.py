@@ -252,9 +252,13 @@ class AccountsRepo:
                 reasons.append("status")
 
             available_til = row.get("available_til")
+            last_err = str(row.get("last_error") or row.get("error") or row.get("notes") or "").lower()
             try:
                 if available_til is not None and float(available_til) > now_ts:
-                    reasons.append("cooldown")
+                    if "proxy" in last_err or "407" in last_err or "tunnel" in last_err:
+                        reasons.append("proxy_error")
+                    else:
+                        reasons.append("cooldown")
             except Exception:
                 pass
 

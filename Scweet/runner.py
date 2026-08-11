@@ -257,10 +257,18 @@ class Runner:
                     pass
                 _total = _diag.get("total", "?")
                 _blocked = _diag.get("blocked_counts", {})
-                _detail = ", ".join(f"{k}={v}" for k, v in sorted(_blocked.items())) if _blocked else "no accounts in pool"
+                _detail_parts = []
+                for k, v in sorted(_blocked.items()):
+                    if k == "proxy_error":
+                        _detail_parts.append(f"{v} account(s) failed with PROXY ERROR (407/Connection issue)")
+                    elif k == "cooldown":
+                        _detail_parts.append(f"{v} account(s) on Twitter rate-limit cooldown")
+                    else:
+                        _detail_parts.append(f"{k}={v}")
+                _detail = "; ".join(_detail_parts) if _detail_parts else "no accounts in pool"
                 raise AccountPoolExhausted(
                     f"No eligible accounts (total={_total}, {_detail}). "
-                    "Check your credentials or wait for cooldowns to expire."
+                    "Check your account proxies or wait for rate-limit cooldowns to expire."
                 )
             for account in accounts:
                 lease_id = str(account.get("lease_id") or "").strip()
