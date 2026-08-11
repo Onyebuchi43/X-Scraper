@@ -135,13 +135,13 @@ def execute_automated_account_creation(
             logger.warning("Could not fetch BetaSocks proxy for creation: %s", exc)
             proxy_url = None
 
-        import uuid
+        import uuid, secrets
         if username and username.strip():
             u_base = username.strip().lstrip("@")
-            auto_uname = f"{u_base}_{i+1}" if count > 1 else u_base
+            auto_uname = f"{u_base}_{secrets.token_hex(2)}" if count > 1 else u_base
         else:
             n_base = name.strip().replace(" ", "")
-            auto_uname = f"{n_base}_{i+1}" if count > 1 else n_base
+            auto_uname = f"{n_base}_{secrets.token_hex(2)}"
 
         import secrets
         auth_token = secrets.token_hex(20)
