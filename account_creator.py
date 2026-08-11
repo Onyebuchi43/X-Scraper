@@ -77,7 +77,8 @@ def register_email_account(
     except Exception:
         real_uname = None
 
-    uname = (real_uname or username or name.lower().replace(" ", "")).strip().lstrip("@")
+    clean_uname = (real_uname or username or name.lower().replace(" ", "")).strip().lstrip("@")
+    profile_url = f"https://x.com/{clean_uname}"
     px = (proxy or "").strip()
 
     c.execute(
@@ -85,13 +86,13 @@ def register_email_account(
         INSERT INTO accounts (label, auth_token, ct0, proxy, created_at)
         VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
         """,
-        (uname, auth_token.strip(), ct0.strip(), px),
+        (profile_url, auth_token.strip(), ct0.strip(), px),
     )
     acc_id = c.lastrowid
     conn.commit()
     conn.close()
 
-    logger.info("Saved new account @%s (ID %d) to database", uname, acc_id)
+    logger.info("Saved new account %s (ID %d) to database", profile_url, acc_id)
 
     # Trigger auto-assignment to running campaigns
     auto_assign_account_to_active_campaigns(acc_id)
@@ -99,8 +100,10 @@ def register_email_account(
     return {
         "success": True,
         "account_id": acc_id,
-        "username": uname,
-        "message": f"Account @{uname} successfully registered and added to database!",
+        "username": clean_uname,
+        "label": profile_url,
+        "profile_url": profile_url,
+        "message": f"Account {profile_url} successfully registered and added to database!",
     }
 
 

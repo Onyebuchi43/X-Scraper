@@ -90,10 +90,19 @@ function renderAccounts(list) {
     tbody.innerHTML = '<tr><td colspan="6" class="empty-row">No accounts yet — add one above</td></tr>';
     return;
   }
-  tbody.innerHTML = list.map(a => `
+  tbody.innerHTML = list.map(a => {
+    let labelHtml = '—';
+    if (a.label) {
+      let linkUrl = a.label;
+      if (!linkUrl.startsWith('http://') && !linkUrl.startsWith('https://')) {
+        linkUrl = `https://x.com/${linkUrl.replace(/^@/, '')}`;
+      }
+      labelHtml = `<a href="${esc(linkUrl)}" target="_blank" rel="noopener noreferrer" style="color:var(--accent-color, #4f46e5);font-weight:600;text-decoration:underline;">${esc(linkUrl)}</a>`;
+    }
+    return `
     <tr>
       <td>${a.id}</td>
-      <td>${esc(a.label || '—')}</td>
+      <td>${labelHtml}</td>
       <td><code>${esc(a.token_preview)}</code></td>
       <td>${a.proxy ? `<code>${esc(a.proxy)}</code>` : '—'}</td>
       <td>${fmtDate(a.created_at)}</td>
@@ -102,7 +111,8 @@ function renderAccounts(list) {
         <button class="btn btn-sm btn-danger" onclick="deleteAccount(${a.id})">✕ Remove</button>
       </td>
     </tr>
-  `).join('');
+  `;
+  }).join('');
 }
 
 async function addAccount() {
