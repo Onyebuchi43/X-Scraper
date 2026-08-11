@@ -161,15 +161,30 @@ def get_profile_info(auth_token: str, ct0: str, handle: str, proxy: Optional[str
     try:
         proxy_url = _get_httpx_proxy_url(proxy)
         httpx_kwargs = {"proxy": proxy_url} if proxy_url else {}
-        resp = httpx.get(
-            USER_LOOKUP_URL,
-            params=params,
-            headers=_headers(ct0),
-            cookies=_cookies(auth_token, ct0),
-            timeout=20,
-            **httpx_kwargs,
-        )
-        resp.raise_for_status()
+        try:
+            resp = httpx.get(
+                USER_LOOKUP_URL,
+                params=params,
+                headers=_headers(ct0),
+                cookies=_cookies(auth_token, ct0),
+                timeout=10,
+                **httpx_kwargs,
+            )
+            resp.raise_for_status()
+        except Exception as p_err:
+            if proxy_url:
+                logger.warning("Proxy lookup failed for @%s (%s) — trying direct connection", handle, p_err)
+                resp = httpx.get(
+                    USER_LOOKUP_URL,
+                    params=params,
+                    headers=_headers(ct0),
+                    cookies=_cookies(auth_token, ct0),
+                    timeout=10,
+                )
+                resp.raise_for_status()
+            else:
+                raise p_err
+
         res_dict = resp.json().get("data", {}).get("user", {}).get("result", {})
         legacy = res_dict.get("legacy", {}) if isinstance(res_dict, dict) else {}
         rel_counts = res_dict.get("relationship_counts", {}) if isinstance(res_dict, dict) else {}
