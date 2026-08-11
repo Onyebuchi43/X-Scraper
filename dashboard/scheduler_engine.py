@@ -1003,8 +1003,10 @@ class _Campaign:
                             if raw_count == 0:
                                 self._log(
                                     "WARNING",
-                                    "No candidates returned from target profiles/tweets. Target profiles or tweets may be exhausted or private. Campaign complete."
+                                    f"Round {scrape_round}: 0 candidates returned from Twitter (scraper accounts may be in cooldown or target exhausted). Waiting 60s before retrying…"
                                 )
+                                time.sleep(60)
+                                scrape_round = max(0, scrape_round - 1)
                                 break
                             else:
                                 self._log(
@@ -1035,6 +1037,7 @@ class _Campaign:
                     batch.append(h)
 
                 if not batch:
+                    time.sleep(30)
                     continue
 
                 acc_label = f"Account #{account_i + 1}" + (f" (ID {acc_id})" if acc_id else "")
