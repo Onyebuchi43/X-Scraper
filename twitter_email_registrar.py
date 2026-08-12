@@ -6,9 +6,12 @@ import secrets
 import sqlite3
 import subprocess
 import time
+import os
+import time
 from typing import Optional, Dict
 import httpx
 from playwright.async_api import async_playwright
+from playwright.sync_api import sync_playwright
 
 logger = logging.getLogger(__name__)
 
@@ -17,9 +20,16 @@ DASH_DB = "dashboard.db"
 def create_temp_email() -> tuple[Optional[str], Optional[str], str]:
     """
     Creates a temporary email address.
-    Returns (email_address, cred_dir_or_token, provider_type) where provider_type is 'atomicmail', 'guerrilla', or 'mailtm'.
+    Returns (email_address, token_or_session, provider_type) where provider_type is 'outlook', 'atomicmail', 'guerrilla', or 'mailtm'.
     """
-    # 1. Try Atomic Mail first (high reputation @atomicmail.ai)
+    # 1. Try Outlook Plus-Addressing first (100% trusted by Twitter, delivers OTP instantly)
+    if os.path.exists("outlook_session.json"):
+        tag = secrets.token_hex(4)
+        email = f"alexstrickland2026+{tag}@outlook.com"
+        logger.info("Generated Outlook Plus-Addressing temp address: %s", email)
+        return email, "outlook_session.json", "outlook"
+
+    # 2. Try Atomic Mail fallback
     try:
         uname = f"usr{secrets.token_hex(4)}"
         cred_dir = f"/tmp/atomic_{uname}"
@@ -38,7 +48,7 @@ def create_temp_email() -> tuple[Optional[str], Optional[str], str]:
     except Exception as exc:
         logger.warning("Atomic Mail generation failed: %s — trying Guerrilla Mail fallback", exc)
 
-    # 2. Try Guerrilla Mail fallback
+    # 3. Try Guerrilla Mail fallback
     try:
         r = httpx.get("https://api.guerrillamail.com/ajax.php?f=get_email_address", timeout=10)
         if r.status_code == 200:
@@ -51,7 +61,7 @@ def create_temp_email() -> tuple[Optional[str], Optional[str], str]:
     except Exception as exc:
         logger.warning("Guerrilla Mail generation failed: %s — trying mail.tm fallback", exc)
 
-    # 3. Fallback to mail.tm
+    # 4. Fallback to mail.tm
     try:
         d_res = httpx.get("https://api.mail.tm/domains", timeout=10)
         domains = d_res.json().get("hydra:member", [])
@@ -73,7 +83,32 @@ def create_temp_email() -> tuple[Optional[str], Optional[str], str]:
 
 def poll_twitter_code(email_token: str, provider_type: str, timeout_sec: int = 90) -> Optional[str]:
     start = time.time()
-    if provider_type == "atomicmail":
+    if provider_type == "outlook":
+        session_path = email_token if (email_token and os.path.exists(email_token)) else "outlook_session.json"
+        while time.time() - start < timeout_sec:
+            try:
+                with sync_playwright() as p:
+                    browser = p.chromium.launch(headless=True)
+                    context = browser.new_context(
+                        storage_state=session_path,
+                        user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+                    )
+                    page = context.new_page()
+                    page.goto("https://outlook.live.com/mail/0/", wait_until="domcontentloaded", timeout=30000)
+                    time.sleep(3)
+                    content = page.content()
+                    browser.close()
+
+                    matches = re.findall(r"\b\d{6}\b", content)
+                    for c in matches:
+                        if c not in ("000000", "242424", "424242", "616161", "808080", "123456", "360679", "038111"):
+                            logger.info("Successfully fetched Twitter OTP code from Outlook: %s", c)
+                            return c
+            except Exception as exc:
+                logger.warning("Error polling Outlook inbox via Playwright: %s", exc)
+            time.sleep(5)
+        return None
+    elif provider_type == "atomicmail":
         cmd = f"/usr/bin/node /usr/lib/node_modules/@atomicmail/agent-skill/esm/skill/cli.js jmap_request --ops-file list_inbox.json --credentials-dir '{email_token}'"
         while time.time() - start < timeout_sec:
             try:
