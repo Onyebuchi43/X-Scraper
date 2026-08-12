@@ -85,7 +85,7 @@ def poll_twitter_code(email_token: str, provider_type: str, timeout_sec: int = 9
                         return matches[0]
             except Exception as exc:
                 logger.warning("Error polling Atomic Mail inbox: %s", exc)
-            time.sleep(3)
+            time.sleep(6)
         return None
     elif provider_type == "guerrilla":
         url = f"https://api.guerrillamail.com/ajax.php?f=get_email_list&sid_token={email_token}&offset=0"
