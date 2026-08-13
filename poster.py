@@ -455,6 +455,31 @@ def fetch_account_based_in(
                 _save_location_to_db(clean_username, res)
             return res
         except Exception as exc:
+            if proxy_url:
+                try:
+                    resp = httpx.get(
+                        ABOUT_ACCOUNT_URL,
+                        params=params,
+                        headers=_headers(c0),
+                        cookies=_cookies(at, c0),
+                        timeout=timeout,
+                    )
+                    if resp.status_code == 200:
+                        data = resp.json()
+                        country = (
+                            data.get("data", {})
+                                .get("user_result_by_screen_name", {})
+                                .get("result", {})
+                                .get("about_profile", {})
+                                .get("account_based_in")
+                        )
+                        res = str(country).strip() if country else None
+                        if res:
+                            _ACCOUNT_LOCATION_CACHE[clean_username] = res
+                            _save_location_to_db(clean_username, res)
+                        return res
+                except Exception:
+                    pass
             logger.debug("fetch_account_based_in failed for @%s: %s", clean_username, exc)
             continue
 

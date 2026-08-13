@@ -392,18 +392,13 @@ def _auto_heal_account_proxy(account_id: int, log_fn: Callable) -> Optional[str]
 
 
 def _check_and_log_account_proxy_health(accounts: List[dict], log_fn: Callable) -> None:
-    """Pre-flight check for account proxies to log explicit errors when a proxy fails."""
-    now = time.time()
+    """Pre-flight check for account proxies to auto-heal and log explicit errors when a proxy fails."""
     for acc in accounts:
         aid = acc.get("id")
         px = acc.get("proxy")
         if not px:
             continue
-        cache_key = f"{aid}:{px}"
-        if now - _TESTED_PROXY_HEALTH_CACHE.get(cache_key, 0) < 300:
-            continue
 
-        _TESTED_PROXY_HEALTH_CACHE[cache_key] = now
         try:
             parts = str(px).split(":")
             if len(parts) == 4:
@@ -411,16 +406,16 @@ def _check_and_log_account_proxy_health(accounts: List[dict], log_fn: Callable) 
             else:
                 px_url = f"http://{px}"
 
-            httpx.get("https://api.ipify.org?format=json", proxy=px_url, timeout=5)
+            httpx.get("https://api.ipify.org?format=json", proxy=px_url, timeout=4)
         except Exception as exc:
             err_str = str(exc)
-            if "407" in err_str or "Proxy Authentication" in err_str or "tunnel" in err_str:
-                log_fn("WARNING", f"🔌 Account (ID {aid}) PROXY FAILURE: Proxy '{px}' failed (407 Auth Required). Triggering auto-healing...")
+            if "407" in err_str or "Proxy Authentication" in err_str or "tunnel" in err_str or "599" in err_str or "Connect" in err_str:
+                log_fn("WARNING", f"🔌 Account (ID {aid}) PROXY FAILURE: Proxy '{px}' failed ({exc}). Triggering auto-healing...")
                 healed_px = _auto_heal_account_proxy(aid, log_fn)
                 if healed_px:
                     acc["proxy"] = healed_px
             else:
-                log_fn("WARNING", f"🔌 Account (ID {aid}) PROXY WARNING: Failed proxy check '{px}': {exc}")
+                log_fn("WARNING", f"🔌 Account (ID {aid}) PROXY WARNING: Proxy '{px}' failed check: {exc}")
 
 
 def _scrape_tweet_commenters(
