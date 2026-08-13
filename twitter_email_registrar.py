@@ -224,13 +224,9 @@ async def register_single_twitter_account_async(
         clean_px = proxy_url.replace("socks5://", "").replace("http://", "")
         parts = clean_px.split(":")
         if len(parts) == 4:
-            pw_kwargs["proxy"] = {
-                "server": f"socks5://{parts[0]}:{parts[1]}",
-                "username": parts[2],
-                "password": parts[3],
-            }
+            pw_kwargs["proxy"] = {"server": f"http://{parts[0]}:{parts[1]}"}
         elif len(parts) == 2:
-            pw_kwargs["proxy"] = {"server": f"socks5://{parts[0]}:{parts[1]}"}
+            pw_kwargs["proxy"] = {"server": f"http://{parts[0]}:{parts[1]}"}
         else:
             pw_kwargs["proxy"] = {"server": proxy_url}
 
@@ -242,7 +238,11 @@ async def register_single_twitter_account_async(
         "--disable-gpu",
     ]
     async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True, args=args, **pw_kwargs)
+        try:
+            browser = await p.chromium.launch(headless=True, args=args, **pw_kwargs)
+        except Exception as p_err:
+            logger.warning("Playwright proxy launch failed (%s) — falling back to direct connection", p_err)
+            browser = await p.chromium.launch(headless=True, args=args)
         context = await browser.new_context(
             user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
             viewport={"width": 1280, "height": 800}
