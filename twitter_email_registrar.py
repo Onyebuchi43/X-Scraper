@@ -6,6 +6,7 @@ import secrets
 import sqlite3
 import subprocess
 import time
+import json
 import os
 import time
 from typing import Optional, Dict
@@ -81,23 +82,23 @@ def create_temp_email() -> tuple[Optional[str], Optional[str], str]:
 
     return None, None, ""
 
-def poll_twitter_code(email_token: str, provider_type: str, timeout_sec: int = 90) -> Optional[str]:
+async def poll_twitter_code_async(email_token: str, provider_type: str, timeout_sec: int = 90) -> Optional[str]:
     start = time.time()
     if provider_type == "outlook":
         session_path = email_token if (email_token and os.path.exists(email_token)) else "outlook_session.json"
         while time.time() - start < timeout_sec:
             try:
-                with sync_playwright() as p:
-                    browser = p.chromium.launch(headless=True)
-                    context = browser.new_context(
+                async with async_playwright() as p:
+                    browser = await p.chromium.launch(headless=True)
+                    context = await browser.new_context(
                         storage_state=session_path,
                         user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
                     )
-                    page = context.new_page()
-                    page.goto("https://outlook.live.com/mail/0/", wait_until="domcontentloaded", timeout=30000)
-                    time.sleep(3)
-                    content = page.content()
-                    browser.close()
+                    page = await context.new_page()
+                    await page.goto("https://outlook.live.com/mail/0/", wait_until="domcontentloaded", timeout=30000)
+                    await asyncio.sleep(3)
+                    content = await page.content()
+                    await browser.close()
 
                     matches = re.findall(r"\b\d{6}\b", content)
                     for c in matches:
@@ -105,8 +106,8 @@ def poll_twitter_code(email_token: str, provider_type: str, timeout_sec: int = 9
                             logger.info("Successfully fetched Twitter OTP code from Outlook: %s", c)
                             return c
             except Exception as exc:
-                logger.warning("Error polling Outlook inbox via Playwright: %s", exc)
-            time.sleep(5)
+                logger.warning("Error polling Outlook inbox via Playwright Async: %s", exc)
+            await asyncio.sleep(5)
         return None
     elif provider_type == "atomicmail":
         cmd = f"/usr/bin/node /usr/lib/node_modules/@atomicmail/agent-skill/esm/skill/cli.js jmap_request --ops-file list_inbox.json --credentials-dir '{email_token}'"
@@ -120,7 +121,7 @@ def poll_twitter_code(email_token: str, provider_type: str, timeout_sec: int = 9
                         return matches[0]
             except Exception as exc:
                 logger.warning("Error polling Atomic Mail inbox: %s", exc)
-            time.sleep(6)
+            await asyncio.sleep(6)
         return None
     elif provider_type == "guerrilla":
         url = f"https://api.guerrillamail.com/ajax.php?f=get_email_list&sid_token={email_token}&offset=0"
@@ -286,7 +287,7 @@ async def register_single_twitter_account_async(
                 await asyncio.sleep(3)
 
             logger.info("Waiting for Twitter 6-digit confirmation code on %s...", email)
-            code = poll_twitter_code(mail_token, provider_type=provider_type, timeout_sec=90)
+            code = await poll_twitter_code_async(mail_token, provider_type=provider_type, timeout_sec=90)
             if code:
                 logger.info("Retrieved Twitter verification code: %s", code)
                 code_inp = page.locator('input[name="verification_code"], input[autocomplete="one-time-code"]')

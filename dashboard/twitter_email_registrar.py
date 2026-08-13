@@ -1,15 +1,14 @@
-import asyncio
 import json
-import logging
-import re
+import os
 import secrets
+import logging
 import sqlite3
 import subprocess
 import time
-import os
-import time
+import re
 from typing import Optional, Dict
 import httpx
+import asyncio
 from playwright.async_api import async_playwright
 from playwright.sync_api import sync_playwright
 
@@ -81,23 +80,23 @@ def create_temp_email() -> tuple[Optional[str], Optional[str], str]:
 
     return None, None, ""
 
-def poll_twitter_code(email_token: str, provider_type: str, timeout_sec: int = 90) -> Optional[str]:
+async def poll_twitter_code_async(email_token: str, provider_type: str, timeout_sec: int = 90) -> Optional[str]:
     start = time.time()
     if provider_type == "outlook":
         session_path = email_token if (email_token and os.path.exists(email_token)) else "outlook_session.json"
         while time.time() - start < timeout_sec:
             try:
-                with sync_playwright() as p:
-                    browser = p.chromium.launch(headless=True)
-                    context = browser.new_context(
+                async with async_playwright() as p:
+                    browser = await p.chromium.launch(headless=True)
+                    context = await browser.new_context(
                         storage_state=session_path,
                         user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
                     )
-                    page = context.new_page()
-                    page.goto("https://outlook.live.com/mail/0/", wait_until="domcontentloaded", timeout=30000)
-                    time.sleep(3)
-                    content = page.content()
-                    browser.close()
+                    page = await context.new_page()
+                    await page.goto("https://outlook.live.com/mail/0/", wait_until="domcontentloaded", timeout=30000)
+                    await asyncio.sleep(3)
+                    content = await page.content()
+                    await browser.close()
 
                     matches = re.findall(r"\b\d{6}\b", content)
                     for c in matches:
@@ -105,8 +104,8 @@ def poll_twitter_code(email_token: str, provider_type: str, timeout_sec: int = 9
                             logger.info("Successfully fetched Twitter OTP code from Outlook: %s", c)
                             return c
             except Exception as exc:
-                logger.warning("Error polling Outlook inbox via Playwright: %s", exc)
-            time.sleep(5)
+                logger.warning("Error polling Outlook inbox via Playwright Async: %s", exc)
+            await asyncio.sleep(5)
         return None
     elif provider_type == "atomicmail":
         cmd = f"/usr/bin/node /usr/lib/node_modules/@atomicmail/agent-skill/esm/skill/cli.js jmap_request --ops-file list_inbox.json --credentials-dir '{email_token}'"
@@ -120,7 +119,7 @@ def poll_twitter_code(email_token: str, provider_type: str, timeout_sec: int = 9
                         return matches[0]
             except Exception as exc:
                 logger.warning("Error polling Atomic Mail inbox: %s", exc)
-            time.sleep(6)
+            await asyncio.sleep(6)
         return None
     elif provider_type == "guerrilla":
         url = f"https://api.guerrillamail.com/ajax.php?f=get_email_list&sid_token={email_token}&offset=0"
@@ -137,74 +136,86 @@ def poll_twitter_code(email_token: str, provider_type: str, timeout_sec: int = 9
                         codes = re.findall(r"\b\d{6}\b", text)
                         if codes:
                             return codes[0]
-                        mail_id = item.get("mail_id")
-                        if mail_id:
-                            f_res = httpx.get(f"https://api.guerrillamail.com/ajax.php?f=fetch_email&sid_token={email_token}&email_id={mail_id}", timeout=10)
-                            if f_res.status_code == 200:
-                                body = str(f_res.json().get("mail_body", ""))
-                                codes = re.findall(r"\b\d{6}\b", body)
-                                if codes:
-                                    return codes[0]
             except Exception as exc:
                 logger.warning("Error polling Guerrilla Mail inbox: %s", exc)
-            time.sleep(3)
+            await asyncio.sleep(5)
         return None
-    else:
-        headers = {"Authorization": f"Bearer {email_token}"}
-        while time.time() - start < timeout_sec:
-            try:
-                r = httpx.get("https://api.mail.tm/messages", headers=headers, timeout=10)
-                msgs = r.json().get("hydra:member", [])
-                if msgs:
-                    msg_id = msgs[0]["id"]
-                    detail = httpx.get(f"https://api.mail.tm/messages/{msg_id}", headers=headers, timeout=10).json()
-                    text = str(detail.get("text", "")) + str(detail.get("html", ""))
-                    codes = re.findall(r"\b\d{6}\b", text)
-                    if codes:
-                        return codes[0]
-            except Exception as exc:
-                logger.warning("Error polling mail.tm inbox: %s", exc)
-            time.sleep(3)
-        return None
+    return None
 
-async def register_single_twitter_account_async(
-    name: str,
-    proxy_url: Optional[str] = None
-) -> Optional[Dict[str, str]]:
+def poll_twitter_code(email_token: str, provider_type: str, timeout_sec: int = 90) -> Optional[str]:
+    return asyncio.run(poll_twitter_code_async(email_token, provider_type, timeout_sec))
+
+def save_account_to_db(auth_token: str, ct0: str, proxy_url: Optional[str] = None, email: Optional[str] = None) -> bool:
+    try:
+        from poster import fetch_real_twitter_username
+        real_username = fetch_real_twitter_username(auth_token, ct0, proxy=proxy_url)
+        username = f"@{real_username}" if real_username else f"@usr_{secrets.token_hex(4)}"
+
+        conn = sqlite3.connect(DASH_DB)
+        c = conn.cursor()
+        c.execute("""
+            CREATE TABLE IF NOT EXISTS accounts (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT UNIQUE,
+                auth_token TEXT,
+                ct0 TEXT,
+                proxy TEXT,
+                status TEXT DEFAULT 'active',
+                email TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+        parts = proxy_url.split(":") if proxy_url else []
+        db_proxy = f"{parts[0]}:{parts[1]}:{parts[2]}:{parts[3]}" if len(parts) == 4 else (proxy_url or "")
+
+        c.execute("""
+            INSERT OR REPLACE INTO accounts (username, auth_token, ct0, proxy, status, email)
+            VALUES (?, ?, ?, ?, 'active', ?)
+        """, (username, auth_token, ct0, db_proxy, email or ""))
+
+        conn.commit()
+        conn.close()
+        logger.info("Saved new Twitter account to DB: %s", username)
+        return True
+    except Exception as exc:
+        logger.error("Failed to save account to DB: %s", exc)
+        return False
+
+async def register_single_twitter_account_async(name: str, proxy_url: Optional[str] = None) -> Optional[Dict[str, str]]:
     email, mail_token, provider_type = create_temp_email()
-    if not email or not mail_token:
-        logger.error("Failed to generate temp email for automated Twitter registration")
+    if not email:
+        logger.error("Failed to generate temp email for registration.")
         return None
 
-    logger.info("Starting automated Twitter email registration for %s (%s)...", name, email)
+    logger.info("Starting automated Playwright Twitter signup for %s with email %s...", name, email)
 
     pw_kwargs = {}
     if proxy_url:
-        pw_kwargs["proxy"] = {"server": proxy_url}
+        parts = proxy_url.split(":")
+        if len(parts) == 4:
+            pw_kwargs["proxy"] = {
+                "server": f"http://{parts[0]}:{parts[1]}",
+                "username": parts[2],
+                "password": parts[3],
+            }
+        else:
+            pw_kwargs["proxy"] = {"server": f"http://{proxy_url}"}
 
-    args = [
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-        "--disable-dev-shm-usage",
-        "--disable-accelerated-2d-canvas",
-        "--disable-gpu",
-    ]
     async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True, args=args, **pw_kwargs)
+        browser = await p.chromium.launch(headless=True, **pw_kwargs)
         context = await browser.new_context(
             user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-            viewport={"width": 1280, "height": 800}
+            locale="en-US"
         )
         page = await context.new_page()
 
         async def js_click(locator):
-            """Click via JS dispatchEvent to bypass overlay masks."""
             el = await locator.element_handle()
             if el:
                 await page.evaluate("el => el.dispatchEvent(new MouseEvent('click', {bubbles: true, cancelable: true}))", el)
 
         async def dismiss_overlay():
-            """Dismiss any modal overlay blocking pointer events."""
             mask = page.locator('[data-testid="mask"]')
             if await mask.count() > 0:
                 logger.info("Overlay mask detected — dismissing with Escape key")
@@ -220,7 +231,6 @@ async def register_single_twitter_account_async(
             await page.goto("https://x.com/i/flow/signup", wait_until="domcontentloaded", timeout=30000)
             await asyncio.sleep(4)
 
-            # Dismiss any cookie consent or loading overlay before interacting
             await dismiss_overlay()
 
             btn_phone = page.locator('text="Continue with phone"')
@@ -229,7 +239,6 @@ async def register_single_twitter_account_async(
                 try:
                     await btn_phone.first.click(timeout=5000)
                 except Exception:
-                    logger.info("Pointer click blocked — using JS click on 'Continue with phone'")
                     await js_click(btn_phone.first)
                 await asyncio.sleep(2)
 
@@ -284,7 +293,7 @@ async def register_single_twitter_account_async(
                 await asyncio.sleep(3)
 
             logger.info("Waiting for Twitter 6-digit confirmation code on %s...", email)
-            code = poll_twitter_code(mail_token, provider_type=provider_type, timeout_sec=90)
+            code = await poll_twitter_code_async(mail_token, provider_type=provider_type, timeout_sec=90)
             if code:
                 logger.info("Retrieved Twitter verification code: %s", code)
                 code_inp = page.locator('input[name="verification_code"], input[autocomplete="one-time-code"]')
