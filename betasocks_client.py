@@ -27,7 +27,7 @@ def init_proxy_db():
             id INTEGER PRIMARY KEY DEFAULT 1,
             betasocks_email TEXT DEFAULT 'mentlinda38@gmail.com',
             betasocks_password TEXT DEFAULT 'Meandyou2580',
-            daily_limit INTEGER DEFAULT 50,
+            daily_limit INTEGER DEFAULT 10000,
             fetched_today_count INTEGER DEFAULT 0,
             last_reset_date TEXT DEFAULT ''
         )
@@ -37,8 +37,11 @@ def init_proxy_db():
     if c.fetchone()[0] == 0:
         c.execute("""
             INSERT INTO proxy_settings (id, betasocks_email, betasocks_password, daily_limit, fetched_today_count, last_reset_date)
-            VALUES (1, 'mentlinda38@gmail.com', 'Meandyou2580', 50, 0, DATE('now'))
+            VALUES (1, 'mentlinda38@gmail.com', 'Meandyou2580', 10000, 0, DATE('now'))
         """)
+    else:
+        # Ensure limit is high
+        c.execute("UPDATE proxy_settings SET daily_limit=10000 WHERE id=1 AND daily_limit < 100")
     conn.commit()
     conn.close()
 
