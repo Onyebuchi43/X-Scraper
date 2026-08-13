@@ -390,7 +390,10 @@ def add_account():
 
     if not proxy:
         try:
-            from betasocks_client import BetaSocksClient
+            try:
+                from betasocks_client import BetaSocksClient
+            except ImportError:
+                from dashboard.betasocks_client import BetaSocksClient  # type: ignore
             bs = BetaSocksClient()
             fresh_px = bs.get_first_working_socks()
             if fresh_px:
@@ -1126,7 +1129,10 @@ def bulk_import_accounts_api():
             proxy = parts[3].strip() if len(parts) > 3 else None
             if not proxy:
                 try:
-                    from betasocks_client import BetaSocksClient
+                    try:
+                        from betasocks_client import BetaSocksClient
+                    except ImportError:
+                        from dashboard.betasocks_client import BetaSocksClient  # type: ignore
                     bs = BetaSocksClient()
                     fresh_px = bs.get_first_working_socks()
                     if fresh_px:
