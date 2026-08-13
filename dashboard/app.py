@@ -1115,17 +1115,12 @@ def bulk_import_accounts_api():
     imported = 0
     errors = []
 
-    try:
-        from account_creator import register_email_account
-    except ImportError:
-        from dashboard.account_creator import register_email_account  # type: ignore
-
     for idx, line in enumerate(lines, 1):
         parts = line.split(":")
         if len(parts) >= 2:
             auth_token = parts[0].strip()
             ct0 = parts[1].strip()
-            username = parts[2].strip() if len(parts) > 2 else f"user_{uuid.uuid4().hex[:6]}"
+            label = parts[2].strip() if len(parts) > 2 else f"Account #{idx}"
             proxy = parts[3].strip() if len(parts) > 3 else None
             if not proxy:
                 try:
@@ -1140,10 +1135,13 @@ def bulk_import_accounts_api():
                 except Exception:
                     pass
             try:
-                register_email_account(
-                    email="", name=username, password="",
-                    auth_token=auth_token, ct0=ct0, proxy=proxy, username=username
+                conn = _db()
+                conn.execute(
+                    "INSERT INTO accounts (auth_token, ct0, proxy, label) VALUES (?,?,?,?)",
+                    (auth_token, ct0, proxy, label)
                 )
+                conn.commit()
+                conn.close()
                 imported += 1
             except Exception as e:
                 errors.append(f"Line {idx}: {e}")

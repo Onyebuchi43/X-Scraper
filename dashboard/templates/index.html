@@ -1179,6 +1179,51 @@ nohup python3 -m dashboard.app > app.log 2>&1 &
   </div>
 </div>
 
+<!-- MODAL: BULK TOKEN IMPORTER -->
+<div class="modal-overlay" id="modal-bulk-import" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:9999;align-items:center;justify-content:center;">
+  <div class="card card-form" style="width:90%;max-width:600px;background:#1e293b;border:1px solid #334155;border-radius:12px;padding:24px;color:#fff;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;">
+      <h3 style="margin:0;font-size:1.2rem;">📥 Bulk Token Importer</h3>
+      <button onclick="closeBulkImportModal()" style="background:none;border:none;color:#94a3b8;font-size:1.5rem;cursor:pointer;">&times;</button>
+    </div>
+    <p style="font-size:0.85rem;color:#94a3b8;margin-bottom:15px;">Paste your Twitter accounts below (one account per line).<br>Format: <code>auth_token:ct0</code> or <code>auth_token:ct0:label</code></p>
+    <textarea id="bulk-import-text" rows="8" style="width:100%;background:#0f172a;border:1px solid #334155;border-radius:8px;color:#fff;padding:12px;font-family:monospace;font-size:0.85rem;resize:vertical;" placeholder="6b832b12eb0d082ca93194b165f400cc1573732a:e5379e53f10bd4e9935a47e080ba7e12d712a57c:Account #1&#10;8302130e5844211b81e81abb0a56650fa7e5aaad:dc8cbefad115d3b77eab90f270c1a85e1c175790:Account #2"></textarea>
+    <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:15px;">
+      <button class="btn btn-ghost" onclick="closeBulkImportModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="bulkImportSubmit()">Import Accounts</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: BULK PROFILE EDITOR -->
+<div class="modal-overlay" id="modal-bulk-edit" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:9999;align-items:center;justify-content:center;">
+  <div class="card card-form" style="width:90%;max-width:600px;background:#1e293b;border:1px solid #334155;border-radius:12px;padding:24px;color:#fff;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;">
+      <h3 style="margin:0;font-size:1.2rem;">✏️ Bulk Profile Editor</h3>
+      <button onclick="closeBulkEditModal()" style="background:none;border:none;color:#94a3b8;font-size:1.5rem;cursor:pointer;">&times;</button>
+    </div>
+    <p style="font-size:0.85rem;color:#94a3b8;margin-bottom:15px;">Update profile bio, location, or website URL for registered accounts.</p>
+    <div class="form-grid form-grid-2">
+      <div class="form-group span-2">
+        <label>Bio / Description</label>
+        <textarea id="be-bio" rows="2" style="width:100%;background:#0f172a;border:1px solid #334155;border-radius:8px;color:#fff;padding:8px;" placeholder="Web3 Developer & Crypto Enthusiast"></textarea>
+      </div>
+      <div class="form-group">
+        <label>Location</label>
+        <input type="text" id="be-location" style="width:100%;background:#0f172a;border:1px solid #334155;border-radius:8px;color:#fff;padding:8px;" placeholder="New York, USA"/>
+      </div>
+      <div class="form-group">
+        <label>Website URL</label>
+        <input type="url" id="be-url" style="width:100%;background:#0f172a;border:1px solid #334155;border-radius:8px;color:#fff;padding:8px;" placeholder="https://mywebsite.com"/>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:15px;">
+      <button class="btn btn-ghost" onclick="closeBulkEditModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="bulkEditSubmit()">Update Profiles</button>
+    </div>
+  </div>
+</div>
+
 <!-- TOAST -->
 <div class="toast-container" id="toast-container"></div>
 

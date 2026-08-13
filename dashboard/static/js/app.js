@@ -1349,3 +1349,70 @@ async function createAccountSubmit(e) {
     }
   }
 }
+
+// ── BULK IMPORTER & EDITOR MODALS ──────────────────────────────────────────────
+function openBulkImportModal() {
+  const m = document.getElementById('modal-bulk-import');
+  if (m) m.style.display = 'flex';
+}
+
+function closeBulkImportModal() {
+  const m = document.getElementById('modal-bulk-import');
+  if (m) m.style.display = 'none';
+}
+
+async function bulkImportSubmit() {
+  const txt = (document.getElementById('bulk-import-text')?.value || '').trim();
+  if (!txt) {
+    toast('Please paste at least one line of auth_token:ct0 credentials', 'error');
+    return;
+  }
+  try {
+    const resp = await fetch('/api/accounts/bulk-import', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: txt })
+    });
+    const data = await resp.json();
+    if (data.imported > 0) {
+      toast(`Successfully imported ${data.imported} account(s)!`, 'success');
+      closeBulkImportModal();
+      document.getElementById('bulk-import-text').value = '';
+      if (typeof loadAccounts === 'function') loadAccounts();
+    } else {
+      toast('Failed to import accounts: ' + (data.errors ? data.errors.join(', ') : 'Unknown error'), 'error');
+    }
+  } catch (err) {
+    toast('Error importing accounts: ' + err.message, 'error');
+  }
+}
+
+function openBulkEditModal() {
+  const m = document.getElementById('modal-bulk-edit');
+  if (m) m.style.display = 'flex';
+}
+
+function closeBulkEditModal() {
+  const m = document.getElementById('modal-bulk-edit');
+  if (m) m.style.display = 'none';
+}
+
+async function bulkEditSubmit() {
+  const bio = document.getElementById('be-bio')?.value || '';
+  const location = document.getElementById('be-location')?.value || '';
+  const url = document.getElementById('be-url')?.value || '';
+
+  try {
+    const resp = await fetch('/api/accounts/bulk-edit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ description: bio, location: location, url: url })
+    });
+    const data = await resp.json();
+    toast('Profile updates submitted!', 'success');
+    closeBulkEditModal();
+    if (typeof loadAccounts === 'function') loadAccounts();
+  } catch (err) {
+    toast('Error updating profiles: ' + err.message, 'error');
+  }
+}
