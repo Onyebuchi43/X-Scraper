@@ -387,6 +387,17 @@ def add_account():
     label = (data.get("label") or "").strip() or None
     if not auth_token or not ct0:
         return jsonify({"error": "auth_token and ct0 are required"}), 400
+
+    if not proxy:
+        try:
+            from betasocks_client import BetaSocksClient
+            bs = BetaSocksClient()
+            fresh_px = bs.get_first_working_socks()
+            if fresh_px:
+                proxy = fresh_px
+        except Exception as exc:
+            logger.warning("Could not auto-fetch BetaSocks proxy on account add: %s", exc)
+
     conn = _db()
     cur = conn.execute(
         "INSERT INTO accounts (auth_token, ct0, proxy, label) VALUES (?,?,?,?)",
@@ -395,7 +406,7 @@ def add_account():
     conn.commit()
     account_id = cur.lastrowid
     conn.close()
-    return jsonify({"id": account_id, "msg": "Account added"})
+    return jsonify({"id": account_id, "proxy": proxy, "msg": "Account added"})
 
 
 @app.route("/api/accounts/<int:account_id>", methods=["GET", "PUT", "DELETE"])
@@ -1113,6 +1124,15 @@ def bulk_import_accounts_api():
             ct0 = parts[1].strip()
             username = parts[2].strip() if len(parts) > 2 else f"user_{uuid.uuid4().hex[:6]}"
             proxy = parts[3].strip() if len(parts) > 3 else None
+            if not proxy:
+                try:
+                    from betasocks_client import BetaSocksClient
+                    bs = BetaSocksClient()
+                    fresh_px = bs.get_first_working_socks()
+                    if fresh_px:
+                        proxy = fresh_px
+                except Exception:
+                    pass
             try:
                 register_email_account(
                     email="", name=username, password="",
