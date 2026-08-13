@@ -217,6 +217,30 @@ class BetaSocksClient:
             logger.error("Error fetching BetaSocks proxies: %s", exc)
             return []
 
+    def get_first_working_socks(self, country: str = "all", log_fn=None) -> Optional[str]:
+        """Fetch available proxies from BetaSocks and return the first working IP:PORT:USER:PASS string."""
+        log = log_fn or logger.info
+        if not self.login():
+            log("WARNING", f"BetaSocks Login Failed for user '{self.email}'. Check credentials in Settings tab.")
+            return None
+
+        proxies = self.fetch_available_proxies(country=country, limit=3)
+        if not proxies:
+            log("WARNING", "BetaSocks returned 0 proxies. Ensure subscription package is active on BetaSocks.com.")
+            return None
+
+        for p in proxies:
+            clean_p = p.replace("socks5://", "").replace("http://", "")
+            if "@" in clean_p:
+                creds, host = clean_p.split("@")
+                user, pwd = creds.split(":")
+                ip, port = host.split(":")
+                db_format = f"{ip}:{port}:{user}:{pwd}"
+            else:
+                db_format = clean_p
+            return db_format
+        return None
+
 
 def test_betasocks_credentials(email: str, password: str) -> dict:
     client = BetaSocksClient(email, password)
