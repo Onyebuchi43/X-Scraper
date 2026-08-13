@@ -173,14 +173,17 @@ class BetaSocksClient:
                 if len(formatted_proxies) >= limit:
                     break
                 check_resp = self.client.get(f"https://betasocks.com/user/check_ip/{sid}")
-                if "Package expired" in check_resp.text or "buy a package" in check_resp.text:
+                raw_ip_txt = check_resp.text
+                if "Package expired" in raw_ip_txt or "buy a package" in raw_ip_txt:
                     logger.warning("BetaSocks Package Expired: Please renew your subscription on BetaSocks.com")
                     break
 
-                ip_text = check_resp.text.strip()
+                if "Offline" in raw_ip_txt or "color:red" in raw_ip_txt:
+                    continue
+
                 matches = re.findall(
                     r"\b(?:\d{1,3}\.){3}\d{1,3}:\d{2,5}(?::[^\s<'\"]+:[^\s<'\"]+)?\b",
-                    ip_text,
+                    raw_ip_txt,
                 )
                 for p in matches:
                     parts = p.split(":")
