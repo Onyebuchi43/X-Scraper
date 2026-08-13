@@ -40,7 +40,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 const TAB_TITLES = {
   accounts: 'Account Manager',
-  creator: 'Account Creator & Bulk Tools',
   proxy: 'Proxy & BetaSocks Settings',
   scraper: 'Twitter Scraper',
   campaign: 'Post Campaign',
@@ -58,7 +57,6 @@ function switchTab(tab, el) {
   currentTab = tab;
 
   if (tab === 'accounts') loadAccounts();
-  if (tab === 'creator') loadAccounts();
   if (tab === 'proxy') loadProxySettings();
   if (tab === 'scraper') { loadAccountSelects(); loadCSVFiles(); }
   if (tab === 'campaign') { loadAccountSelects(); loadCampaignDbPanel(); loadVpsStatus(); }
