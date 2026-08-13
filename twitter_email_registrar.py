@@ -221,8 +221,18 @@ async def register_single_twitter_account_async(
 
     pw_kwargs = {}
     if proxy_url:
-        # Format proxy for Playwright if provided
-        pw_kwargs["proxy"] = {"server": proxy_url}
+        clean_px = proxy_url.replace("socks5://", "").replace("http://", "")
+        parts = clean_px.split(":")
+        if len(parts) == 4:
+            pw_kwargs["proxy"] = {
+                "server": f"socks5://{parts[0]}:{parts[1]}",
+                "username": parts[2],
+                "password": parts[3],
+            }
+        elif len(parts) == 2:
+            pw_kwargs["proxy"] = {"server": f"socks5://{parts[0]}:{parts[1]}"}
+        else:
+            pw_kwargs["proxy"] = {"server": proxy_url}
 
     args = [
         "--no-sandbox",

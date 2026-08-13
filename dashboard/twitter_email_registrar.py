@@ -192,15 +192,18 @@ async def register_single_twitter_account_async(name: str, proxy_url: Optional[s
 
     pw_kwargs = {}
     if proxy_url:
-        parts = proxy_url.split(":")
+        clean_px = proxy_url.replace("socks5://", "").replace("http://", "")
+        parts = clean_px.split(":")
         if len(parts) == 4:
             pw_kwargs["proxy"] = {
-                "server": f"http://{parts[0]}:{parts[1]}",
+                "server": f"socks5://{parts[0]}:{parts[1]}",
                 "username": parts[2],
                 "password": parts[3],
             }
+        elif len(parts) == 2:
+            pw_kwargs["proxy"] = {"server": f"socks5://{parts[0]}:{parts[1]}"}
         else:
-            pw_kwargs["proxy"] = {"server": f"http://{proxy_url}"}
+            pw_kwargs["proxy"] = {"server": proxy_url}
 
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True, **pw_kwargs)
