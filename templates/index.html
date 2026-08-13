@@ -21,9 +21,6 @@
     <li class="nav-item active" data-tab="accounts" onclick="switchTab('accounts',this)">
       <span class="nav-icon">&#128100;</span><span class="nav-label">Accounts</span>
     </li>
-    <li class="nav-item" data-tab="creator" onclick="switchTab('creator',this)">
-      <span class="nav-icon">✨</span><span class="nav-label">Account Creator</span>
-    </li>
     <li class="nav-item" data-tab="proxy" onclick="switchTab('proxy',this)">
       <span class="nav-icon">🛡️</span><span class="nav-label">Proxy Settings</span>
     </li>
@@ -83,8 +80,10 @@
           <input type="text" id="inp-label" placeholder="Account #1 - Main"/>
         </div>
       </div>
-      <div class="form-actions">
+      <div class="form-actions" style="display:flex;gap:10px;">
         <button class="btn btn-primary" onclick="addAccount()">Add Account</button>
+        <button class="btn btn-ghost" onclick="openBulkImportModal()">📥 Bulk Token Importer</button>
+        <button class="btn btn-ghost" onclick="openBulkEditModal()">✏️ Bulk Profile Editor</button>
       </div>
     </div>
 
@@ -100,57 +99,6 @@
           </tbody>
         </table>
       </div>
-    </div>
-  </section>
-
-  <!-- ======= TAB: ACCOUNT CREATOR ======= -->
-  <section class="tab-panel" id="tab-creator">
-    <div class="panel-header">
-      <h2>Account Creator & Bulk Tools</h2>
-      <p class="panel-sub">Register new email-only accounts, import pre-made token lists, or bulk update profile credentials.</p>
-    </div>
-
-    <div class="card card-form">
-      <div class="card-title">✨ Automated Account Creator</div>
-      <form id="form-account-creator" onsubmit="createAccountSubmit(event)">
-        <div class="form-grid form-grid-2">
-          <div class="form-group">
-            <label>Display Name <span class="badge-required">required</span></label>
-            <input type="text" id="cr-name" placeholder="Alex Rivers" required/>
-            <p class="field-hint">Twitter/X will automatically generate a matching username for this name.</p>
-          </div>
-          <div class="form-group">
-            <label>Number of Accounts to Create <span class="badge-required">required</span></label>
-            <input type="number" id="cr-quantity" value="1" min="1" max="50"/>
-            <p class="field-hint">Set how many accounts to create automatically (1 to 50).</p>
-          </div>
-          <div class="form-group span-2">
-            <label>Bio / Description <span class="badge-optional">optional</span></label>
-            <textarea id="cr-bio" rows="2" placeholder="Crypto investor & Web3 developer..."></textarea>
-          </div>
-          <div class="form-group">
-            <label>Location <span class="badge-optional">optional</span></label>
-            <input type="text" id="cr-location" placeholder="New York, USA"/>
-          </div>
-          <div class="form-group">
-            <label>Website URL <span class="badge-optional">optional</span></label>
-            <input type="url" id="cr-url" placeholder="https://mywebsite.com"/>
-          </div>
-          <div class="form-group">
-            <label>Profile Picture (Avatar) <span class="badge-optional">optional</span></label>
-            <input type="file" id="cr-avatar" accept="image/*"/>
-          </div>
-          <div class="form-group">
-            <label>Header Banner Image <span class="badge-optional">optional</span></label>
-            <input type="file" id="cr-banner" accept="image/*"/>
-          </div>
-        </div>
-        <div class="form-actions" style="display:flex;gap:10px;margin-top:15px;">
-          <button type="submit" class="btn btn-primary">✨ Create & Register Account</button>
-          <button type="button" class="btn btn-ghost" onclick="openBulkImportModal()">📥 Bulk Token Importer</button>
-          <button type="button" class="btn btn-ghost" onclick="openBulkEditModal()">✏️ Bulk Profile Editor</button>
-        </div>
-      </form>
     </div>
   </section>
 
