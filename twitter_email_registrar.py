@@ -82,6 +82,46 @@ def create_temp_email() -> tuple[Optional[str], Optional[str], str]:
 
     return None, None, ""
 
+def poll_twitter_code(email_token: str, provider_type: str, timeout_sec: int = 90) -> Optional[str]:
+    return asyncio.run(poll_twitter_code_async(email_token, provider_type, timeout_sec))
+
+def save_account_to_db(auth_token: str, ct0: str, proxy_url: Optional[str] = None, email: Optional[str] = None) -> bool:
+    try:
+        from poster import fetch_real_twitter_username
+        real_username = fetch_real_twitter_username(auth_token, ct0, proxy=proxy_url)
+        username = f"@{real_username}" if real_username else f"@usr_{secrets.token_hex(4)}"
+
+        conn = sqlite3.connect(DASH_DB)
+        c = conn.cursor()
+        c.execute("""
+            CREATE TABLE IF NOT EXISTS accounts (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT UNIQUE,
+                auth_token TEXT,
+                ct0 TEXT,
+                proxy TEXT,
+                status TEXT DEFAULT 'active',
+                email TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+        parts = proxy_url.split(":") if proxy_url else []
+        db_proxy = f"{parts[0]}:{parts[1]}:{parts[2]}:{parts[3]}" if len(parts) == 4 else (proxy_url or "")
+
+        c.execute("""
+            INSERT OR REPLACE INTO accounts (username, auth_token, ct0, proxy, status, email)
+            VALUES (?, ?, ?, ?, 'active', ?)
+        """, (username, auth_token, ct0, db_proxy, email or ""))
+
+        conn.commit()
+        conn.close()
+        logger.info("Saved new Twitter account to DB: %s", username)
+        return True
+    except Exception as exc:
+        logger.error("Failed to save account to DB: %s", exc)
+        return False
+
 async def poll_twitter_code_async(email_token: str, provider_type: str, timeout_sec: int = 90) -> Optional[str]:
     start = time.time()
     if provider_type == "outlook":
