@@ -363,18 +363,22 @@ def _auto_heal_account_proxy(account_id: int, log_fn: Callable) -> Optional[str]
 
         working_proxy = None
         for px in fresh_proxies:
-            try:
-                parts = str(px).split(":")
-                if len(parts) == 4:
-                    px_url = f"http://{parts[2]}:{parts[3]}@{parts[0]}:{parts[1]}"
-                else:
-                    px_url = f"http://{px}"
-                t_resp = httpx.get("https://api.ipify.org?format=json", proxy=px_url, timeout=5)
-                if t_resp.status_code == 200:
-                    working_proxy = px
-                    break
-            except Exception:
-                continue
+            clean_p = px.replace("socks5://", "").replace("http://", "")
+            if "@" in clean_p:
+                creds, host = clean_p.split("@")
+                u, pw = creds.split(":")
+                ip, port = host.split(":")
+                db_proxy = f"{ip}:{port}:{u}:{pw}"
+                curl_proxy = f"socks5://{u}:{pw}@{ip}:{port}"
+            else:
+                db_proxy = clean_p
+                curl_proxy = f"socks5://{clean_p}"
+
+            cmd = f"curl -s --proxy '{curl_proxy}' --max-time 5 https://api.ipify.org"
+            res = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+            if res.returncode == 0 and res.stdout and len(res.stdout.strip()) > 5:
+                working_proxy = db_proxy
+                break
 
         if working_proxy:
             conn = _db()
