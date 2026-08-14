@@ -49,18 +49,29 @@ init_proxy_db()
 
 
 def get_proxy_settings() -> dict:
+    today_str = time.strftime("%Y-%m-%d")
     conn = sqlite3.connect(DASH_DB)
     conn.row_factory = sqlite3.Row
     row = conn.execute("SELECT * FROM proxy_settings WHERE id=1").fetchone()
-    conn.close()
     if row:
-        return dict(row)
+        d = dict(row)
+        if d.get("last_reset_date") != today_str:
+            d["fetched_today_count"] = 0
+            d["last_reset_date"] = today_str
+            conn.execute(
+                "UPDATE proxy_settings SET fetched_today_count=0, last_reset_date=? WHERE id=1",
+                (today_str,),
+            )
+            conn.commit()
+        conn.close()
+        return d
+    conn.close()
     return {
         "betasocks_email": "mentlinda38@gmail.com",
         "betasocks_password": "Meandyou2580",
         "daily_limit": 50,
         "fetched_today_count": 0,
-        "last_reset_date": "",
+        "last_reset_date": today_str,
     }
 
 
