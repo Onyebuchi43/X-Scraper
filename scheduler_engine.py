@@ -1369,17 +1369,29 @@ class _Campaign:
 
 # ── Public API ─────────────────────────────────────────────────────────────────
 def launch_campaign(campaign_id: int, config: dict) -> None:
-    """Create and start a _Campaign background thread."""
+    """Create and start a _Campaign background thread.
+    Always stops any existing thread for this campaign first to prevent
+    ghost threads that pollute logs with false 'Campaign finished: 0' messages.
+    """
     with _lock:
         existing = _campaigns.get(campaign_id)
-        if existing and existing.is_running():
-            logger.info("Campaign %d is already running in active thread. Ignoring duplicate launch request.", campaign_id)
-            return
-        # Clear stale cooldowns for this campaign's accounts so a resume starts fresh
+        if existing:
+            if existing.is_running():
+                # Stop the old thread and give it a moment to acknowledge the stop signal
+                logger.info(
+                    "Campaign %d: stopping existing thread before launching new one.",
+                    campaign_id,
+                )
+                existing.stop()
+                existing._thread.join(timeout=2.0)
+
+        # Clear stale cooldowns so a resume starts fresh
         for acc in config.get("accounts", []):
             acc_id = acc.get("id")
             if acc_id and acc_id in _GLOBAL_ACCOUNT_COOLDOWNS:
                 _GLOBAL_ACCOUNT_COOLDOWNS.pop(acc_id, None)
+
         c = _Campaign(campaign_id, config)
         _campaigns[campaign_id] = c
         c.start()
+

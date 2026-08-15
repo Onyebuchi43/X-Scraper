@@ -851,6 +851,13 @@ def get_campaign(cid: int):
 @app.route("/api/campaigns/<int:cid>/resume", methods=["POST"])
 def start_campaign(cid: int):
     conn = _db()
+    engine = _get_scheduler_engine()
+
+    # Guard: reject if this specific campaign is already running in the scheduler
+    existing = engine._campaigns.get(cid)
+    if existing and existing.is_running():
+        conn.close()
+        return jsonify({"msg": "Campaign already running"})
 
     # Enforce maximum 3 active concurrent campaigns
     active_count = conn.execute("SELECT COUNT(*) FROM campaigns WHERE status='running' AND id != ?", (cid,)).fetchone()[0]
@@ -883,7 +890,7 @@ def start_campaign(cid: int):
     conn.close()
     config["accounts"] = accounts
 
-    _get_scheduler_engine().launch_campaign(cid, config)
+    engine.launch_campaign(cid, config)
 
     return jsonify({"msg": "Campaign started"})
 
