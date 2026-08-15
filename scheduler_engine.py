@@ -405,22 +405,25 @@ def _check_and_log_account_proxy_health(accounts: List[dict], log_fn: Callable) 
             continue
 
         try:
-            parts = str(px).split(":")
-            if len(parts) == 4:
-                px_url = f"http://{parts[2]}:{parts[3]}@{parts[0]}:{parts[1]}"
+            px_str = str(px).strip()
+            if px_str.startswith("socks5://") or px_str.startswith("socks5h://") or px_str.startswith("http://"):
+                px_url = px_str
             else:
-                px_url = f"http://{px}"
+                parts = px_str.split(":")
+                if len(parts) == 4:
+                    px_url = f"socks5://{parts[2]}:{parts[3]}@{parts[0]}:{parts[1]}"
+                else:
+                    px_url = f"socks5://{px_str}"
 
             httpx.get("https://api.ipify.org?format=json", proxy=px_url, timeout=4)
         except Exception as exc:
             err_str = str(exc)
-            if "407" in err_str or "Proxy Authentication" in err_str or "tunnel" in err_str or "599" in err_str or "Connect" in err_str:
-                log_fn("WARNING", f"🔌 Account (ID {aid}) PROXY FAILURE: Proxy '{px}' failed ({exc}). Triggering auto-healing...")
-                healed_px = _auto_heal_account_proxy(aid, log_fn)
-                if healed_px:
-                    acc["proxy"] = healed_px
+            log_fn("WARNING", f"🔌 Account (ID {aid}) PROXY FAILURE: Proxy '{px}' failed ({err_str}). Triggering auto-healing replacement...")
+            healed_px = _auto_heal_account_proxy(aid, log_fn)
+            if healed_px:
+                acc["proxy"] = healed_px
             else:
-                log_fn("WARNING", f"🔌 Account (ID {aid}) PROXY WARNING: Proxy '{px}' failed check: {exc}")
+                acc["proxy"] = None  # Fallback to direct connection so scraping doesn't stall
 
 
 def _scrape_tweet_commenters(
