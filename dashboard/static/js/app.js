@@ -609,64 +609,75 @@ async function startCampaign() {
   const started = await api(`/api/campaigns/${created.id}/start`, { method: 'POST' });
   if (started.error) { toast(started.error, 'error'); return; }
 
-  toast('Campaign launched!', 'success');
-  document.getElementById('stop-btn').style.display = 'inline-flex';
-  document.getElementById('resume-btn').style.display = 'none';
-  document.getElementById('clear-tagged-btn').style.display = 'inline-flex';
-  updateCampaignStats(config);
+  toast('Campaign launched! 🚀', 'success');
+  currentCampaignId = created.id;
   startCampaignPoll();
   loadCampaignDbPanel();
 }
 
 function updateCampaignStats(config) {
-  document.getElementById('stat-accounts').textContent = (config.account_ids || []).length;
+  // Stats now live on per-campaign cards rendered by renderActiveCampaignFeeds()
 }
 
 async function stopCampaign() {
   if (!currentCampaignId) { toast('No active campaign selected', 'error'); return; }
-  await stopCampaignId(currentCampaignId);
+  await stopCampaignById(currentCampaignId);
 }
 
 async function stopCampaignId(cid) {
+  await stopCampaignById(cid);
+}
+
+async function stopCampaignById(cid) {
   await api(`/api/campaigns/${cid}/stop`, { method: 'POST' });
   toast(`Campaign #${cid} stopped`, 'info');
-  const stopBtn = document.getElementById('stop-btn');
-  const resumeBtn = document.getElementById('resume-btn');
-  const pill = document.getElementById('camp-status-pill');
-  if (currentCampaignId === cid) {
-    if (pill) { pill.textContent = 'stopped'; pill.setAttribute('data-s', 'stopped'); }
-    if (stopBtn) stopBtn.style.display = 'none';
-    if (resumeBtn) resumeBtn.style.display = 'inline-flex';
+  const cardEl = document.getElementById(`card-live-${cid}`);
+  if (cardEl) {
+    cardEl.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+    cardEl.style.opacity = '0';
+    cardEl.style.transform = 'translateY(-10px)';
+    setTimeout(() => cardEl.remove(), 300);
   }
+  setTimeout(pollCampaign, 400);
   loadCampaignDbPanel();
 }
 
 async function resumeCampaign(cid) {
+  await resumeCampaignById(cid);
+}
+
+async function resumeCampaignById(cid) {
   currentCampaignId = cid;
   const res = await api(`/api/campaigns/${cid}/resume`, { method: 'POST' });
   if (res.error) { toast(res.error, 'error'); return; }
   toast(`Campaign #${cid} resumed!`, 'success');
-  const stopBtn = document.getElementById('stop-btn');
-  const resumeBtn = document.getElementById('resume-btn');
-  if (stopBtn) stopBtn.style.display = 'inline-flex';
-  if (resumeBtn) resumeBtn.style.display = 'none';
-  const clearBtn = document.getElementById('clear-tagged-btn');
-  if (clearBtn) clearBtn.style.display = 'inline-flex';
-  startCampaignPoll();
+  pollCampaign();
   loadCampaignDbPanel();
 }
 
 async function selectCampaignForLogs(cid) {
   currentCampaignId = cid;
   startCampaignPoll();
-  pollCampaign();
   toast(`Viewing logs for Campaign #${cid}`, 'info');
 }
 
 async function resumeActiveCampaign() {
-  if (currentCampaignId) {
-    resumeCampaign(currentCampaignId);
-  }
+  if (currentCampaignId) resumeCampaignById(currentCampaignId);
+}
+
+function openEditCampaignModalById(cid) {
+  currentCampaignId = cid;
+  openEditCampaignModal();
+}
+
+async function clearCampaignTaggedById(cid) {
+  if (!confirm(`Clear tagged history for campaign #${cid}?`)) return;
+  const res = await api(`/api/campaigns/${cid}/tagged`, { method: 'DELETE' });
+  if (res.error) { toast(res.error, 'error'); return; }
+  toast(`Cleared tagged users for campaign #${cid}`, 'success');
+  const el = document.getElementById(`stat-tagged-${cid}`);
+  if (el) el.textContent = '0';
+  loadCampaignDbPanel();
 }
 
 function toggleTargetType(val) {
@@ -960,30 +971,10 @@ async function autoConnectActiveCampaign() {
     const campaigns = await api('/api/campaigns');
     if (!campaigns || !Array.isArray(campaigns)) return;
     const running = campaigns.find(c => c.status === 'running');
-    const stopBtn = document.getElementById('stop-btn');
-    const resumeBtn = document.getElementById('resume-btn');
-    const pill = document.getElementById('camp-status-pill');
-
-    if (running) {
-      currentCampaignId = running.id;
-      if (stopBtn) stopBtn.style.display = 'inline-flex';
-      if (resumeBtn) resumeBtn.style.display = 'none';
-      if (pill) { pill.textContent = 'running'; pill.setAttribute('data-s', 'running'); }
-      if (!campaignPollInterval) {
-        startCampaignPoll();
-      }
-    } else if (!currentCampaignId && campaigns.length > 0) {
-      currentCampaignId = campaigns[0].id;
-      const st = campaigns[0].status || 'stopped';
-      if (pill) { pill.textContent = st; pill.setAttribute('data-s', st); }
-      if (st === 'running') {
-        if (stopBtn) stopBtn.style.display = 'inline-flex';
-        if (resumeBtn) resumeBtn.style.display = 'none';
-      } else {
-        if (stopBtn) stopBtn.style.display = 'none';
-        if (resumeBtn) resumeBtn.style.display = 'inline-flex';
-      }
-    }
+    if (running) currentCampaignId = running.id;
+    else if (!currentCampaignId && campaigns.length > 0) currentCampaignId = campaigns[0].id;
+    // Always start the poll — renderActiveCampaignFeeds() handles all card rendering
+    if (!campaignPollInterval) startCampaignPoll();
   } catch (e) {
     console.warn("autoConnectActiveCampaign error:", e);
   }
@@ -1169,17 +1160,8 @@ async function deleteAllCampaigns() {
   const res = await api('/api/campaigns/all', { method: 'DELETE' });
   if (res.error) { toast(res.error, 'error'); return; }
   toast('All campaigns deleted', 'info');
-  if (currentCampaignId) {
-    currentCampaignId = null;
-    clearInterval(campaignPollInterval);
-    document.getElementById('stop-btn').style.display = 'none';
-    document.getElementById('clear-tagged-btn').style.display = 'none';
-    document.getElementById('stat-tagged').textContent = '--';
-    document.getElementById('stat-posts').textContent = '--';
-    document.getElementById('camp-status-pill').textContent = 'idle';
-    document.getElementById('camp-status-pill').setAttribute('data-s', 'idle');
-    document.getElementById('campaign-log').innerHTML = '<div class="log-entry log-info">Waiting for campaign to start...</div>';
-  }
+  currentCampaignId = null;
+  pollCampaign();
   loadCampaignDbPanel();
 }
 
@@ -1188,27 +1170,15 @@ async function deleteCampaign(cid) {
   const res = await api(`/api/campaigns/${cid}`, { method: 'DELETE' });
   if (res.error) { toast(res.error, 'error'); return; }
   toast(`Campaign #${cid} deleted`, 'info');
-  if (currentCampaignId === cid) {
-    currentCampaignId = null;
-    clearInterval(campaignPollInterval);
-    document.getElementById('stop-btn').style.display = 'none';
-    document.getElementById('clear-tagged-btn').style.display = 'none';
-    document.getElementById('stat-tagged').textContent = '--';
-    document.getElementById('stat-posts').textContent = '--';
-    document.getElementById('camp-status-pill').textContent = 'idle';
-    document.getElementById('camp-status-pill').setAttribute('data-s', 'idle');
-    document.getElementById('campaign-log').innerHTML = '<div class="log-entry log-info">Waiting for campaign to start...</div>';
-  }
+  if (currentCampaignId === cid) currentCampaignId = null;
+  const cardEl = document.getElementById(`card-live-${cid}`);
+  if (cardEl) cardEl.remove();
+  pollCampaign();
   loadCampaignDbPanel();
 }
 
 async function clearCampaignTagged(cid) {
-  if (!confirm(`Clear tagged history for campaign #${cid}?`)) return;
-  const res = await api(`/api/campaigns/${cid}/tagged`, { method: 'DELETE' });
-  if (res.error) { toast(res.error, 'error'); return; }
-  toast(`Cleared tagged users for campaign #${cid}`, 'success');
-  if (currentCampaignId === cid) document.getElementById('stat-tagged').textContent = '0';
-  loadCampaignDbPanel();
+  await clearCampaignTaggedById(cid);
 }
 
 // ══ Utilities ═════════════════════════════════════════════════════════════════
