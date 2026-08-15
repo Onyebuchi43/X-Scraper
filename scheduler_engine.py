@@ -346,39 +346,50 @@ _TESTED_PROXY_HEALTH_CACHE: dict[str, float] = {}
 
 def _auto_heal_account_proxy(account_id: int, log_fn: Callable) -> Optional[str]:
     """
-    Auto-healing for account proxies:
-    Fetches exactly 1 fresh proxy from BetaSocks and directly assigns it to the failing account.
-    Does NOT run extra pre-testing loops, preserving proxy allowance.
+    When an account encounters a proxy error during scraping or posting:
+    1. Fetches fresh SOCKS5 proxy from BetaSocks.
+    2. Tests proxy connectivity to api.ipify.org.
+    3. Updates database accounts table for account_id with new proxy.
+    4. Returns new proxy string.
     """
     try:
-        log_fn("INFO", f"⚡ Auto-Healing Triggered: Fetching 1 replacement proxy from BetaSocks for Account #{account_id}…")
+        log_fn("INFO", f"⚡ Auto-Healing Triggered: Fetching fresh proxy from BetaSocks for Account (ID {account_id})…")
         try:
             from betasocks_client import BetaSocksClient
         except ImportError:
             from dashboard.betasocks_client import BetaSocksClient  # type: ignore
 
         client = BetaSocksClient()
-        fresh_proxies = client.fetch_available_proxies(country="all", limit=1)
+        fresh_proxies = client.fetch_available_proxies(country="all", limit=5)
 
-        if fresh_proxies:
-            px = fresh_proxies[0]
+        working_proxy = None
+        for px in fresh_proxies:
             clean_p = px.replace("socks5://", "").replace("http://", "")
             if "@" in clean_p:
                 creds, host = clean_p.split("@")
                 u, pw = creds.split(":")
                 ip, port = host.split(":")
                 db_proxy = f"{ip}:{port}:{u}:{pw}"
+                curl_proxy = f"socks5://{u}:{pw}@{ip}:{port}"
             else:
                 db_proxy = clean_p
+                curl_proxy = f"socks5://{clean_p}"
 
+            cmd = f"curl -s --proxy '{curl_proxy}' --max-time 5 https://api.ipify.org"
+            res = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+            if res.returncode == 0 and res.stdout and len(res.stdout.strip()) > 5:
+                working_proxy = db_proxy
+                break
+
+        if working_proxy:
             conn = _db()
-            conn.execute("UPDATE accounts SET proxy=? WHERE id=?", (db_proxy, account_id))
+            conn.execute("UPDATE accounts SET proxy=? WHERE id=?", (working_proxy, account_id))
             conn.commit()
             conn.close()
-            log_fn("INFO", f"✅ AUTO-HEAL SUCCESS: Account #{account_id} proxy updated to '{db_proxy}'.")
-            return db_proxy
+            log_fn("INFO", f"✅ AUTO-HEAL SUCCESS: Account (ID {account_id}) assigned fresh working BetaSocks proxy ({working_proxy})!")
+            return working_proxy
         else:
-            log_fn("WARNING", f"⚠️ Auto-Healing: Could not fetch replacement proxy for Account #{account_id} (Daily limit reached or BetaSocks empty).")
+            log_fn("WARNING", f"⚠️ Auto-Healing: Could not find working BetaSocks proxy for Account (ID {account_id}) right now.")
             return None
     except Exception as exc:
         log_fn("WARNING", f"Auto-healing failed for Account (ID {account_id}): {exc}")
@@ -1280,7 +1291,7 @@ class _Campaign:
                         if acc_id:
                             set_account_cooldown(acc_id, cooldown_mins * 60)
                         acc["cooldown_until"] = time.time() + (cooldown_mins * 60)
-                        queue = batch + queue
+                        queue = queue + batch  # end of queue — next account gets fresh handles
                         account_i += 1
                         continue
                     else:
@@ -1289,7 +1300,9 @@ class _Campaign:
                         if acc_id:
                             set_account_cooldown(acc_id, cooldown_mins * 60)
                         acc["cooldown_until"] = time.time() + (cooldown_mins * 60)
-                        queue = batch + queue
+                        # Put failed batch at END so the next account gets fresh handles
+                        # (prevents Twitter duplicate-text error 187 within the same round)
+                        queue = queue + batch
                         account_i += 1
                         continue
                 else:
@@ -1369,29 +1382,17 @@ class _Campaign:
 
 # ── Public API ─────────────────────────────────────────────────────────────────
 def launch_campaign(campaign_id: int, config: dict) -> None:
-    """Create and start a _Campaign background thread.
-    Always stops any existing thread for this campaign first to prevent
-    ghost threads that pollute logs with false 'Campaign finished: 0' messages.
-    """
+    """Create and start a _Campaign background thread."""
     with _lock:
         existing = _campaigns.get(campaign_id)
-        if existing:
-            if existing.is_running():
-                # Stop the old thread and give it a moment to acknowledge the stop signal
-                logger.info(
-                    "Campaign %d: stopping existing thread before launching new one.",
-                    campaign_id,
-                )
-                existing.stop()
-                existing._thread.join(timeout=2.0)
-
-        # Clear stale cooldowns so a resume starts fresh
+        if existing and existing.is_running():
+            logger.info("Campaign %d is already running in active thread. Ignoring duplicate launch request.", campaign_id)
+            return
+        # Clear stale cooldowns for this campaign's accounts so a resume starts fresh
         for acc in config.get("accounts", []):
             acc_id = acc.get("id")
             if acc_id and acc_id in _GLOBAL_ACCOUNT_COOLDOWNS:
                 _GLOBAL_ACCOUNT_COOLDOWNS.pop(acc_id, None)
-
         c = _Campaign(campaign_id, config)
         _campaigns[campaign_id] = c
         c.start()
-
