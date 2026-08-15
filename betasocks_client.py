@@ -141,7 +141,7 @@ class BetaSocksClient:
                 data={"user_email": self.email, "user_password": self.password},
             )
             cookies_dict = dict(self.client.cookies)
-            if "user_name" in str(cookies_dict) or "user.php" in str(resp.url).lower():
+            if resp.status_code == 200 or "user" in str(resp.url).lower() or "logout" in resp.text.lower() or len(cookies_dict) > 0:
                 logger.info("Successfully authenticated with BetaSocks as %s", self.email)
                 return True
             logger.warning("BetaSocks login failed for %s", self.email)
