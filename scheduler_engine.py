@@ -346,14 +346,12 @@ _TESTED_PROXY_HEALTH_CACHE: dict[str, float] = {}
 
 def _auto_heal_account_proxy(account_id: int, log_fn: Callable) -> Optional[str]:
     """
-    When an account encounters a proxy error during scraping or posting:
-    1. Fetches fresh SOCKS5 proxy from BetaSocks.
-    2. Tests proxy connectivity to api.ipify.org.
-    3. Updates database accounts table for account_id with new proxy.
-    4. Returns new proxy string.
+    Auto-healing for account proxies:
+    Fetches exactly 1 fresh proxy from BetaSocks and directly assigns it to the failing account.
+    Does NOT run extra pre-testing loops, preserving proxy allowance.
     """
     try:
-        log_fn("INFO", f"⚡ Auto-Healing Triggered: Fetching fresh proxy from BetaSocks for Account (ID {account_id})…")
+        log_fn("INFO", f"⚡ Auto-Healing Triggered: Fetching 1 replacement proxy from BetaSocks for Account #{account_id}…")
         try:
             from betasocks_client import BetaSocksClient
         except ImportError:
@@ -362,34 +360,25 @@ def _auto_heal_account_proxy(account_id: int, log_fn: Callable) -> Optional[str]
         client = BetaSocksClient()
         fresh_proxies = client.fetch_available_proxies(country="all", limit=1)
 
-        working_proxy = None
-        for px in fresh_proxies:
+        if fresh_proxies:
+            px = fresh_proxies[0]
             clean_p = px.replace("socks5://", "").replace("http://", "")
             if "@" in clean_p:
                 creds, host = clean_p.split("@")
                 u, pw = creds.split(":")
                 ip, port = host.split(":")
                 db_proxy = f"{ip}:{port}:{u}:{pw}"
-                curl_proxy = f"socks5://{u}:{pw}@{ip}:{port}"
             else:
                 db_proxy = clean_p
-                curl_proxy = f"socks5://{clean_p}"
 
-            cmd = f"curl -s --proxy '{curl_proxy}' --max-time 5 https://api.ipify.org"
-            res = subprocess.run(cmd, shell=True, capture_output=True, text=True)
-            if res.returncode == 0 and res.stdout and len(res.stdout.strip()) > 5:
-                working_proxy = db_proxy
-                break
-
-        if working_proxy:
             conn = _db()
-            conn.execute("UPDATE accounts SET proxy=? WHERE id=?", (working_proxy, account_id))
+            conn.execute("UPDATE accounts SET proxy=? WHERE id=?", (db_proxy, account_id))
             conn.commit()
             conn.close()
-            log_fn("INFO", f"✅ AUTO-HEAL SUCCESS: Account (ID {account_id}) assigned fresh working BetaSocks proxy ({working_proxy})!")
-            return working_proxy
+            log_fn("INFO", f"✅ AUTO-HEAL SUCCESS: Account #{account_id} proxy updated to '{db_proxy}'.")
+            return db_proxy
         else:
-            log_fn("WARNING", f"⚠️ Auto-Healing: Could not find working BetaSocks proxy for Account (ID {account_id}) right now.")
+            log_fn("WARNING", f"⚠️ Auto-Healing: Could not fetch replacement proxy for Account #{account_id} (Daily limit reached or BetaSocks empty).")
             return None
     except Exception as exc:
         log_fn("WARNING", f"Auto-healing failed for Account (ID {account_id}): {exc}")

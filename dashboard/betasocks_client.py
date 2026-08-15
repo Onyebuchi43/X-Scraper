@@ -27,7 +27,7 @@ def init_proxy_db():
             id INTEGER PRIMARY KEY DEFAULT 1,
             betasocks_email TEXT DEFAULT 'mentlinda38@gmail.com',
             betasocks_password TEXT DEFAULT 'Meandyou2580',
-            daily_limit INTEGER DEFAULT 10,
+            daily_limit INTEGER DEFAULT 50,
             fetched_today_count INTEGER DEFAULT 0,
             last_reset_date TEXT DEFAULT ''
         )
@@ -37,7 +37,7 @@ def init_proxy_db():
     if c.fetchone()[0] == 0:
         c.execute("""
             INSERT INTO proxy_settings (id, betasocks_email, betasocks_password, daily_limit, fetched_today_count, last_reset_date)
-            VALUES (1, 'mentlinda38@gmail.com', 'Meandyou2580', 10, 0, DATE('now'))
+            VALUES (1, 'mentlinda38@gmail.com', 'Meandyou2580', 50, 0, DATE('now'))
         """)
     conn.commit()
     conn.close()
@@ -46,29 +46,18 @@ init_proxy_db()
 
 
 def get_proxy_settings() -> dict:
-    today_str = time.strftime("%Y-%m-%d")
     conn = sqlite3.connect(DASH_DB)
     conn.row_factory = sqlite3.Row
     row = conn.execute("SELECT * FROM proxy_settings WHERE id=1").fetchone()
-    if row:
-        d = dict(row)
-        if d.get("last_reset_date") != today_str:
-            d["fetched_today_count"] = 0
-            d["last_reset_date"] = today_str
-            conn.execute(
-                "UPDATE proxy_settings SET fetched_today_count=0, last_reset_date=? WHERE id=1",
-                (today_str,),
-            )
-            conn.commit()
-        conn.close()
-        return d
     conn.close()
+    if row:
+        return dict(row)
     return {
         "betasocks_email": "mentlinda38@gmail.com",
         "betasocks_password": "Meandyou2580",
         "daily_limit": 50,
         "fetched_today_count": 0,
-        "last_reset_date": today_str,
+        "last_reset_date": "",
     }
 
 
@@ -138,7 +127,7 @@ class BetaSocksClient:
                 data={"user_email": self.email, "user_password": self.password},
             )
             cookies_dict = dict(self.client.cookies)
-            if resp.status_code == 200 or "user" in str(resp.url).lower() or "logout" in resp.text.lower() or len(cookies_dict) > 0:
+            if "user_name" in str(cookies_dict) or "user.php" in str(resp.url).lower():
                 logger.info("Successfully authenticated with BetaSocks as %s", self.email)
                 return True
             logger.warning("BetaSocks login failed for %s", self.email)
@@ -184,17 +173,14 @@ class BetaSocksClient:
                 if len(formatted_proxies) >= limit:
                     break
                 check_resp = self.client.get(f"https://betasocks.com/user/check_ip/{sid}")
-                raw_ip_txt = check_resp.text
-                if "Package expired" in raw_ip_txt or "buy a package" in raw_ip_txt:
+                if "Package expired" in check_resp.text or "buy a package" in check_resp.text:
                     logger.warning("BetaSocks Package Expired: Please renew your subscription on BetaSocks.com")
                     break
 
-                if "Offline" in raw_ip_txt or "color:red" in raw_ip_txt:
-                    continue
-
+                ip_text = check_resp.text.strip()
                 matches = re.findall(
                     r"\b(?:\d{1,3}\.){3}\d{1,3}:\d{2,5}(?::[^\s<'\"]+:[^\s<'\"]+)?\b",
-                    raw_ip_txt,
+                    ip_text,
                 )
                 for p in matches:
                     parts = p.split(":")
@@ -231,28 +217,14 @@ class BetaSocksClient:
             logger.error("Error fetching BetaSocks proxies: %s", exc)
             return []
 
-    def get_first_working_socks(self, country: str = "all", log_fn=None) -> Optional[str]:
-        """Fetch available proxies from BetaSocks and return the first working IP:PORT:USER:PASS string."""
-        log = log_fn or logger.info
-        if not self.login():
-            log("WARNING", f"BetaSocks Login Failed for user '{self.email}'. Check credentials in Settings tab.")
-            return None
-
-        proxies = self.fetch_available_proxies(country=country, limit=3)
-        if not proxies:
-            log("WARNING", "BetaSocks returned 0 proxies. Ensure subscription package is active on BetaSocks.com.")
-            return None
-
-        for p in proxies:
-            clean_p = p.replace("socks5://", "").replace("http://", "")
-            if "@" in clean_p:
-                creds, host = clean_p.split("@")
-                user, pwd = creds.split(":")
-                ip, port = host.split(":")
-                db_format = f"{ip}:{port}:{user}:{pwd}"
-            else:
-                db_format = clean_p
-            return db_format
+    def get_first_working_socks(self, country: str = "all") -> Optional[str]:
+        """
+        Retrieves exactly 1 proxy from BetaSocks for single account assignment.
+        Does NOT pre-test multiple proxies, preserving daily limit.
+        """
+        proxies = self.fetch_available_proxies(country=country, limit=1)
+        if proxies:
+            return proxies[0]
         return None
 
 
