@@ -733,53 +733,145 @@ function startCampaignPoll() {
 }
 
 async function pollCampaign() {
-  if (!currentCampaignId) return;
   try {
-    const data = await api(`/api/campaigns/${currentCampaignId}/log`);
-    if (data && !data.error) {
-      updateCampaignLog(data);
-    }
+    const listRes = await api('/api/campaigns');
+    if (!listRes || listRes.error || !Array.isArray(listRes)) return;
 
-    // Poll tagged count
-    const tc = await api(`/api/campaigns/${currentCampaignId}/tagged-count`);
-    if (tc && !tc.error) {
-      const el = document.getElementById('stat-tagged');
-      if (el) el.textContent = tc.tagged_count;
-    }
+    // Active campaigns (not stopped and not deleted), max 3
+    const active = listRes.filter(c => c.status === 'running' || c.status === 'paused' || c.status === 'error' || c.status === 'idle').slice(0, 3);
 
-    const editBtn = document.getElementById('edit-camp-btn');
-    if (editBtn) editBtn.style.display = 'inline-flex';
+    renderActiveCampaignFeeds(active);
 
-    if (data.status === 'running') {
-      document.getElementById('stop-btn').style.display = 'inline-flex';
-      document.getElementById('resume-btn').style.display = 'none';
-    } else if (['done', 'error', 'stopped'].includes(data.status)) {
-      document.getElementById('stop-btn').style.display = 'none';
-      document.getElementById('resume-btn').style.display = 'inline-flex';
-      document.getElementById('clear-tagged-btn').style.display = 'inline-flex';
+    for (const c of active) {
+      await pollSingleCampaignData(c.id, c.account_ids_count || (c.config ? (c.config.account_ids || []).length : 0));
     }
   } catch (err) {
-    console.warn("Campaign poll failed:", err);
+    console.warn("Campaigns poll failed:", err);
   }
 }
 
-function updateCampaignLog(data) {
-  const pill = document.getElementById('camp-status-pill');
+function renderActiveCampaignFeeds(activeCampaigns) {
+  const col = document.getElementById('live-campaign-feeds-col');
+  if (!col) return;
+
+  if (activeCampaigns.length === 0) {
+    col.innerHTML = `
+      <div class="card card-live" id="card-live-idle">
+        <div class="card-title">Live Campaign Feed
+          <span class="campaign-status-pill" data-s="idle">idle</span>
+        </div>
+        <div class="log-panel" style="min-height:140px;">
+          <div class="log-entry log-info">No active campaigns running. Configure details on the left and click "Launch Campaign" to start.</div>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  const activeIds = activeCampaigns.map(c => c.id);
+  const existingCards = Array.from(col.querySelectorAll('.card-live'));
+
+  // Remove stopped or deleted campaign cards
+  existingCards.forEach(cardEl => {
+    const id = parseInt(cardEl.id.replace('card-live-', ''));
+    if (!isNaN(id) && !activeIds.includes(id)) {
+      cardEl.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+      cardEl.style.opacity = '0';
+      cardEl.style.transform = 'translateY(-10px)';
+      setTimeout(() => cardEl.remove(), 300);
+    }
+  });
+
+  // Remove idle placeholder if present
+  const idleCard = document.getElementById('card-live-idle');
+  if (idleCard && activeCampaigns.length > 0) idleCard.remove();
+
+  // Render or update active campaign cards
+  activeCampaigns.forEach((c) => {
+    let cardEl = document.getElementById(`card-live-${c.id}`);
+    if (!cardEl) {
+      cardEl = document.createElement('div');
+      cardEl.className = 'card card-live';
+      cardEl.id = `card-live-${c.id}`;
+      cardEl.innerHTML = buildCampaignFeedCardHTML(c);
+      col.appendChild(cardEl);
+    } else {
+      const pill = document.getElementById(`camp-status-pill-${c.id}`);
+      if (pill) {
+        pill.textContent = c.status;
+        pill.setAttribute('data-s', c.status);
+      }
+      const resumeBtn = document.getElementById(`resume-btn-${c.id}`);
+      const stopBtn = document.getElementById(`stop-btn-${c.id}`);
+      if (c.status === 'running') {
+        if (stopBtn) stopBtn.style.display = 'inline-flex';
+        if (resumeBtn) resumeBtn.style.display = 'none';
+      } else {
+        if (stopBtn) stopBtn.style.display = 'none';
+        if (resumeBtn) resumeBtn.style.display = 'inline-flex';
+      }
+    }
+  });
+}
+
+function buildCampaignFeedCardHTML(c) {
+  const cid = c.id;
+  const isRunning = c.status === 'running';
+  const name = c.name || `Campaign #${cid}`;
+  const accCount = (c.config && c.config.account_ids) ? c.config.account_ids.length : '--';
+  return `
+    <div class="card-title">Live Campaign Feed — ${esc(name)}
+      <span class="campaign-status-pill" id="camp-status-pill-${cid}" data-s="${c.status}">${c.status}</span>
+    </div>
+    <div class="campaign-stats">
+      <div class="stat-box"><div class="stat-num" id="stat-posts-${cid}">--</div><div class="stat-label">Posts sent</div></div>
+      <div class="stat-box"><div class="stat-num" id="stat-tagged-${cid}">--</div><div class="stat-label">Users tagged</div></div>
+      <div class="stat-box"><div class="stat-num" id="stat-accounts-${cid}">${accCount}</div><div class="stat-label">Active accounts</div></div>
+    </div>
+    <div class="log-panel" id="campaign-log-${cid}">
+      <div class="log-entry log-info">Loading campaign logs...</div>
+    </div>
+    <div class="form-actions" style="margin-top:12px;gap:8px;display:flex;flex-wrap:wrap;">
+      <button class="btn btn-ghost" onclick="copyCampaignLogsById(${cid})">📋 Copy Logs</button>
+      <button class="btn btn-secondary" onclick="openEditCampaignModalById(${cid})">✏ Edit Campaign</button>
+      <button class="btn btn-success" id="resume-btn-${cid}" style="display:${isRunning ? 'none' : 'inline-flex'}" onclick="resumeCampaignById(${cid})">▶ Resume Campaign</button>
+      <button class="btn btn-danger" id="stop-btn-${cid}" style="display:${isRunning ? 'inline-flex' : 'none'}" onclick="stopCampaignById(${cid})">Stop Campaign</button>
+      <button class="btn btn-ghost" onclick="clearCampaignTaggedById(${cid})">🗑 Clear Tagged Users</button>
+    </div>
+  `;
+}
+
+async function pollSingleCampaignData(cid) {
+  try {
+    const data = await api(`/api/campaigns/${cid}/log`);
+    if (data && !data.error) {
+      updateCampaignLogById(cid, data);
+    }
+    const tc = await api(`/api/campaigns/${cid}/tagged-count`);
+    if (tc && !tc.error) {
+      const el = document.getElementById(`stat-tagged-${cid}`);
+      if (el) el.textContent = tc.tagged_count;
+    }
+  } catch (err) {
+    console.warn(`Campaign #${cid} poll error:`, err);
+  }
+}
+
+function updateCampaignLogById(cid, data) {
+  const pill = document.getElementById(`camp-status-pill-${cid}`);
   if (pill) { pill.textContent = data.status; pill.setAttribute('data-s', data.status); }
 
-  const log = document.getElementById('campaign-log');
+  const log = document.getElementById(`campaign-log-${cid}`);
   if (!log || !data.log) return;
 
   const postCount = data.log.filter(e => e.level === 'SUCCESS' && (e.msg.includes('Tweeted:') || e.msg.includes('Posted:'))).length;
-  document.getElementById('stat-posts').textContent = postCount || '0';
+  const postEl = document.getElementById(`stat-posts-${cid}`);
+  if (postEl) postEl.textContent = postCount || '0';
 
   const lastEntry = data.log.length ? JSON.stringify(data.log[data.log.length - 1]) : '';
-  if (log.dataset.lastEntry === lastEntry) {
-    return;
-  }
+  if (log.dataset.lastEntry === lastEntry) return;
   log.dataset.lastEntry = lastEntry;
 
-  // Smart scroll: check if user is at the bottom before rendering new HTML
   const isAtBottom = (log.scrollHeight - log.scrollTop - log.clientHeight) < 80;
 
   log.innerHTML = data.log.map(e => {
@@ -795,20 +887,21 @@ function updateCampaignLog(data) {
   }
 }
 
-function copyCampaignLogs() {
-  const log = document.getElementById('campaign-log');
+function copyCampaignLogsById(cid) {
+  const log = document.getElementById(`campaign-log-${cid}`);
   if (!log) return;
   const entries = Array.from(log.querySelectorAll('.log-entry'));
   if (!entries.length) { toast('No logs to copy', 'info'); return; }
   const text = entries.map(el => el.textContent).join('\n');
-
   if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(text).then(() => {
-      toast('Logs copied to clipboard! 📋', 'success');
-    }).catch(() => fallbackCopyText(text));
+    navigator.clipboard.writeText(text).then(() => toast('Logs copied! 📋', 'success')).catch(() => fallbackCopyText(text));
   } else {
     fallbackCopyText(text);
   }
+}
+
+function copyCampaignLogs() {
+  if (currentCampaignId) copyCampaignLogsById(currentCampaignId);
 }
 
 function fallbackCopyText(text) {

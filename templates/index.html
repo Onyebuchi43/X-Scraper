@@ -725,35 +725,9 @@
 
       </div><!-- /campaign-col -->
 
-      <!-- Right column: Live feed -->
-      <div class="campaign-col">
-        <div class="card card-live">
-          <div class="card-title">Live Campaign Feed
-            <span class="campaign-status-pill" id="camp-status-pill" data-s="idle">idle</span>
-          </div>
-          <div class="campaign-stats" id="camp-stats">
-            <div class="stat-box"><div class="stat-num" id="stat-posts">--</div><div class="stat-label">Posts sent</div></div>
-            <div class="stat-box"><div class="stat-num" id="stat-tagged">--</div><div class="stat-label">Users tagged</div></div>
-            <div class="stat-box"><div class="stat-num" id="stat-accounts">--</div><div class="stat-label">Active accounts</div></div>
-          </div>
-
-          <div class="log-panel" id="campaign-log">
-            <div class="log-entry log-info">Waiting for campaign to start...</div>
-          </div>
-
-          <div class="form-actions" style="margin-top:12px;gap:8px;display:flex;flex-wrap:wrap;">
-            <button class="btn btn-ghost" onclick="copyCampaignLogs()">📋 Copy Logs</button>
-            <button class="btn btn-secondary" id="edit-camp-btn" style="display:none" onclick="openEditCampaignModal()">✏ Edit Campaign</button>
-            <button class="btn btn-success" id="resume-btn" style="display:none" onclick="resumeActiveCampaign()">▶ Resume Campaign</button>
-            <button class="btn btn-danger" id="stop-btn" style="display:none" onclick="stopCampaign()">Stop Campaign</button>
-            <button class="btn btn-ghost" id="clear-tagged-btn" style="display:none" onclick="clearTaggedUsers()">🗑 Clear Tagged Users</button>
-          </div>
-
-          <div class="lists-section" id="lists-section" style="display:none">
-            <div class="card-title" style="margin-top:20px;">Created Lists</div>
-            <div id="lists-feed"></div>
-          </div>
-        </div>
+      <!-- Right column: Dynamic Live Feed Cards Stack (Max 3 active) -->
+      <div class="campaign-col" id="live-campaign-feeds-col" style="display:flex;flex-direction:column;gap:16px;">
+        <!-- Dynamically rendered active campaign feed cards -->
       </div><!-- /campaign-col -->
 
     </div><!-- /campaign-grid -->
