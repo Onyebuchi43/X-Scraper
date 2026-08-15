@@ -1181,7 +1181,13 @@ class _Campaign:
                         except Exception as exc:
                             self._log("WARNING", f"Media upload failed for {acc_label}: {exc}")
 
-                    tweet_text = post_template.replace("{taggings}", taggings).strip()[:280]
+                    if "{taggings}" in post_template:
+                        tweet_text = post_template.replace("{taggings}", taggings)
+                    elif taggings:
+                        tweet_text = f"{post_template}\n\n{taggings}"
+                    else:
+                        tweet_text = post_template
+                    tweet_text = tweet_text.strip()[:280]
                     self._log("POST", f"{acc_label} (Normal Post + Generated Card) → {taggings[:80]}")
                     result = poster.post_tweet(acc["auth_token"], acc["ct0"], tweet_text, media_id=media_id, proxy=acc.get("proxy"))
 
@@ -1199,12 +1205,24 @@ class _Campaign:
                         except Exception as exc:
                             self._log("WARNING", f"Media upload exception for {acc_label}: {exc}")
 
-                    tweet_text = post_template.replace("{taggings}", taggings).strip()[:280]
+                    if "{taggings}" in post_template:
+                        tweet_text = post_template.replace("{taggings}", taggings)
+                    elif taggings:
+                        tweet_text = f"{post_template}\n\n{taggings}"
+                    else:
+                        tweet_text = post_template
+                    tweet_text = tweet_text.strip()[:280]
                     self._log("POST", f"{acc_label} (Normal Post + Custom Media) → {taggings[:80]}")
                     result = poster.post_tweet(acc["auth_token"], acc["ct0"], tweet_text, media_id=media_id, proxy=acc.get("proxy"))
 
                 elif posting_mode_effective == "normal_text":
-                    tweet_text = post_template.replace("{taggings}", taggings).strip()[:280]
+                    if "{taggings}" in post_template:
+                        tweet_text = post_template.replace("{taggings}", taggings)
+                    elif taggings:
+                        tweet_text = f"{post_template}\n\n{taggings}"
+                    else:
+                        tweet_text = post_template
+                    tweet_text = tweet_text.strip()[:280]
                     self._log("POST", f"{acc_label} (Normal Post Text Only) → {taggings[:80]}")
                     result = poster.post_tweet(acc["auth_token"], acc["ct0"], tweet_text, proxy=acc.get("proxy"))
 
@@ -1245,7 +1263,12 @@ class _Campaign:
                             self._log("WARNING", f"Could not generate card image for {acc_label}: {exc}")
 
                     # ── Build tweet text & post ───────────────────────────────
-                    tweet_text = post_template.replace("{taggings}", taggings)
+                    if "{taggings}" in post_template:
+                        tweet_text = post_template.replace("{taggings}", taggings)
+                    elif taggings:
+                        tweet_text = f"{post_template}\n\n{taggings}"
+                    else:
+                        tweet_text = post_template
                     for placeholder in ("{link}", "{list_url}", "{list}"):
                         if placeholder in tweet_text:
                             tweet_text = tweet_text.replace(placeholder, acc_list_url)

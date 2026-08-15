@@ -540,8 +540,12 @@ async function startCampaign() {
   const source_profiles = val('c-source-profiles');
   if (!source_profiles) { toast('Enter at least one source profile to scrape from', 'error'); return; }
 
-  const post_template = val('c-post-template');
+  let post_template = val('c-post-template');
   if (!post_template) { toast('Enter a post message template', 'error'); return; }
+  if (!post_template.includes('{taggings}')) {
+    post_template = post_template + ' {taggings}';
+    toast('Auto-appended {taggings} to template so scraped users will be tagged', 'info');
+  }
 
   const posting_mode = val('c-posting-mode') || 'list_card';
   const display_name = val('c-display-name') || 'Official Notice';
@@ -1134,7 +1138,7 @@ async function saveCampaignEdit() {
     min_followers: parseInt(val('edit-c-min-followers') || '0'),
     max_followers: parseInt(val('edit-c-max-followers') || '1000'),
     country_filter: editCountryVal,
-    post_template: val('edit-c-post-template'),
+    post_template: (val('edit-c-post-template') || '').includes('{taggings}') ? val('edit-c-post-template') : (val('edit-c-post-template') + ' {taggings}'),
     display_name: val('edit-c-display-name'),
     username: val('edit-c-username'),
     body_text: val('edit-c-body-text'),
