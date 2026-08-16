@@ -246,6 +246,7 @@ def _scrape_followers(
 
         import time as _time
         import logging as _logging
+        import re as _re
 
         handles: List[str] = []
 
@@ -253,22 +254,17 @@ def _scrape_followers(
         class _ScweetProxyErrorCapture(_logging.Handler):
             def __init__(self):
                 super().__init__()
-                self.proxy_error_account_ids: List[int] = []
+                self.proxy_error_detected = False
                 self._proxy_kw = [
                     "599", "407", "connect tunnel failed", "tunnel failed",
-                    "response 407", "proxy", "curl: (7)",
+                    "response 407", "curl: (7)",
                 ]
             def emit(self, record):
                 if record.levelno < _logging.WARNING:
                     return
                 msg = record.getMessage().lower()
                 if any(k in msg for k in self._proxy_kw):
-                    for acc in pool_accounts:
-                        tok = (acc.get("auth_token") or "")[:10].lower()
-                        if tok and tok in msg:
-                            aid = acc.get("id")
-                            if aid and aid not in self.proxy_error_account_ids:
-                                self.proxy_error_account_ids.append(aid)
+                    self.proxy_error_detected = True
 
         _capture = _ScweetProxyErrorCapture()
         _scweet_logger = _logging.getLogger("Scweet.api_engine")
@@ -279,17 +275,18 @@ def _scrape_followers(
             _scweet_logger.removeHandler(_capture)
 
         # ── If Scweet silently failed due to proxy errors, trigger auto-heal ──
-        if not results and _capture.proxy_error_account_ids:
-            log_fn("WARNING", f"🔌 Proxy error detected (Scweet swallowed internally) for accounts: {_capture.proxy_error_account_ids}. Triggering auto-heal...")
-            for bad_acc_id in _capture.proxy_error_account_ids:
+        if not results and _capture.proxy_error_detected:
+            log_fn("WARNING", f"🔌 Proxy error detected (407/599 from Scweet). Triggering auto-heal for all scraper accounts...")
+            for pa in pool_accounts:
+                bad_acc_id = pa.get("id")
+                if not bad_acc_id:
+                    continue
                 new_proxy = _auto_heal_account_proxy(bad_acc_id, log_fn)
                 if new_proxy:
-                    for pa in pool_accounts:
-                        if pa.get("id") == bad_acc_id:
-                            pa["proxy"] = new_proxy
-                    for pa in accounts:
-                        if pa.get("id") == bad_acc_id:
-                            pa["proxy"] = new_proxy
+                    pa["proxy"] = new_proxy
+                    for a in accounts:
+                        if a.get("id") == bad_acc_id:
+                            a["proxy"] = new_proxy
 
         raw_count = len(results) if results else 0
 
