@@ -245,10 +245,58 @@ def _scrape_followers(
         )
 
         import time as _time
+        import logging as _logging
 
         handles: List[str] = []
-        # resume=True to paginate deeper across rounds
-        results = s.get_followers(source_profiles, limit=fetch_limit, save=False, resume=True)
+
+        # ── Log interceptor: catch proxy errors Scweet swallows internally ────
+        class _ScweetProxyErrorCapture(_logging.Handler):
+            def __init__(self):
+                super().__init__()
+                self.proxy_error_account_ids: List[int] = []
+                self._proxy_kw = [
+                    "599", "407", "connect tunnel failed", "tunnel failed",
+                    "response 407", "proxy", "curl: (7)",
+                ]
+            def emit(self, record):
+                if record.levelno < _logging.WARNING:
+                    return
+                msg = record.getMessage().lower()
+                if any(k in msg for k in self._proxy_kw):
+                    # Extract which account triggered the warning from the log message
+                    for acc in pool_accounts:
+                        tok = (acc.get("auth_token") or "")[:10].lower()
+                        if tok and tok in msg:
+                            aid = acc.get("id")
+                            if aid and aid not in self.proxy_error_account_ids:
+                                self.proxy_error_account_ids.append(aid)
+
+        _capture = _ScweetProxyErrorCapture()
+        _scweet_logger = _logging.getLogger("Scweet.api_engine")
+        _scweet_logger.addHandler(_capture)
+        try:
+            results = s.get_followers(source_profiles, limit=fetch_limit, save=False, resume=True)
+        finally:
+            _scweet_logger.removeHandler(_capture)
+
+        # ── If Scweet silently failed due to proxy errors, trigger auto-heal ──
+        if not results and _capture.proxy_error_account_ids:
+            log_fn("WARNING", f"🔌 Proxy error detected (Scweet swallowed internally) for accounts: {_capture.proxy_error_account_ids}. Triggering auto-heal...")
+            for bad_acc_id in _capture.proxy_error_account_ids:
+                new_proxy = _auto_heal_account_proxy(bad_acc_id, log_fn)
+                # Update the proxy in pool_accounts so next round uses the healed proxy
+                if new_proxy:
+                    for pa in pool_accounts:
+                        if pa.get("id") == bad_acc_id:
+                            pa["proxy"] = new_proxy
+                    # Also update accounts list passed in from the campaign
+                    for pa in accounts:
+                        if pa.get("id") == bad_acc_id:
+                            pa["proxy"] = new_proxy
+        elif not results:
+            # No proxy capture but still empty — generic 0-result path
+            pass
+
         raw_count = len(results) if results else 0
 
         # ── Step 1: follower count filter (fast, no extra API calls) ─────────
