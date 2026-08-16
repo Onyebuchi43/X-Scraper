@@ -222,8 +222,13 @@ def _scrape_followers(
 
         cookies_pool_list = []
         for acc in pool_accounts:
-            entry = {"auth_token": acc["auth_token"], "ct0": acc["ct0"]}
+            entry = {
+                "auth_token": acc["auth_token"],
+                "ct0": acc["ct0"],
+                "username": f"acc_{acc['id']}" if acc.get("id") else f"acc_{acc['auth_token'][:8]}",
+            }
             if acc.get("proxy"): entry["proxy"] = acc["proxy"]
+            if acc.get("id"): entry["id"] = acc["id"]
             cookies_pool_list.append(entry)
 
         start_idx = (scrape_round - 1) % len(cookies_pool_list)
@@ -246,17 +251,14 @@ def _scrape_followers(
 
         import time as _time
         import logging as _logging
-        import re as _re
 
         handles: List[str] = []
 
-        # ── Log interceptor: catch proxy errors Scweet swallows internally ────
+        # ── Log interceptor: pinpoint the EXACT scraper account whose proxy failed ──
         class _ScweetProxyErrorCapture(_logging.Handler):
             def __init__(self):
                 super().__init__()
-                self.proxy_error_detected = False
-                # account=auth_XXXX:ID format Scweet uses in its log messages
-                self._id_pattern = _re.compile(r'account=\S+:(\d+)')
+                self.failing_account_ids: set = set()
                 self._proxy_kw = [
                     "599", "407", "connect tunnel failed", "tunnel failed",
                     "response 407", "curl: (7)",
@@ -264,9 +266,19 @@ def _scrape_followers(
             def emit(self, record):
                 if record.levelno < _logging.WARNING:
                     return
-                msg = record.getMessage().lower()
-                if any(k in msg for k in self._proxy_kw):
-                    self.proxy_error_detected = True
+                msg = record.getMessage()
+                msg_lower = msg.lower()
+                if any(k in msg_lower for k in self._proxy_kw):
+                    matched = False
+                    for acc in pool_accounts:
+                        aid = acc.get("id")
+                        if aid and (f"acc_{aid}" in msg or f":{aid}" in msg):
+                            self.failing_account_ids.add(aid)
+                            matched = True
+                    if not matched and rotated_cookies:
+                        active_first_id = rotated_cookies[0].get("id")
+                        if active_first_id:
+                            self.failing_account_ids.add(active_first_id)
 
         _capture = _ScweetProxyErrorCapture()
         _scweet_logger = _logging.getLogger("Scweet.api_engine")
@@ -276,16 +288,15 @@ def _scrape_followers(
         finally:
             _scweet_logger.removeHandler(_capture)
 
-        # ── If Scweet silently failed due to proxy errors, trigger auto-heal ──
-        if not results and _capture.proxy_error_detected:
-            log_fn("WARNING", f"🔌 Proxy error detected (407/599 from Scweet). Triggering auto-heal for all scraper accounts...")
-            for pa in pool_accounts:
-                bad_acc_id = pa.get("id")
-                if not bad_acc_id:
-                    continue
+        # ── Auto-heal ONLY the specific account(s) that encountered proxy errors ──
+        if not results and _capture.failing_account_ids:
+            for bad_acc_id in _capture.failing_account_ids:
+                log_fn("WARNING", f"🔌 Scraper Account #{bad_acc_id} proxy error detected (407/599). Triggering auto-heal for Account #{bad_acc_id}…")
                 new_proxy = _auto_heal_account_proxy(bad_acc_id, log_fn)
                 if new_proxy:
-                    pa["proxy"] = new_proxy
+                    for pa in pool_accounts:
+                        if pa.get("id") == bad_acc_id:
+                            pa["proxy"] = new_proxy
                     for a in accounts:
                         if a.get("id") == bad_acc_id:
                             a["proxy"] = new_proxy
