@@ -1453,6 +1453,8 @@ class _Campaign:
         status = "stopped" if self._stop_event.is_set() else "done"
         _set_status(campaign_id, status)
         self._log("INFO", f"Campaign finished. Total posts this session: {total_posts}")
+        with _lock:
+            _campaigns.pop(campaign_id, None)
 
     def _log(self, level: str, message: str) -> None:
         ts = time.strftime("%Y-%m-%d %H:%M:%S")
@@ -1466,9 +1468,12 @@ def launch_campaign(campaign_id: int, config: dict) -> None:
     """Create and start a _Campaign background thread."""
     with _lock:
         existing = _campaigns.get(campaign_id)
-        if existing and existing.is_running():
-            logger.info("Campaign %d is already running in active thread. Ignoring duplicate launch request.", campaign_id)
-            return
+        if existing:
+            try:
+                existing.stop()
+            except Exception:
+                pass
+            _campaigns.pop(campaign_id, None)
         # Clear stale cooldowns for this campaign's accounts so a resume starts fresh
         for acc in config.get("accounts", []):
             acc_id = acc.get("id")

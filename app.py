@@ -807,12 +807,6 @@ def start_campaign(cid: int):
     conn = _db()
     engine = _get_scheduler_engine()
 
-    # Guard: reject if this specific campaign is already running in the scheduler
-    existing = engine._campaigns.get(cid)
-    if existing and existing.is_running():
-        conn.close()
-        return jsonify({"msg": "Campaign already running"})
-
     # Enforce maximum 3 active concurrent campaigns
     active_count = conn.execute("SELECT COUNT(*) FROM campaigns WHERE status='running' AND id != ?", (cid,)).fetchone()[0]
     if active_count >= 3:
