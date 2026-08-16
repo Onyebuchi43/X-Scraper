@@ -208,6 +208,8 @@ class BetaSocksClient:
                     if len(formatted_proxies) >= limit:
                         break
 
+            formatted_proxies = formatted_proxies[:limit]
+
             if formatted_proxies:
                 increment_daily_fetch_count(len(formatted_proxies))
                 logger.info("Retrieved %d proxies from BetaSocks (%s)", len(formatted_proxies), country)
