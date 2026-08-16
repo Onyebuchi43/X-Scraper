@@ -45,19 +45,28 @@ def init_proxy_db():
 init_proxy_db()
 
 
+import threading
+
+_FETCH_LOCK = threading.Lock()
+
 def get_proxy_settings() -> dict:
     conn = sqlite3.connect(DASH_DB)
     conn.row_factory = sqlite3.Row
     row = conn.execute("SELECT * FROM proxy_settings WHERE id=1").fetchone()
     conn.close()
+    today_str = time.strftime("%Y-%m-%d")
     if row:
-        return dict(row)
+        d = dict(row)
+        if d.get("last_reset_date") != today_str:
+            d["fetched_today_count"] = 0
+            d["last_reset_date"] = today_str
+        return d
     return {
         "betasocks_email": "mentlinda38@gmail.com",
         "betasocks_password": "Meandyou2580",
         "daily_limit": 50,
         "fetched_today_count": 0,
-        "last_reset_date": "",
+        "last_reset_date": today_str,
     }
 
 
@@ -137,87 +146,88 @@ class BetaSocksClient:
             return False
 
     def fetch_available_proxies(self, country: str = "usa", limit: int = 10) -> List[str]:
-        cfg = get_proxy_settings()
-        daily_limit = cfg.get("daily_limit", 50)
-        fetched_today = cfg.get("fetched_today_count", 0)
-        allowed = max(0, daily_limit - fetched_today)
-        if allowed <= 0:
-            logger.warning("Daily BetaSocks proxy fetch limit (%d/%d) reached", fetched_today, daily_limit)
-            return []
-
-        limit = min(limit, allowed)
-
-        if not self.login():
-            return []
-
-        endpoint_map = {
-            "usa": "view_usa_socks",
-            "canada": "view_canada_socks",
-            "uk": "view_gb_socks",
-            "au": "view_au_socks",
-            "all": "view_socks",
-        }
-        ep = endpoint_map.get(country.lower(), "view_socks")
-
-        try:
-            resp = self.client.get(f"https://betasocks.com/user/{ep}")
-            if resp.status_code != 200:
+        with _FETCH_LOCK:
+            cfg = get_proxy_settings()
+            daily_limit = int(cfg.get("daily_limit", 50))
+            fetched_today = int(cfg.get("fetched_today_count", 0))
+            allowed = max(0, daily_limit - fetched_today)
+            if allowed <= 0:
+                logger.warning("Daily BetaSocks proxy fetch limit (%d/%d) reached", fetched_today, daily_limit)
                 return []
 
-            raw_text = resp.text
-            sock_ids = list(dict.fromkeys(re.findall(r'onclick="socks\((\d+)\)"', raw_text)))
+            effective_limit = min(max(1, limit), allowed)
 
-            formatted_proxies = []
+            if not self.login():
+                return []
 
-            for sid in sock_ids:
-                if len(formatted_proxies) >= limit:
-                    break
-                check_resp = self.client.get(f"https://betasocks.com/user/check_ip/{sid}")
-                if "Package expired" in check_resp.text or "buy a package" in check_resp.text:
-                    logger.warning("BetaSocks Package Expired: Please renew your subscription on BetaSocks.com")
-                    break
+            endpoint_map = {
+                "usa": "view_usa_socks",
+                "canada": "view_canada_socks",
+                "uk": "view_gb_socks",
+                "au": "view_au_socks",
+                "all": "view_socks",
+            }
+            ep = endpoint_map.get(country.lower(), "view_socks")
 
-                ip_text = check_resp.text.strip()
-                matches = re.findall(
-                    r"\b(?:\d{1,3}\.){3}\d{1,3}:\d{2,5}(?::[^\s<'\"]+:[^\s<'\"]+)?\b",
-                    ip_text,
-                )
-                for p in matches:
-                    parts = p.split(":")
-                    if len(parts) == 4:
-                        proxy_url = f"socks5://{parts[2]}:{parts[3]}@{parts[0]}:{parts[1]}"
-                    else:
-                        proxy_url = f"socks5://{p}"
-                    if proxy_url not in formatted_proxies:
-                        formatted_proxies.append(proxy_url)
+            try:
+                resp = self.client.get(f"https://betasocks.com/user/{ep}")
+                if resp.status_code != 200:
+                    return []
+
+                raw_text = resp.text
+                sock_ids = list(dict.fromkeys(re.findall(r'onclick="socks\((\d+)\)"', raw_text)))
+
+                formatted_proxies = []
+
+                for sid in sock_ids:
+                    if len(formatted_proxies) >= effective_limit:
+                        break
+                    check_resp = self.client.get(f"https://betasocks.com/user/check_ip/{sid}")
+                    if "Package expired" in check_resp.text or "buy a package" in check_resp.text:
+                        logger.warning("BetaSocks Package Expired: Please renew your subscription on BetaSocks.com")
                         break
 
-            if not formatted_proxies and not sock_ids:
-                proxy_matches = re.findall(
-                    r"\b(?:\d{1,3}\.){3}\d{1,3}:\d{2,5}(?::[^\s<'\"]+:[^\s<'\"]+)?\b",
-                    raw_text,
-                )
-                for p in proxy_matches:
-                    parts = p.split(":")
-                    if len(parts) == 4:
-                        proxy_url = f"socks5://{parts[2]}:{parts[3]}@{parts[0]}:{parts[1]}"
-                    else:
-                        proxy_url = f"socks5://{p}"
-                    if proxy_url not in formatted_proxies:
-                        formatted_proxies.append(proxy_url)
-                    if len(formatted_proxies) >= limit:
-                        break
+                    ip_text = check_resp.text.strip()
+                    matches = re.findall(
+                        r"\b(?:\d{1,3}\.){3}\d{1,3}:\d{2,5}(?::[^\s<'\"]+:[^\s<'\"]+)?\b",
+                        ip_text,
+                    )
+                    for p in matches:
+                        parts = p.split(":")
+                        if len(parts) == 4:
+                            proxy_url = f"socks5://{parts[2]}:{parts[3]}@{parts[0]}:{parts[1]}"
+                        else:
+                            proxy_url = f"socks5://{p}"
+                        if proxy_url not in formatted_proxies:
+                            formatted_proxies.append(proxy_url)
+                            break
 
-            formatted_proxies = formatted_proxies[:limit]
+                if not formatted_proxies and not sock_ids:
+                    proxy_matches = re.findall(
+                        r"\b(?:\d{1,3}\.){3}\d{1,3}:\d{2,5}(?::[^\s<'\"]+:[^\s<'\"]+)?\b",
+                        raw_text,
+                    )
+                    for p in proxy_matches:
+                        parts = p.split(":")
+                        if len(parts) == 4:
+                            proxy_url = f"socks5://{parts[2]}:{parts[3]}@{parts[0]}:{parts[1]}"
+                        else:
+                            proxy_url = f"socks5://{p}"
+                        if proxy_url not in formatted_proxies:
+                            formatted_proxies.append(proxy_url)
+                        if len(formatted_proxies) >= effective_limit:
+                            break
 
-            if formatted_proxies:
-                increment_daily_fetch_count(len(formatted_proxies))
-                logger.info("Retrieved %d proxies from BetaSocks (%s)", len(formatted_proxies), country)
+                formatted_proxies = formatted_proxies[:effective_limit]
 
-            return formatted_proxies
-        except Exception as exc:
-            logger.error("Error fetching BetaSocks proxies: %s", exc)
-            return []
+                if formatted_proxies:
+                    increment_daily_fetch_count(len(formatted_proxies))
+                    logger.info("Retrieved %d proxies from BetaSocks (%s) [Today: %d/%d]", len(formatted_proxies), country, fetched_today + len(formatted_proxies), daily_limit)
+
+                return formatted_proxies
+            except Exception as exc:
+                logger.error("Error fetching BetaSocks proxies: %s", exc)
+                return []
 
     def get_first_working_socks(self, country: str = "all") -> Optional[str]:
         """
