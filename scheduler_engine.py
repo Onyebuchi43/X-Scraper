@@ -201,14 +201,21 @@ def _scrape_followers(
     Scrape follower handles from `source_profiles`.
     Returns (handles_list, success_bool, total_scraped_raw_count).
     """
-    # Always include ALL registered active DB accounts in the scraping pool for maximum rotation
+    # Always include active DB accounts in the scraping pool, prioritizing accounts that are not in cooldown
     try:
         conn = _db()
         all_db_accs = conn.execute("SELECT id, auth_token, ct0, proxy FROM accounts").fetchall()
         conn.close()
-        pool_accounts = [dict(a) for a in all_db_accs] if all_db_accs else accounts
+        raw_pool = [dict(a) for a in all_db_accs] if all_db_accs else accounts
     except Exception:
-        pool_accounts = accounts if accounts else []
+        raw_pool = accounts if accounts else []
+
+    pool_accounts = [
+        a for a in raw_pool
+        if not (a.get("id") and is_account_cooling(a.get("id")))
+    ]
+    if not pool_accounts:
+        pool_accounts = raw_pool
 
     if not pool_accounts:
         log_fn("ERROR", "No accounts available for scraping.")
@@ -300,6 +307,8 @@ def _scrape_followers(
                     for a in accounts:
                         if a.get("id") == bad_acc_id:
                             a["proxy"] = new_proxy
+                else:
+                    set_account_cooldown(bad_acc_id, 1800)
 
         raw_count = len(results) if results else 0
 
