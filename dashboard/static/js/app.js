@@ -268,28 +268,68 @@ function toggleEditPostingMode(mode) {
   });
 }
 
-function toggleTargetType(type) {
-  const isCsv = (type === 'csv_list');
-  const targetInput = document.getElementById('group-target-input');
-  const csvUpload = document.getElementById('group-c-csv-upload');
-  const followerRange = document.getElementById('group-c-follower-range');
-  const countryFilter = document.getElementById('group-c-country-filter');
-  if (targetInput) targetInput.style.display = isCsv ? 'none' : 'block';
-  if (csvUpload) csvUpload.style.display = isCsv ? 'block' : 'none';
-  if (followerRange) followerRange.style.display = isCsv ? 'none' : 'block';
-  if (countryFilter) countryFilter.style.display = isCsv ? 'none' : 'block';
+function toggleTargetType(val) {
+  const isCsv = (val === 'csv_list');
+  const targetGroup   = document.getElementById('group-target-input');
+  const csvGroup      = document.getElementById('group-c-csv-upload');
+  const rangeGroup    = document.getElementById('group-c-follower-range');
+  const countryGroup  = document.getElementById('group-c-country-filter');
+  const lbl           = document.getElementById('lbl-target-input');
+  const inp           = document.getElementById('c-source-profiles');
+  const hint          = document.getElementById('hint-target-input');
+
+  if (targetGroup)  targetGroup.style.display  = isCsv ? 'none' : 'block';
+  if (rangeGroup)   rangeGroup.style.display   = isCsv ? 'none' : 'block';
+  if (countryGroup) countryGroup.style.display = isCsv ? 'none' : 'block';
+  if (csvGroup)     csvGroup.style.display     = isCsv ? 'block' : 'none';
+
+  if (!isCsv) {
+    if (val === 'tweet_commenters') {
+      if (lbl)  lbl.innerHTML = 'Tweet URL or Tweet ID <span class="badge-required">required</span>';
+      if (inp)  inp.placeholder = 'https://x.com/elonmusk/status/1820000000000000000';
+      if (hint) hint.textContent = 'Paste Tweet URL or ID. Streamingly scrapes users who commented on this tweet and tags them.';
+    } else if (val === 'target_tweets_commenters') {
+      if (lbl)  lbl.innerHTML = 'Target Profile(s) to Scrape Comments From <span class="badge-required">required</span>';
+      if (inp)  inp.placeholder = 'elonmusk, OpenAI, nasa';
+      if (hint) hint.textContent = 'Comma-separated usernames. Scrapes recent top tweets posted by target profiles and extracts comments.';
+    } else {
+      if (lbl)  lbl.innerHTML = 'Source Profiles to Scrape From <span class="badge-required">required</span>';
+      if (inp)  inp.placeholder = 'elonmusk, OpenAI, nasa';
+      if (hint) hint.textContent = 'Comma-separated usernames. Streamingly scrapes followers from these profiles without saving CSV files on disk.';
+    }
+  }
 }
 
-function toggleEditTargetType(type) {
-  const isCsv = (type === 'csv_list');
-  const editTargetInput = document.getElementById('group-edit-target-input');
-  const editCsvUpload = document.getElementById('group-edit-c-csv-upload');
-  const editFollowerRange = document.getElementById('group-edit-c-follower-range');
-  const editCountryFilter = document.getElementById('group-edit-c-country-filter');
-  if (editTargetInput) editTargetInput.style.display = isCsv ? 'none' : 'block';
-  if (editCsvUpload) editCsvUpload.style.display = isCsv ? 'block' : 'none';
-  if (editFollowerRange) editFollowerRange.style.display = isCsv ? 'none' : 'block';
-  if (editCountryFilter) editCountryFilter.style.display = isCsv ? 'none' : 'block';
+function toggleEditTargetType(val) {
+  const isCsv = (val === 'csv_list');
+  const editTargetGroup   = document.getElementById('group-edit-target-input');
+  const editCsvGroup      = document.getElementById('group-edit-c-csv-upload');
+  const editRangeGroup    = document.getElementById('group-edit-c-follower-range');
+  const editCountryGroup  = document.getElementById('group-edit-c-country-filter');
+  const lbl               = document.getElementById('lbl-edit-target-input');
+  const inp               = document.getElementById('edit-c-source-profiles');
+  const hint              = document.getElementById('hint-edit-target-input');
+
+  if (editTargetGroup)  editTargetGroup.style.display  = isCsv ? 'none' : 'block';
+  if (editRangeGroup)   editRangeGroup.style.display   = isCsv ? 'none' : 'block';
+  if (editCountryGroup) editCountryGroup.style.display = isCsv ? 'none' : 'block';
+  if (editCsvGroup)     editCsvGroup.style.display     = isCsv ? 'block' : 'none';
+
+  if (!isCsv) {
+    if (val === 'tweet_commenters') {
+      if (lbl)  lbl.textContent = 'Tweet URL or Tweet ID';
+      if (inp)  inp.placeholder = 'https://x.com/elonmusk/status/1820000000000000000';
+      if (hint) hint.textContent = 'Paste Tweet URL or ID. Streamingly scrapes users who commented on this tweet and tags them.';
+    } else if (val === 'target_tweets_commenters') {
+      if (lbl)  lbl.textContent = 'Target Profile(s) to Scrape Comments From';
+      if (inp)  inp.placeholder = 'elonmusk, OpenAI, nasa';
+      if (hint) hint.textContent = 'Comma-separated usernames. Scrapes recent top tweets posted by target profiles and extracts comments.';
+    } else {
+      if (lbl)  lbl.textContent = 'Source Profile(s) to Scrape From';
+      if (inp)  inp.placeholder = 'elonmusk, OpenAI, nasa';
+      if (hint) hint.textContent = 'Comma-separated usernames. Streamingly scrapes followers from these profiles.';
+    }
+  }
 }
 
 let campaignCsvHandles = { 'c': [], 'edit-c': [] };
@@ -776,62 +816,7 @@ async function clearCampaignTaggedById(cid) {
   loadCampaignDbPanel();
 }
 
-function toggleTargetType(val) {
-  const lbl = document.getElementById('lbl-target-input');
-  const inp = document.getElementById('c-source-profiles');
-  const hint = document.getElementById('hint-target-input');
-  if (val === 'tweet_commenters') {
-    if (lbl) lbl.innerHTML = 'Tweet URL or Tweet ID <span class="badge-required">required</span>';
-    if (inp) inp.placeholder = 'https://x.com/elonmusk/status/1820000000000000000';
-    if (hint) hint.textContent = 'Paste Tweet URL or ID. Streamingly scrapes users who commented on this tweet and tags them.';
-  } else if (val === 'target_tweets_commenters') {
-    if (lbl) lbl.innerHTML = 'Target Profile(s) to Scrape Comments From <span class="badge-required">required</span>';
-    if (inp) inp.placeholder = 'elonmusk, OpenAI, nasa';
-    if (hint) hint.textContent = 'Comma-separated usernames. Scrapes recent top tweets posted by target profiles and extracts their comments first.';
-  } else {
-    if (lbl) lbl.innerHTML = 'Source Profiles to Scrape From <span class="badge-required">required</span>';
-    if (inp) inp.placeholder = 'elonmusk, OpenAI, nasa';
-    if (hint) hint.textContent = 'Comma-separated usernames. Streamingly scrapes followers from these profiles without saving CSV files.';
-  }
-}
 
-function toggleScraperTargetType(val) {
-  const lbl = document.getElementById('lbl-scraper-target-input');
-  const inp = document.getElementById('f-targets');
-  const hint = document.getElementById('hint-scraper-target-input');
-  if (val === 'tweet_commenters') {
-    if (lbl) lbl.innerHTML = 'Tweet URL or Tweet ID <span class="badge-required">required</span>';
-    if (inp) inp.placeholder = 'https://x.com/elonmusk/status/1820000000000000000';
-    if (hint) hint.textContent = 'Paste Tweet URL or ID. Streamingly scrapes users who commented on this tweet.';
-  } else if (val === 'target_tweets_commenters') {
-    if (lbl) lbl.innerHTML = 'Target Profile(s) to Scrape Comments From <span class="badge-required">required</span>';
-    if (inp) inp.placeholder = 'elonmusk, OpenAI, nasa';
-    if (hint) hint.textContent = 'Comma-separated usernames. Scrapes recent top tweets from these profiles and extracts their comment sections first.';
-  } else {
-    if (lbl) lbl.innerHTML = 'Target Profile(s) <span class="badge-required">required</span>';
-    if (inp) inp.placeholder = 'elonmusk, OpenAI, nasa (comma-separated)';
-    if (hint) hint.textContent = 'Comma-separated usernames. Streamingly scrapes followers from these profiles without saving CSV files.';
-  }
-}
-
-function toggleEditTargetType(val) {
-  const lbl = document.getElementById('lbl-edit-target-input');
-  const inp = document.getElementById('edit-c-source-profiles');
-  const hint = document.getElementById('hint-edit-target-input');
-  if (val === 'tweet_commenters') {
-    if (lbl) lbl.textContent = 'Tweet URL or Tweet ID';
-    if (inp) inp.placeholder = 'https://x.com/elonmusk/status/1820000000000000000';
-    if (hint) hint.textContent = 'Paste Tweet URL or ID. Streamingly scrapes users who commented on this tweet and tags them.';
-  } else if (val === 'target_tweets_commenters') {
-    if (lbl) lbl.textContent = 'Target Profile(s) to Scrape Comments From';
-    if (inp) inp.placeholder = 'elonmusk, OpenAI, nasa';
-    if (hint) hint.textContent = 'Comma-separated usernames. Scrapes recent top tweets posted by target profiles and extracts their comments first.';
-  } else {
-    if (lbl) lbl.textContent = 'Source Profile(s) to Scrape From';
-    if (inp) inp.placeholder = 'elonmusk, OpenAI, nasa';
-    if (hint) hint.textContent = 'Comma-separated usernames. Streamingly scrapes followers from these profiles.';
-  }
-}
 
 function startCampaignPoll() {
   if (campaignPollInterval) clearInterval(campaignPollInterval);
