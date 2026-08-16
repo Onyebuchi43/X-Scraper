@@ -945,7 +945,6 @@ class _Campaign:
                 _set_status(campaign_id, "error")
                 return
             self._log("INFO", f"Target type: {target_type} | Target: {source_profiles_raw}")
-        _check_and_log_account_proxy_health(accounts, self._log)
 
         min_followers: int = int(cfg.get("min_followers", 0))
         max_followers: int = int(cfg.get("max_followers", 1000))
