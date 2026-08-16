@@ -327,11 +327,16 @@ def _scrape_followers(
 
     except Exception as exc:
         err_type = classify_account_error(exc)
-        scrape_acc_id = accounts[0].get("id")
+        scrape_acc_id = accounts[0].get("id") if accounts else None
         if err_type == "BLOCKED" and scrape_acc_id:
             log_fn("ERROR", f"🚨 Scraper Account #{scrape_acc_id} was BLOCKED/SUSPENDED ({exc}). Automatically removing from database!")
             _delete_account_from_db(scrape_acc_id)
-            accounts.pop(0)
+            if accounts: accounts.pop(0)
+        elif err_type == "PROXY_ERROR" and scrape_acc_id:
+            log_fn("WARNING", f"🔌 Scraper Account #{scrape_acc_id} PROXY ERROR: {exc}. Triggering auto-healing...")
+            new_proxy = _auto_heal_account_proxy(scrape_acc_id, log_fn)
+            if new_proxy and accounts:
+                accounts[0]["proxy"] = new_proxy
         elif err_type == "RATE_LIMIT":
             log_fn("WARNING", f"⏳ Scraper Account encountered RATE LIMIT / RESTRICTION ({exc}). Leaving account to cool down.")
             if accounts:
@@ -419,8 +424,6 @@ def _scrape_tweet_commenters(
     if not pool_accounts:
         log_fn("ERROR", "No accounts available for scraping.")
         return [], False, 0
-
-    _check_and_log_account_proxy_health(pool_accounts, log_fn)
 
     target_clean = tweet_target.strip()
     tweet_id = ""
@@ -573,11 +576,16 @@ def _scrape_tweet_commenters(
 
     except Exception as exc:
         err_type = classify_account_error(exc)
-        scrape_acc_id = accounts[0].get("id")
+        scrape_acc_id = accounts[0].get("id") if accounts else None
         if err_type == "BLOCKED" and scrape_acc_id:
             log_fn("ERROR", f"🚨 Scraper Account #{scrape_acc_id} was BLOCKED/SUSPENDED ({exc}). Automatically removing from database!")
             _delete_account_from_db(scrape_acc_id)
-            accounts.pop(0)
+            if accounts: accounts.pop(0)
+        elif err_type == "PROXY_ERROR" and scrape_acc_id:
+            log_fn("WARNING", f"🔌 Scraper Account #{scrape_acc_id} PROXY ERROR: {exc}. Triggering auto-healing...")
+            new_proxy = _auto_heal_account_proxy(scrape_acc_id, log_fn)
+            if new_proxy and accounts:
+                accounts[0]["proxy"] = new_proxy
         elif err_type == "RATE_LIMIT":
             log_fn("WARNING", f"⏳ Scraper Account encountered RATE LIMIT / RESTRICTION ({exc}). Leaving account to cool down.")
             if accounts:
@@ -775,6 +783,11 @@ def _scrape_target_tweets_commenters(
             log_fn("ERROR", f"🚨 Scraper Account #{scrape_acc_id} was BLOCKED/SUSPENDED ({exc}). Automatically removing from database!")
             _delete_account_from_db(scrape_acc_id)
             if accounts: accounts.pop(0)
+        elif err_type == "PROXY_ERROR" and scrape_acc_id:
+            log_fn("WARNING", f"🔌 Scraper Account #{scrape_acc_id} PROXY ERROR: {exc}. Triggering auto-healing...")
+            new_proxy = _auto_heal_account_proxy(scrape_acc_id, log_fn)
+            if new_proxy and accounts:
+                accounts[0]["proxy"] = new_proxy
         elif err_type == "RATE_LIMIT":
             log_fn("WARNING", f"⏳ Scraper Account encountered RATE LIMIT / RESTRICTION ({exc}). Leaving account to cool down.")
             if accounts: accounts[0]["cooldown_until"] = time.time() + 900
