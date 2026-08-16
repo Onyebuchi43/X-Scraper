@@ -1110,7 +1110,6 @@ async function loadCampaignDbPanel() {
                   ? `<button class="btn btn-sm btn-danger" onclick="stopCampaignId(${c.id})">⏹ Stop</button>`
                   : `<button class="btn btn-sm btn-success" onclick="resumeCampaign(${c.id})">▶ Resume</button>`
                 }
-                <button class="btn btn-sm btn-ghost" onclick="selectCampaignForLogs(${c.id})">📋 Logs</button>
                 <button class="btn btn-sm btn-ghost" onclick="clearCampaignTagged(${c.id})">🗑 Clear</button>
                 <button class="btn btn-sm btn-danger" onclick="deleteCampaign(${c.id})">✕ Delete</button>
               </td>
