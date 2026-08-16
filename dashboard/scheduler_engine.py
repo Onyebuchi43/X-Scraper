@@ -346,84 +346,46 @@ _TESTED_PROXY_HEALTH_CACHE: dict[str, float] = {}
 
 def _auto_heal_account_proxy(account_id: int, log_fn: Callable) -> Optional[str]:
     """
-    When an account encounters a proxy error during scraping or posting:
-    1. Fetches fresh SOCKS5 proxy from BetaSocks.
-    2. Tests proxy connectivity to api.ipify.org.
-    3. Updates database accounts table for account_id with new proxy.
-    4. Returns new proxy string.
+    Auto-healing for account proxies:
+    Fetches exactly 1 fresh proxy from BetaSocks and directly assigns it to the failing account.
+    Does NOT run extra pre-testing loops, preserving proxy allowance.
     """
     try:
-        log_fn("INFO", f"⚡ Auto-Healing Triggered: Fetching fresh proxy from BetaSocks for Account (ID {account_id})…")
+        log_fn("INFO", f"⚡ Auto-Healing Triggered: Fetching 1 replacement proxy from BetaSocks for Account #{account_id}…")
         try:
             from betasocks_client import BetaSocksClient
         except ImportError:
             from dashboard.betasocks_client import BetaSocksClient  # type: ignore
 
         client = BetaSocksClient()
-        fresh_proxies = client.fetch_available_proxies(country="all", limit=5)
+        fresh_proxies = client.fetch_available_proxies(country="all", limit=1)
 
-        working_proxy = None
-        for px in fresh_proxies:
+        if fresh_proxies:
+            px = fresh_proxies[0]
             clean_p = px.replace("socks5://", "").replace("http://", "")
             if "@" in clean_p:
                 creds, host = clean_p.split("@")
                 u, pw = creds.split(":")
                 ip, port = host.split(":")
                 db_proxy = f"{ip}:{port}:{u}:{pw}"
-                curl_proxy = f"socks5://{u}:{pw}@{ip}:{port}"
             else:
                 db_proxy = clean_p
-                curl_proxy = f"socks5://{clean_p}"
 
-            cmd = f"curl -s --proxy '{curl_proxy}' --max-time 5 https://api.ipify.org"
-            res = subprocess.run(cmd, shell=True, capture_output=True, text=True)
-            if res.returncode == 0 and res.stdout and len(res.stdout.strip()) > 5:
-                working_proxy = db_proxy
-                break
-
-        if working_proxy:
             conn = _db()
-            conn.execute("UPDATE accounts SET proxy=? WHERE id=?", (working_proxy, account_id))
+            conn.execute("UPDATE accounts SET proxy=? WHERE id=?", (db_proxy, account_id))
             conn.commit()
             conn.close()
-            log_fn("INFO", f"✅ AUTO-HEAL SUCCESS: Account (ID {account_id}) assigned fresh working BetaSocks proxy ({working_proxy})!")
-            return working_proxy
+            log_fn("INFO", f"✅ AUTO-HEAL SUCCESS: Account #{account_id} proxy updated to '{db_proxy}'.")
+            return db_proxy
         else:
-            log_fn("WARNING", f"⚠️ Auto-Healing: Could not find working BetaSocks proxy for Account (ID {account_id}) right now.")
+            log_fn("WARNING", f"⚠️ Auto-Healing: Could not fetch replacement proxy for Account #{account_id} (Daily limit reached or BetaSocks empty).")
             return None
     except Exception as exc:
         log_fn("WARNING", f"Auto-healing failed for Account (ID {account_id}): {exc}")
         return None
 
 
-def _check_and_log_account_proxy_health(accounts: List[dict], log_fn: Callable) -> None:
-    """Pre-flight check for account proxies to auto-heal and log explicit errors when a proxy fails."""
-    for acc in accounts:
-        aid = acc.get("id")
-        px = acc.get("proxy")
-        if not px:
-            continue
 
-        try:
-            px_str = str(px).strip()
-            if px_str.startswith("socks5://") or px_str.startswith("socks5h://") or px_str.startswith("http://"):
-                px_url = px_str
-            else:
-                parts = px_str.split(":")
-                if len(parts) == 4:
-                    px_url = f"socks5://{parts[2]}:{parts[3]}@{parts[0]}:{parts[1]}"
-                else:
-                    px_url = f"socks5://{px_str}"
-
-            httpx.get("https://api.ipify.org?format=json", proxy=px_url, timeout=4)
-        except Exception as exc:
-            err_str = str(exc)
-            log_fn("WARNING", f"🔌 Account (ID {aid}) PROXY FAILURE: Proxy '{px}' failed ({err_str}). Triggering auto-healing replacement...")
-            healed_px = _auto_heal_account_proxy(aid, log_fn)
-            if healed_px:
-                acc["proxy"] = healed_px
-            else:
-                acc["proxy"] = None  # Fallback to direct connection so scraping doesn't stall
 
 
 def _scrape_tweet_commenters(
@@ -946,19 +908,13 @@ class _Campaign:
             for p in source_profiles_raw.split(",")
             if p.strip()
         ]
-        csv_handles_raw = cfg.get("csv_handles", [])
-        if target_type == "csv_list":
-            if not csv_handles_raw:
-                self._log("ERROR", "No Twitter handles found in CSV campaign configuration — aborting.")
-                _set_status(campaign_id, "error")
-                return
-            self._log("INFO", f"Campaign Target: 📁 CSV List ({len(csv_handles_raw)} total handles)")
-        else:
-            if not source_profiles and not source_profiles_raw.strip():
-                self._log("ERROR", "No target profile or tweet configured — aborting.")
-                _set_status(campaign_id, "error")
-                return
-            self._log("INFO", f"Target type: {target_type} | Target: {source_profiles_raw}")
+        if not source_profiles and not source_profiles_raw.strip():
+            self._log("ERROR", "No target profile or tweet configured — aborting.")
+            _set_status(campaign_id, "error")
+            return
+
+        self._log("INFO", f"Target type: {target_type} | Target: {source_profiles_raw}")
+        _check_and_log_account_proxy_health(accounts, self._log)
 
         min_followers: int = int(cfg.get("min_followers", 0))
         max_followers: int = int(cfg.get("max_followers", 1000))
@@ -1018,18 +974,6 @@ class _Campaign:
         scrape_round = 0
         queue: list[str] = []   # buffer of fresh, un-tagged usernames
 
-        if target_type == "csv_list":
-            queue = [
-                h.strip().lstrip("@")
-                for h in csv_handles_raw
-                if h and h.strip() and h.strip().lstrip("@").lower() not in already_tagged
-            ]
-            self._log("INFO", f"📁 CSV Campaign Mode: Loaded {len(queue)} fresh un-tagged handles from CSV (out of {len(csv_handles_raw)} total)")
-            if not queue:
-                self._log("INFO", "All handles in this CSV file have already been tagged in previous sessions.")
-                _set_status(campaign_id, "finished")
-                return
-
         while not self._stop_event.is_set():
             posts_in_this_round = 0
             n_accounts = len(accounts)
@@ -1055,113 +999,103 @@ class _Campaign:
 
                 # ── Fill batch up to tags_per_post with verified handles ─────
                 batch = []
-                if target_type == "csv_list":
-                    while len(batch) < tags_per_post and queue and not self._stop_event.is_set():
-                        h = queue.pop(0)
-                        if h.lower() not in already_tagged and h not in batch:
-                            batch.append(h)
-
-                    if not batch:
-                        self._log("SUCCESS", "🏁 All handles from CSV file have been tagged and posted! Campaign completed.")
-                        break
-                else:
-                    while len(batch) < tags_per_post and not self._stop_event.is_set():
-                        if not queue:
-                            scrape_round += 1
-                            limit_this_round = max(tags_per_post * 10, 50) * scrape_round
-                            self._log(
-                                "INFO",
-                                f"Scrape round {scrape_round} ({target_type}): fetching up to {limit_this_round} users "
-                                f"for target {source_profiles_raw}…"
+                while len(batch) < tags_per_post and not self._stop_event.is_set():
+                    if not queue:
+                        scrape_round += 1
+                        limit_this_round = max(tags_per_post * 10, 50) * scrape_round
+                        self._log(
+                            "INFO",
+                            f"Scrape round {scrape_round} ({target_type}): fetching up to {limit_this_round} users "
+                            f"for target {source_profiles_raw}…"
+                        )
+                        if target_type == "tweet_commenters":
+                            raw_handles, ok, raw_count = _scrape_tweet_commenters(
+                                source_profiles_raw, accounts, limit_this_round, self._log,
+                                min_followers=min_followers, max_followers=max_followers,
+                                country_filter=country_filter, scrape_round=scrape_round,
+                                checked_candidates_set=checked_candidates_set,
                             )
-                            if target_type == "tweet_commenters":
-                                raw_handles, ok, raw_count = _scrape_tweet_commenters(
-                                    source_profiles_raw, accounts, limit_this_round, self._log,
-                                    min_followers=min_followers, max_followers=max_followers,
-                                    country_filter=country_filter, scrape_round=scrape_round,
-                                    checked_candidates_set=checked_candidates_set,
-                                )
-                            elif target_type == "target_tweets_commenters":
-                                raw_handles, ok, raw_count = _scrape_target_tweets_commenters(
-                                    source_profiles, accounts, limit_this_round, self._log,
-                                    min_followers=min_followers, max_followers=max_followers,
-                                    country_filter=country_filter, scrape_round=scrape_round,
-                                    checked_candidates_set=checked_candidates_set,
-                                )
-                            else:
-                                raw_handles, ok, raw_count = _scrape_followers(
-                                    source_profiles, accounts, limit_this_round, self._log,
-                                    min_followers=min_followers, max_followers=max_followers,
-                                    country_filter=country_filter, scrape_round=scrape_round,
-                                    checked_handles_set=checked_candidates_set,
-                                )
+                        elif target_type == "target_tweets_commenters":
+                            raw_handles, ok, raw_count = _scrape_target_tweets_commenters(
+                                source_profiles, accounts, limit_this_round, self._log,
+                                min_followers=min_followers, max_followers=max_followers,
+                                country_filter=country_filter, scrape_round=scrape_round,
+                                checked_candidates_set=checked_candidates_set,
+                            )
+                        else:
+                            raw_handles, ok, raw_count = _scrape_followers(
+                                source_profiles, accounts, limit_this_round, self._log,
+                                min_followers=min_followers, max_followers=max_followers,
+                                country_filter=country_filter, scrape_round=scrape_round,
+                                checked_handles_set=checked_candidates_set,
+                            )
 
-                            if not ok:
-                                if not accounts:
-                                    self._log("ERROR", "No active accounts left for scraping — campaign stopping.")
-                                    _set_status(campaign_id, "error")
-                                    break
-                                self._log(
-                                    "WARNING",
-                                    f"Scrape round {scrape_round} encountered an issue or restriction. Waiting 60s before retrying…"
-                                )
-                                time.sleep(60)
-                                scrape_round -= 1
+                        if not ok:
+                            if not accounts:
+                                self._log("ERROR", "No active accounts left for scraping — campaign stopping.")
+                                _set_status(campaign_id, "error")
                                 break
-
-                            fresh = [h for h in raw_handles if h.lower() not in already_tagged and h.lower() not in batch]
-                            random.shuffle(fresh)
-
                             self._log(
-                                "INFO",
-                                f"Round {scrape_round}: {raw_count} total scraped from Twitter, {len(raw_handles)} matched criteria ({min_followers}-{max_followers}), {len(fresh)} new (not yet tagged)"
+                                "WARNING",
+                                f"Scrape round {scrape_round} encountered an issue or restriction. Waiting 60s before retrying…"
                             )
-
-                            if not fresh:
-                                if raw_count == 0:
-                                    self._log(
-                                        "WARNING",
-                                        f"Round {scrape_round}: 0 candidates returned from Twitter (scraper accounts may be in cooldown or target exhausted). Waiting 60s before retrying…"
-                                    )
-                                    time.sleep(60)
-                                    scrape_round = max(0, scrape_round - 1)
-                                    break
-                                else:
-                                    self._log(
-                                        "INFO",
-                                        f"Round {scrape_round}: {raw_count} profiles scraped, 0 passed criteria/new. Fetching deeper in next round…"
-                                    )
-                                    continue
-
-                            queue = fresh
-
-                        if not queue:
+                            time.sleep(60)
+                            scrape_round -= 1
                             break
 
-                        h = queue.pop(0)
+                        fresh = [h for h in raw_handles if h.lower() not in already_tagged and h.lower() not in batch]
+                        random.shuffle(fresh)
 
-                        # Pre-Tag Safety Shield: Verify handle matches follower range before adding to post!
-                        if max_followers and max_followers > 0:
-                            try:
-                                from poster import get_profile_info
-                                pinfo = get_profile_info(acc.get("auth_token", ""), acc.get("ct0", ""), h, proxy=acc.get("proxy"))
-                                fc = pinfo.get("followers_count") if (pinfo and isinstance(pinfo, dict)) else None
-                                if fc is None or (isinstance(pinfo, dict) and pinfo.get("error")):
-                                    self._log("WARNING", f"Pre-tag safety shield: Could not verify follower count for @{h} — dropping")
-                                    continue
-                                if not (min_followers <= int(fc) <= max_followers):
-                                    self._log("WARNING", f"Pre-tag safety shield: @{h} has {fc} followers (outside range {min_followers}-{max_followers}) — dropping")
-                                    continue
-                            except Exception as p_err:
-                                self._log("WARNING", f"Pre-tag safety check error for @{h}: {p_err}")
+                        self._log(
+                            "INFO",
+                            f"Round {scrape_round}: {raw_count} total scraped from Twitter, {len(raw_handles)} matched criteria ({min_followers}-{max_followers}), {len(fresh)} new (not yet tagged)"
+                        )
+
+                        if not fresh:
+                            if raw_count == 0:
+                                self._log(
+                                    "WARNING",
+                                    f"Round {scrape_round}: 0 candidates returned from Twitter (scraper accounts may be in cooldown or target exhausted). Waiting 60s before retrying…"
+                                )
+                                time.sleep(60)
+                                scrape_round = max(0, scrape_round - 1)
+                                break
+                            else:
+                                self._log(
+                                    "INFO",
+                                    f"Round {scrape_round}: {raw_count} profiles scraped, 0 passed criteria/new. Fetching deeper in next round…"
+                                )
                                 continue
 
-                        batch.append(h)
+                        queue = fresh
 
-                    if len(batch) < tags_per_post:
-                        self._log("INFO", f"Batch has {len(batch)}/{tags_per_post} verified candidates. Waiting to refill full batch before posting…")
-                        time.sleep(15)
-                        continue
+                    if not queue:
+                        break
+
+                    h = queue.pop(0)
+
+                    # Pre-Tag Safety Shield: Verify handle matches follower range before adding to post!
+                    if max_followers and max_followers > 0:
+                        try:
+                            from poster import get_profile_info
+                            pinfo = get_profile_info(acc.get("auth_token", ""), acc.get("ct0", ""), h, proxy=acc.get("proxy"))
+                            fc = pinfo.get("followers_count") if (pinfo and isinstance(pinfo, dict)) else None
+                            if fc is None or (isinstance(pinfo, dict) and pinfo.get("error")):
+                                self._log("WARNING", f"Pre-tag safety shield: Could not verify follower count for @{h} — dropping")
+                                continue
+                            if not (min_followers <= int(fc) <= max_followers):
+                                self._log("WARNING", f"Pre-tag safety shield: @{h} has {fc} followers (outside range {min_followers}-{max_followers}) — dropping")
+                                continue
+                        except Exception as p_err:
+                            self._log("WARNING", f"Pre-tag safety check error for @{h}: {p_err}")
+                            continue
+
+                    batch.append(h)
+
+                if len(batch) < tags_per_post:
+                    self._log("INFO", f"Batch has {len(batch)}/{tags_per_post} verified candidates. Waiting to refill full batch before posting…")
+                    time.sleep(15)
+                    continue
 
                 acc_label = f"Account #{account_i + 1}" + (f" (ID {acc_id})" if acc_id else "")
                 taggings = " ".join(f"@{h}" for h in batch)
@@ -1210,13 +1144,7 @@ class _Campaign:
                         except Exception as exc:
                             self._log("WARNING", f"Media upload failed for {acc_label}: {exc}")
 
-                    if "{taggings}" in post_template:
-                        tweet_text = post_template.replace("{taggings}", taggings)
-                    elif taggings:
-                        tweet_text = f"{post_template}\n\n{taggings}"
-                    else:
-                        tweet_text = post_template
-                    tweet_text = tweet_text.strip()[:280]
+                    tweet_text = post_template.replace("{taggings}", taggings).strip()[:280]
                     self._log("POST", f"{acc_label} (Normal Post + Generated Card) → {taggings[:80]}")
                     result = poster.post_tweet(acc["auth_token"], acc["ct0"], tweet_text, media_id=media_id, proxy=acc.get("proxy"))
 
@@ -1234,24 +1162,12 @@ class _Campaign:
                         except Exception as exc:
                             self._log("WARNING", f"Media upload exception for {acc_label}: {exc}")
 
-                    if "{taggings}" in post_template:
-                        tweet_text = post_template.replace("{taggings}", taggings)
-                    elif taggings:
-                        tweet_text = f"{post_template}\n\n{taggings}"
-                    else:
-                        tweet_text = post_template
-                    tweet_text = tweet_text.strip()[:280]
+                    tweet_text = post_template.replace("{taggings}", taggings).strip()[:280]
                     self._log("POST", f"{acc_label} (Normal Post + Custom Media) → {taggings[:80]}")
                     result = poster.post_tweet(acc["auth_token"], acc["ct0"], tweet_text, media_id=media_id, proxy=acc.get("proxy"))
 
                 elif posting_mode_effective == "normal_text":
-                    if "{taggings}" in post_template:
-                        tweet_text = post_template.replace("{taggings}", taggings)
-                    elif taggings:
-                        tweet_text = f"{post_template}\n\n{taggings}"
-                    else:
-                        tweet_text = post_template
-                    tweet_text = tweet_text.strip()[:280]
+                    tweet_text = post_template.replace("{taggings}", taggings).strip()[:280]
                     self._log("POST", f"{acc_label} (Normal Post Text Only) → {taggings[:80]}")
                     result = poster.post_tweet(acc["auth_token"], acc["ct0"], tweet_text, proxy=acc.get("proxy"))
 
@@ -1292,12 +1208,7 @@ class _Campaign:
                             self._log("WARNING", f"Could not generate card image for {acc_label}: {exc}")
 
                     # ── Build tweet text & post ───────────────────────────────
-                    if "{taggings}" in post_template:
-                        tweet_text = post_template.replace("{taggings}", taggings)
-                    elif taggings:
-                        tweet_text = f"{post_template}\n\n{taggings}"
-                    else:
-                        tweet_text = post_template
+                    tweet_text = post_template.replace("{taggings}", taggings)
                     for placeholder in ("{link}", "{list_url}", "{list}"):
                         if placeholder in tweet_text:
                             tweet_text = tweet_text.replace(placeholder, acc_list_url)
@@ -1342,7 +1253,7 @@ class _Campaign:
                         if acc_id:
                             set_account_cooldown(acc_id, cooldown_mins * 60)
                         acc["cooldown_until"] = time.time() + (cooldown_mins * 60)
-                        queue = queue + batch  # end of queue — next account gets fresh handles
+                        queue = batch + queue
                         account_i += 1
                         continue
                     else:
@@ -1351,9 +1262,7 @@ class _Campaign:
                         if acc_id:
                             set_account_cooldown(acc_id, cooldown_mins * 60)
                         acc["cooldown_until"] = time.time() + (cooldown_mins * 60)
-                        # Put failed batch at END so the next account gets fresh handles
-                        # (prevents Twitter duplicate-text error 187 within the same round)
-                        queue = queue + batch
+                        queue = batch + queue
                         account_i += 1
                         continue
                 else:
@@ -1410,11 +1319,6 @@ class _Campaign:
                     break
                 self._log("INFO", "Account cooldown expired — resuming campaign.")
                 continue
-
-            # ── Check if CSV list completed ─────────────────────────────────
-            if target_type == "csv_list" and not queue:
-                self._log("SUCCESS", f"🏁 All handles from CSV file have been tagged and posted! Total posts this session: {total_posts}")
-                break
 
             # ── Main interval delay between posting rounds ────────────────────
             if not self._stop_event.is_set():
