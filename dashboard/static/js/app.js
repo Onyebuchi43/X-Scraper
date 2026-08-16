@@ -787,7 +787,7 @@ async function resumeCampaignById(cid) {
   const res = await api(`/api/campaigns/${cid}/resume`, { method: 'POST' });
   if (res.error) { toast(res.error, 'error'); return; }
   toast(`Campaign #${cid} resumed!`, 'success');
-  pollCampaign();
+  startCampaignPoll();
   loadCampaignDbPanel();
 }
 
