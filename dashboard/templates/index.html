@@ -218,17 +218,6 @@
           <button class="btn btn-primary" onclick="startScrape('followers')">Start Scraping</button>
         </div>
       </div>
-
-      <div class="card card-secondary">
-        <div class="card-title">Upload Existing CSV</div>
-        <p class="card-desc">Skip scraping and upload a followers CSV you already have (must have a <code>username</code> or <code>user_screen_name</code> column).</p>
-        <div class="upload-area" id="csv-upload-area" ondrop="dropCSV(event)" ondragover="event.preventDefault()">
-          <input type="file" id="csv-file-input" accept=".csv" style="display:none" onchange="uploadCSV(this)"/>
-          <span class="upload-icon">&#128193;</span>
-          <span>Drag &amp; drop CSV or <button class="btn-link" onclick="document.getElementById('csv-file-input').click()">browse</button></span>
-        </div>
-        <div id="csv-upload-status" class="upload-status"></div>
-      </div>
     </div>
 
     <!-- Search -->
@@ -508,6 +497,7 @@
                 <option value="followers" selected>👤 Followers of Profile(s)</option>
                 <option value="tweet_commenters">💬 Commenters / Replies of a Specific Tweet (URL or ID)</option>
                 <option value="target_tweets_commenters">🔥 Commenters on Target Profile's Recent/Top Tweets</option>
+                <option value="csv_list">📁 Upload CSV of Handles (No scraping, direct tagging)</option>
               </select>
             </div>
             <div class="form-group" id="group-target-input">
@@ -515,16 +505,26 @@
               <input type="text" id="c-source-profiles" placeholder="elonmusk, OpenAI, nasa"/>
               <p class="field-hint" id="hint-target-input">Comma-separated usernames. Streamingly scrapes followers without saving CSV files on disk.</p>
             </div>
-            <div class="form-group">
+            <div class="form-group span-2" id="group-c-csv-upload" style="display:none;">
+              <label>Upload Handles CSV <span class="badge-required">required for CSV mode</span></label>
+              <div class="upload-area" id="c-csv-dropzone" ondrop="dropCampaignCSV(event, 'c')" ondragover="event.preventDefault()" style="border:2px dashed #475569;border-radius:8px;padding:20px;text-align:center;background:#0f172a;cursor:pointer;" onclick="document.getElementById('c-csv-file-input').click()">
+                <input type="file" id="c-csv-file-input" accept=".csv" style="display:none" onchange="handleCampaignCSVUpload(this, 'c')"/>
+                <div style="font-size:2rem;margin-bottom:6px;">📁</div>
+                <div style="color:#e2e8f0;font-weight:600;font-size:0.9rem;">Drag &amp; drop followers/commenters CSV or click to browse</div>
+                <div style="color:#94a3b8;font-size:0.75rem;margin-top:4px;">Compatible with Scraper exports (detects <code>username</code> &amp; <code>user_screen_name</code>)</div>
+              </div>
+              <div id="c-csv-upload-status" style="margin-top:8px;font-size:0.85rem;font-weight:600;"></div>
+            </div>
+            <div class="form-group" id="group-c-follower-range">
               <label>Follower Count Range (Target Consumers)</label>
               <div style="display:flex;gap:8px;align-items:center;">
                 <input type="number" id="c-min-followers" value="0" min="0" placeholder="Min (0)"/>
                 <span>to</span>
                 <input type="number" id="c-max-followers" value="1000" min="0" placeholder="Max (1000)"/>
               </div>
-              <p class="field-hint">Defaults: 0 to 1,000 followers (filters out influencers & celebrities)</p>
+              <p class="field-hint">Defaults: 0 to 1,000 followers (filters out influencers &amp; celebrities)</p>
             </div>
-            <div class="form-group span-2">
+            <div class="form-group span-2" id="group-c-country-filter">
               <label>Target Country Filter <span class="badge-optional">optional</span></label>
               <select id="c-country" onchange="addCountryChip('c')">
                 <option value="" selected>➕ Select a Country to add to filter...</option>
@@ -905,6 +905,7 @@ nohup python3 -m dashboard.app > app.log 2>&1 &
           <option value="followers">👤 Followers of Profile(s)</option>
           <option value="tweet_commenters">💬 Commenters / Replies of a Specific Tweet (URL or ID)</option>
           <option value="target_tweets_commenters">🔥 Commenters on Target Profile's Recent/Top Tweets</option>
+          <option value="csv_list">📁 Upload CSV of Handles (No scraping, direct tagging)</option>
         </select>
       </div>
       <div class="form-group span-2" id="group-edit-target-input">
@@ -912,7 +913,17 @@ nohup python3 -m dashboard.app > app.log 2>&1 &
         <input type="text" id="edit-c-source-profiles" placeholder="elonmusk, OpenAI"/>
         <p class="field-hint" id="hint-edit-target-input">Comma-separated usernames.</p>
       </div>
-      <div class="form-group span-2">
+      <div class="form-group span-2" id="group-edit-c-csv-upload" style="display:none;">
+        <label>Upload Handles CSV</label>
+        <div class="upload-area" id="edit-c-csv-dropzone" ondrop="dropCampaignCSV(event, 'edit-c')" ondragover="event.preventDefault()" style="border:2px dashed #475569;border-radius:8px;padding:20px;text-align:center;background:#0f172a;cursor:pointer;" onclick="document.getElementById('edit-c-csv-file-input').click()">
+          <input type="file" id="edit-c-csv-file-input" accept=".csv" style="display:none" onchange="handleCampaignCSVUpload(this, 'edit-c')"/>
+          <div style="font-size:2rem;margin-bottom:6px;">📁</div>
+          <div style="color:#e2e8f0;font-weight:600;font-size:0.9rem;">Drag &amp; drop followers/commenters CSV or click to browse</div>
+          <div style="color:#94a3b8;font-size:0.75rem;margin-top:4px;">Compatible with Scraper exports (detects <code>username</code> &amp; <code>user_screen_name</code>)</div>
+        </div>
+        <div id="edit-c-csv-upload-status" style="margin-top:8px;font-size:0.85rem;font-weight:600;"></div>
+      </div>
+      <div class="form-group span-2" id="group-edit-c-follower-range">
         <label>Follower Count Range (Consumers vs Influencers)</label>
         <div style="display:flex;gap:8px;align-items:center;">
           <input type="number" id="edit-c-min-followers" value="0" min="0" placeholder="Min"/>
@@ -920,7 +931,7 @@ nohup python3 -m dashboard.app > app.log 2>&1 &
           <input type="number" id="edit-c-max-followers" value="1000" min="0" placeholder="Max"/>
         </div>
       </div>
-      <div class="form-group span-2">
+      <div class="form-group span-2" id="group-edit-c-country-filter">
         <label>Target Country Filter</label>
         <select id="edit-c-country" onchange="addCountryChip('edit-c')">
           <option value="" selected>➕ Select a Country to add to filter...</option>

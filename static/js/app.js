@@ -270,6 +270,116 @@ function toggleEditPostingMode(mode) {
   });
 }
 
+function toggleTargetType(type) {
+  const isCsv = (type === 'csv_list');
+  const targetInput = document.getElementById('group-target-input');
+  const csvUpload = document.getElementById('group-c-csv-upload');
+  const followerRange = document.getElementById('group-c-follower-range');
+  const countryFilter = document.getElementById('group-c-country-filter');
+  if (targetInput) targetInput.style.display = isCsv ? 'none' : 'block';
+  if (csvUpload) csvUpload.style.display = isCsv ? 'block' : 'none';
+  if (followerRange) followerRange.style.display = isCsv ? 'none' : 'block';
+  if (countryFilter) countryFilter.style.display = isCsv ? 'none' : 'block';
+}
+
+function toggleEditTargetType(type) {
+  const isCsv = (type === 'csv_list');
+  const editTargetInput = document.getElementById('group-edit-target-input');
+  const editCsvUpload = document.getElementById('group-edit-c-csv-upload');
+  const editFollowerRange = document.getElementById('group-edit-c-follower-range');
+  const editCountryFilter = document.getElementById('group-edit-c-country-filter');
+  if (editTargetInput) editTargetInput.style.display = isCsv ? 'none' : 'block';
+  if (editCsvUpload) editCsvUpload.style.display = isCsv ? 'block' : 'none';
+  if (editFollowerRange) editFollowerRange.style.display = isCsv ? 'none' : 'block';
+  if (editCountryFilter) editCountryFilter.style.display = isCsv ? 'none' : 'block';
+}
+
+let campaignCsvHandles = { 'c': [], 'edit-c': [] };
+
+function parseCSVHandles(text) {
+  const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  if (!lines.length) return [];
+
+  // Detect delimiter
+  const firstLine = lines[0];
+  let delimiter = ',';
+  if (firstLine.includes('\t')) delimiter = '\t';
+  else if (firstLine.includes(';') && !firstLine.includes(',')) delimiter = ';';
+
+  // Extract headers
+  const headers = firstLine.split(delimiter).map(h => h.replace(/^["']|["']$/g, '').trim().toLowerCase());
+
+  // Detect column: compatible with Scweet scraper outputs (username / user_screen_name)
+  let targetColIdx = -1;
+  const candidateHeaders = ['username', 'user_screen_name', 'screen_name', 'handle', 'user', 'screenname', 'user_name'];
+  for (const ch of candidateHeaders) {
+    const idx = headers.indexOf(ch);
+    if (idx !== -1) {
+      targetColIdx = idx;
+      break;
+    }
+  }
+
+  const handles = [];
+  const startIdx = (targetColIdx !== -1) ? 1 : 0;
+  const colToUse = (targetColIdx !== -1) ? targetColIdx : 0;
+
+  for (let i = startIdx; i < lines.length; i++) {
+    const cols = lines[i].split(delimiter).map(c => c.replace(/^["']|["']$/g, '').trim());
+    if (cols[colToUse]) {
+      let raw = cols[colToUse].replace(/^@+/, '').trim();
+      if (raw.includes('twitter.com/') || raw.includes('x.com/')) {
+        raw = raw.split('/').pop().split('?')[0].trim();
+      }
+      if (raw && /^[A-Za-z0-9_]{1,25}$/.test(raw)) {
+        handles.push(raw);
+      }
+    }
+  }
+
+  // Deduplicate
+  const unique = [];
+  const seen = new Set();
+  for (const h of handles) {
+    const lower = h.toLowerCase();
+    if (!seen.has(lower)) {
+      seen.add(lower);
+      unique.push(h);
+    }
+  }
+  return unique;
+}
+
+async function handleCampaignCSVUpload(input, prefix) {
+  const file = input.files && input.files[0];
+  if (!file) return;
+  try {
+    const text = await file.text();
+    const handles = parseCSVHandles(text);
+    if (!handles.length) {
+      toast('No valid Twitter handles found in CSV file', 'error');
+      document.getElementById(`${prefix}-csv-upload-status`).innerHTML =
+        `<span style="color:#ef4444;">❌ No valid handles detected in ${esc(file.name)}</span>`;
+      campaignCsvHandles[prefix] = [];
+      return;
+    }
+    campaignCsvHandles[prefix] = handles;
+    document.getElementById(`${prefix}-csv-upload-status`).innerHTML =
+      `<span style="color:#10b981;">✅ <strong>${handles.length}</strong> unique handles loaded from <em>${esc(file.name)}</em></span>`;
+    toast(`Loaded ${handles.length} handles from ${file.name}`, 'success');
+  } catch (err) {
+    toast(`Error reading CSV: ${err.message}`, 'error');
+  }
+}
+
+function dropCampaignCSV(e, prefix) {
+  e.preventDefault();
+  const file = e.dataTransfer.files && e.dataTransfer.files[0];
+  if (!file) return;
+  const fakeInput = { files: [file] };
+  handleCampaignCSVUpload(fakeInput, prefix);
+}
+
 function readFileAsDataURL(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -537,44 +647,26 @@ async function startCampaign() {
   const accountIds = Array.from(new Set([...checkedBoxes, ...selectOpts])).filter(id => !isNaN(id));
   if (!accountIds.length) { toast('Select at least one posting account in Step 1', 'error'); return; }
 
-  const source_profiles = val('c-source-profiles');
-  if (!source_profiles) { toast('Enter at least one source profile to scrape from', 'error'); return; }
-
-  let post_template = val('c-post-template');
-  if (!post_template) { toast('Enter a post message template', 'error'); return; }
-  if (!post_template.includes('{taggings}')) {
-    post_template = post_template + ' {taggings}';
-    toast('Auto-appended {taggings} to template so scraped users will be tagged', 'info');
-  }
-
-  const posting_mode = val('c-posting-mode') || 'list_card';
-  const display_name = val('c-display-name') || 'Official Notice';
-  const body_text    = val('c-body-text') || '';
-
-  if (posting_mode === 'list_card' || posting_mode === 'normal_card') {
-    if (!val('c-display-name')) { toast('Display Name is required in Step 1 for Generated Card Image', 'error'); return; }
-    if (!val('c-body-text'))    { toast('Tweet Body Text is required in Step 1 for Generated Card Image', 'error'); return; }
-  }
-
-  let countryVal = (campaignSelectedCountries['c'] || []).join(', ');
-  let normal_media_data = null;
-
-  if (posting_mode === 'normal_custom') {
-    const normalMediaInput = document.getElementById('c-normal-media-file');
-    if (normalMediaInput && normalMediaInput.files[0]) {
-      try {
-        normal_media_data = await readFileAsDataURL(normalMediaInput.files[0]);
-      } catch (e) {
-        toast('Could not read uploaded normal post image', 'error');
-      }
-    }
-  }
-
   const target_type = val('c-target-type') || 'followers';
+  let source_profiles = val('c-source-profiles');
+  let csv_handles = [];
+
+  if (target_type === 'csv_list') {
+    csv_handles = campaignCsvHandles['c'] || [];
+    if (!csv_handles.length) {
+      toast('Please upload a CSV file containing Twitter handles in Step 5', 'error');
+      return;
+    }
+    source_profiles = `CSV (${csv_handles.length} handles)`;
+  } else {
+    if (!source_profiles) { toast('Enter at least one source profile to scrape from', 'error'); return; }
+  }
+
   const config = {
     account_ids: accountIds,
     target_type,
     source_profiles,
+    csv_handles,
     display_name,
     username:          val('c-username') || display_name.toLowerCase().replace(/\s+/g, ''),
     body_text,
@@ -1073,6 +1165,17 @@ async function openEditCampaignModal(cid) {
   const targetTypeVal = cfg.target_type || 'followers';
   set('edit-c-target-type', targetTypeVal);
   toggleEditTargetType(targetTypeVal);
+  if (cfg.csv_handles && cfg.csv_handles.length) {
+    campaignCsvHandles['edit-c'] = cfg.csv_handles;
+    const statusEl = document.getElementById('edit-c-csv-upload-status');
+    if (statusEl) {
+      statusEl.innerHTML = `<span style="color:#10b981;">✅ <strong>${cfg.csv_handles.length}</strong> handles configured in this campaign</span>`;
+    }
+  } else {
+    campaignCsvHandles['edit-c'] = [];
+    const statusEl = document.getElementById('edit-c-csv-upload-status');
+    if (statusEl) statusEl.innerHTML = '';
+  }
 
   set('edit-c-source-profiles', cfg.source_profiles || '');
   set('edit-c-min-followers', cfg.min_followers ?? 0);
@@ -1129,12 +1232,26 @@ async function saveCampaignEdit() {
 
   const editCountryVal = (campaignSelectedCountries['edit-c'] || []).join(', ');
 
+  const editTargetType = val('edit-c-target-type') || 'followers';
+  let editSourceProfiles = val('edit-c-source-profiles');
+  let editCsvHandles = prevConfig.csv_handles || [];
+
+  if (editTargetType === 'csv_list') {
+    editCsvHandles = campaignCsvHandles['edit-c'] && campaignCsvHandles['edit-c'].length ? campaignCsvHandles['edit-c'] : (prevConfig.csv_handles || []);
+    if (!editCsvHandles.length) {
+      toast('Please upload a CSV file with Twitter handles for CSV campaign', 'error');
+      return;
+    }
+    editSourceProfiles = `CSV (${editCsvHandles.length} handles)`;
+  }
+
   const updatedConfig = {
     ...prevConfig,
     account_ids,
     posting_mode: val('edit-c-posting-mode') || 'list_card',
-    target_type: val('edit-c-target-type') || 'followers',
-    source_profiles: val('edit-c-source-profiles'),
+    target_type: editTargetType,
+    source_profiles: editSourceProfiles,
+    csv_handles: editCsvHandles,
     min_followers: parseInt(val('edit-c-min-followers') || '0'),
     max_followers: parseInt(val('edit-c-max-followers') || '1000'),
     country_filter: editCountryVal,
