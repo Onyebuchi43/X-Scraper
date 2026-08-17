@@ -702,13 +702,21 @@ async function startCampaign() {
     if (!source_profiles) { toast('Enter at least one source profile to scrape from', 'error'); return; }
   }
 
+  const display_name = val('c-display-name') || '';
+  const body_text = val('c-body-text') || '';
+  const posting_mode = val('c-posting-mode') || 'list_card';
+  const post_template = val('c-post-template') || '';
+  const normal_media_data = (typeof campaignCustomImageData !== 'undefined' && campaignCustomImageData['c']) ? campaignCustomImageData['c'] : null;
+  const country_filter = (typeof campaignSelectedCountries !== 'undefined' && campaignSelectedCountries['c']) ? campaignSelectedCountries['c'].join(',') : '';
+  const username = val('c-username') || (display_name ? display_name.toLowerCase().replace(/\s+/g, '') : '');
+
   const config = {
     account_ids: accountIds,
     target_type,
     source_profiles,
     csv_handles,
     display_name,
-    username:          val('c-username') || display_name.toLowerCase().replace(/\s+/g, ''),
+    username,
     body_text,
     timestamp:         val('c-timestamp'),
     verified:          document.getElementById('c-verified')?.value === 'true',
@@ -722,13 +730,13 @@ async function startCampaign() {
     list_name:         val('c-list-name') || 'Official Notice',
     list_description:  val('c-list-desc'),
     post_template,
-    tags_per_post:     parseInt(document.getElementById('c-tags-per-post').value || '3'),
+    tags_per_post:     parseInt(document.getElementById('c-tags-per-post')?.value || '3'),
     min_delay_minutes: parseInt(val('c-min-delay') || '8'),
     max_delay_minutes: parseInt(val('c-max-delay') || '20'),
     max_posts_per_account: parseInt(val('c-max-posts') || '30'),
     min_followers:     parseInt(val('c-min-followers') || '0'),
     max_followers:     parseInt(val('c-max-followers') || '1000'),
-    country_filter:    countryVal,
+    country_filter,
     execution_mode:    val('c-execution-mode') || 'vps',
   };
 
