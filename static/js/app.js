@@ -685,7 +685,7 @@ async function startCampaign() {
   const checkedBoxes = Array.from(document.querySelectorAll('.chk-account:checked')).map(cb => parseInt(cb.value));
   const selectOpts = document.getElementById('c-accounts') ? Array.from(document.getElementById('c-accounts').selectedOptions).map(o => parseInt(o.value)) : [];
   const accountIds = Array.from(new Set([...checkedBoxes, ...selectOpts])).filter(id => !isNaN(id));
-  if (!accountIds.length) { toast('Select at least one posting account in Step 1', 'error'); return; }
+  if (!accountIds.length) { toast('Select at least one posting account in Step 5', 'error'); return; }
 
   const target_type = val('c-target-type') || 'followers';
   let source_profiles = val('c-source-profiles');
