@@ -415,13 +415,24 @@ def handle_account(account_id: int):
         proxy = (data.get("proxy") or "").strip() or None
         label = (data.get("label") or "").strip() or None
 
-        if not auth_token or not ct0:
+        conn = _db()
+        existing = conn.execute("SELECT auth_token, ct0, proxy, label FROM accounts WHERE id=?", (account_id,)).fetchone()
+        if not existing:
+            conn.close()
+            return jsonify({"error": "Account not found"}), 404
+
+        final_auth = auth_token if auth_token else existing["auth_token"]
+        final_ct0 = ct0 if ct0 else existing["ct0"]
+        final_proxy = proxy if "proxy" in data else existing["proxy"]
+        final_label = label if "label" in data else existing["label"]
+
+        if not final_auth or not final_ct0:
+            conn.close()
             return jsonify({"error": "auth_token and ct0 are required"}), 400
 
-        conn = _db()
         conn.execute(
             "UPDATE accounts SET auth_token=?, ct0=?, proxy=?, label=? WHERE id=?",
-            (auth_token, ct0, proxy, label, account_id),
+            (final_auth, final_ct0, final_proxy, final_label, account_id),
         )
         conn.commit()
         conn.close()
