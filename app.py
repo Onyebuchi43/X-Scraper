@@ -1116,15 +1116,18 @@ def bulk_edit_profiles_api():
     avatar_bytes = avatar_file.read() if avatar_file else None
     banner_bytes = banner_file.read() if banner_file else None
 
-    if not account_ids:
-        return jsonify({"error": "No accounts selected for bulk update"}), 400
-
     conn = _db()
     accounts = []
-    for aid in account_ids:
-        a = conn.execute("SELECT * FROM accounts WHERE id=?", (aid,)).fetchone()
-        if a: accounts.append(dict(a))
+    if account_ids:
+        for aid in account_ids:
+            a = conn.execute("SELECT * FROM accounts WHERE id=?", (aid,)).fetchone()
+            if a: accounts.append(dict(a))
+    else:
+        accounts = [dict(a) for a in conn.execute("SELECT * FROM accounts").fetchall()]
     conn.close()
+
+    if not accounts:
+        return jsonify({"error": "No registered accounts found"}), 400
 
     try:
         from poster import update_profile_text, update_profile_image, update_profile_banner
