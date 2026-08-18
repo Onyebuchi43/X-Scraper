@@ -733,8 +733,30 @@ async function startCampaign() {
       return;
     }
     source_profiles = `CSV (${csv_handles.length} handles)`;
+  } else if (target_type === 'tweet_commenters') {
+    if (!source_profiles || !source_profiles.trim()) {
+      toast('Please enter a Tweet URL or numeric Tweet ID in Step 5', 'error');
+      return;
+    }
+    const trimmed = source_profiles.trim();
+    const isUrl = /(?:twitter\.com|x\.com)\/[^/]+\/status\/(\d+)/i.test(trimmed);
+    const isNumericId = /^\d{5,25}$/.test(trimmed);
+    if (!isUrl && !isNumericId) {
+      toast('Invalid Tweet link or ID format. Enter a valid post URL (e.g. https://x.com/user/status/123456789) or numeric Tweet ID.', 'error');
+      return;
+    }
   } else {
-    if (!source_profiles) { toast('Enter at least one source profile to scrape from', 'error'); return; }
+    if (!source_profiles || !source_profiles.trim()) {
+      toast('Enter at least one source profile to scrape from', 'error');
+      return;
+    }
+    const handles = source_profiles.split(/[\s,]+/).map(h => h.trim().replace(/^@+/, '')).filter(Boolean);
+    for (const h of handles) {
+      if (!/^[A-Za-z0-9_]{1,15}$/.test(h)) {
+        toast(`Invalid Twitter handle format: '@${h}'. Usernames can only contain letters, numbers, and underscores (max 15 chars).`, 'error');
+        return;
+      }
+    }
   }
 
   const display_name = val('c-display-name') || '';
