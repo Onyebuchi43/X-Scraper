@@ -902,8 +902,8 @@ async function pollCampaign() {
     const listRes = await api('/api/campaigns');
     if (!listRes || listRes.error || !Array.isArray(listRes)) return;
 
-    // Active campaigns (not stopped and not deleted), max 3
-    const active = listRes.filter(c => c.status === 'running' || c.status === 'paused' || c.status === 'error' || c.status === 'idle').slice(0, 3);
+    // Active campaigns: only actively running campaigns appear in the live feed column (max 3)
+    const active = listRes.filter(c => c.status === 'running').slice(0, 3);
 
     renderActiveCampaignFeeds(active);
 
