@@ -1251,7 +1251,10 @@ class _Campaign:
                     if card_bytes:
                         try:
                             up_res = poster.upload_media(acc["auth_token"], acc["ct0"], card_bytes, proxy=acc.get("proxy"))
-                            media_id = up_res.get("media_id")
+                            if isinstance(up_res, dict):
+                                media_id = up_res.get("media_id")
+                            else:
+                                media_id = str(up_res) if up_res else None
                             if media_id:
                                 self._log("INFO", f"Uploaded generated card image for {acc_label} (Media ID: {media_id})")
                         except Exception as exc:
@@ -1273,10 +1276,11 @@ class _Campaign:
                             up_res = poster.upload_media(
                                 acc["auth_token"], acc["ct0"], normal_media_bytes, proxy=acc.get("proxy")
                             )
-                            media_id = up_res.get("media_id")
-                            if not media_id:
-                                self._log("WARNING", f"Could not upload custom media image for {acc_label}: {up_res.get('error')}")
+                            if isinstance(up_res, dict):
+                                media_id = up_res.get("media_id")
                             else:
+                                media_id = str(up_res) if up_res else None
+                            if media_id:
                                 self._log("INFO", f"Uploaded custom media image for {acc_label} (Media ID: {media_id})")
                         except Exception as exc:
                             self._log("WARNING", f"Media upload exception for {acc_label}: {exc}")
