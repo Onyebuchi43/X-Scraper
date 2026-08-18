@@ -341,7 +341,7 @@ def _run_scrape_job(job_id: str, job_type: str, params: dict) -> None:
 
         result_file = os.path.join("outputs", f"{save_name}.csv")
         _update_job(job_id, status="done", result_file=result_file)
-        _append_job_log(job_id, f"Done — {len(results)} results → {result_file}")
+        _append_job_log(job_id, f"Done — {len(results)} results -> {result_file}")
 
     except Exception as exc:
         logger.exception("Scrape job %s failed", job_id)

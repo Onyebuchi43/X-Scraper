@@ -1218,7 +1218,7 @@ class _Campaign:
                             self._log("WARNING", f"Media upload failed for {acc_label}: {exc}")
 
                     tweet_text = post_template.replace("{taggings}", taggings).strip()[:280]
-                    self._log("POST", f"{acc_label} (Normal Post + Generated Card) → {taggings[:80]}")
+                    self._log("POST", f"{acc_label} (Normal Post + Generated Card) -> {taggings[:80]}")
                     result = poster.post_tweet(acc["auth_token"], acc["ct0"], tweet_text, media_id=media_id, proxy=acc.get("proxy"))
 
                 elif posting_mode_effective == "normal_custom":
@@ -1236,12 +1236,12 @@ class _Campaign:
                             self._log("WARNING", f"Media upload exception for {acc_label}: {exc}")
 
                     tweet_text = post_template.replace("{taggings}", taggings).strip()[:280]
-                    self._log("POST", f"{acc_label} (Normal Post + Custom Media) → {taggings[:80]}")
+                    self._log("POST", f"{acc_label} (Normal Post + Custom Media) -> {taggings[:80]}")
                     result = poster.post_tweet(acc["auth_token"], acc["ct0"], tweet_text, media_id=media_id, proxy=acc.get("proxy"))
 
                 elif posting_mode_effective == "normal_text":
                     tweet_text = post_template.replace("{taggings}", taggings).strip()[:280]
-                    self._log("POST", f"{acc_label} (Normal Post Text Only) → {taggings[:80]}")
+                    self._log("POST", f"{acc_label} (Normal Post Text Only) -> {taggings[:80]}")
                     result = poster.post_tweet(acc["auth_token"], acc["ct0"], tweet_text, proxy=acc.get("proxy"))
 
                 else:
@@ -1291,7 +1291,7 @@ class _Campaign:
                             tweet_text = f"{tweet_text}\n{acc_list_url}"
 
                     tweet_text = tweet_text[:280]
-                    self._log("POST", f"{acc_label} (List Post) → {taggings[:80]}")
+                    self._log("POST", f"{acc_label} (List Post) -> {taggings[:80]}")
                     result = poster.post_tweet(acc["auth_token"], acc["ct0"], tweet_text, proxy=acc.get("proxy"))
 
                 if result.get("error") or not result.get("tweet_id"):
