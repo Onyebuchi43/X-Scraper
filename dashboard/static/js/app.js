@@ -36,6 +36,30 @@ document.addEventListener('DOMContentLoaded', () => {
   renderCountryChips('c');
   renderCountryChips('edit-c');
   autoConnectActiveCampaign();
+
+  // Global Escape key: close any open modal
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      const editModal = document.getElementById('editCampaignModal');
+      if (editModal && editModal.style.display !== 'none') {
+        closeEditCampaignModal();
+      }
+      // Close any other visible modal-backdrop
+      document.querySelectorAll('[class*="modal"]').forEach(m => {
+        if (m.style.display === 'flex' || m.style.display === 'block') {
+          m.style.display = 'none';
+        }
+      });
+    }
+  });
+
+  // Click outside editCampaignModal backdrop to close it
+  const editModal = document.getElementById('editCampaignModal');
+  if (editModal) {
+    editModal.addEventListener('click', (e) => {
+      if (e.target === editModal) closeEditCampaignModal();
+    });
+  }
 });
 
 const TAB_TITLES = {
