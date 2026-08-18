@@ -423,20 +423,30 @@ async function handleCampaignCSVUpload(input, prefix) {
   try {
     const text = await file.text();
     const handles = parseCSVHandles(text);
+    const statusEl = document.getElementById(`${prefix}-csv-status`) || document.getElementById(`${prefix}-csv-upload-status`);
     if (!handles.length) {
       toast('No valid Twitter handles found in CSV file', 'error');
-      document.getElementById(`${prefix}-csv-upload-status`).innerHTML =
-        `<span style="color:#ef4444;">❌ No valid handles detected in ${esc(file.name)}</span>`;
+      if (statusEl) {
+        statusEl.style.display = 'block';
+        statusEl.innerHTML = `<span style="color:#ef4444;">❌ No valid handles detected in ${esc(file.name)}</span>`;
+      }
       campaignCsvHandles[prefix] = [];
       return;
     }
     campaignCsvHandles[prefix] = handles;
-    document.getElementById(`${prefix}-csv-upload-status`).innerHTML =
-      `<span style="color:#10b981;">✅ <strong>${handles.length}</strong> unique handles loaded from <em>${esc(file.name)}</em></span>`;
+    if (statusEl) {
+      statusEl.style.display = 'block';
+      statusEl.innerHTML = `<span style="color:#10b981;">✅ <strong>${handles.length}</strong> unique handles loaded from <em>${esc(file.name)}</em></span>`;
+    }
     toast(`Loaded ${handles.length} handles from ${file.name}`, 'success');
   } catch (err) {
     toast(`Error reading CSV: ${err.message}`, 'error');
   }
+}
+
+async function handleCsvUpload(event, prefix) {
+  const input = event.target || event;
+  await handleCampaignCSVUpload(input, prefix);
 }
 
 function dropCampaignCSV(e, prefix) {
