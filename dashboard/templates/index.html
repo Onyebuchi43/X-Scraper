@@ -329,8 +329,17 @@
               <label>Limit</label>
               <input type="number" id="p-limit" value="100" min="1" />
             </div>
-            <div class="form-group">
-              <label>Accounts to use</label>
+            <div class="form-group span-2">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                <label style="margin:0;">Accounts to use <span id="p-accounts-badge"
+                    style="font-size:12px;font-weight:600;margin-left:6px;"></span></label>
+                <div style="display:flex;gap:6px;">
+                  <button type="button" class="btn btn-sm btn-ghost" style="padding:2px 8px;font-size:11px;"
+                    onclick="selectAllAccounts('p-accounts', true)">Select All</button>
+                  <button type="button" class="btn btn-sm btn-ghost" style="padding:2px 8px;font-size:11px;"
+                    onclick="selectAllAccounts('p-accounts', false)">Deselect All</button>
+                </div>
+              </div>
               <select id="p-accounts" multiple class="multi-select"></select>
             </div>
           </div>
@@ -960,7 +969,7 @@ nohup python3 -m dashboard.app > app.log 2>&1 &
       <div
         style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:12px;">
         <h3 style="margin:0;">✏ Edit Campaign Details</h3>
-        <button class="btn btn-sm btn-ghost" onclick="closeEditCampaignModal()" style="font-size:16px;">✕</button>
+        <button class="btn btn-sm btn-ghost modal-close" onclick="closeEditCampaignModal()" style="font-size:16px;">✕</button>
       </div>
       <div class="form-grid form-grid-2">
         <div class="form-group span-2">
