@@ -1216,7 +1216,7 @@ async function openEditCampaignModal(cid) {
   // Populate accounts multi-select
   const accSel = document.getElementById('edit-c-accounts');
   if (accSel) {
-    const selectedIds = cfg.account_ids || [];
+    const selectedIds = (cfg.account_ids && cfg.account_ids.length) ? cfg.account_ids : accounts.map(a => a.id);
     accSel.innerHTML = accounts.map(a =>
       `<option value="${a.id}" ${selectedIds.includes(a.id) ? 'selected' : ''}>
         ${esc(a.label || `Account #${a.id}`)} (${esc(a.token_preview)})
@@ -1239,8 +1239,11 @@ async function saveCampaignEdit() {
   if (!name) { toast('Campaign name is required', 'error'); return; }
 
   const accSel = document.getElementById('edit-c-accounts');
-  const account_ids = accSel ? Array.from(accSel.selectedOptions).map(o => parseInt(o.value)) : [];
-  if (!account_ids.length) { toast('Select at least one posting account', 'error'); return; }
+  let account_ids = accSel ? Array.from(accSel.selectedOptions).map(o => parseInt(o.value)) : [];
+  if (!account_ids.length && accounts.length) {
+    account_ids = accounts.map(a => a.id);
+  }
+  if (!account_ids.length) { toast('Select at least one posting account in Step 5', 'error'); return; }
 
   // Fetch current config to merge
   const current = await api(`/api/campaigns/${editingCampaignId}`);
