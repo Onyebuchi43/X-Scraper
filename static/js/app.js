@@ -389,6 +389,11 @@ function parseCSVHandles(text) {
     }
   }
 
+  // If CSV has multiple columns and none of them is a recognized handle column, reject
+  if (targetColIdx === -1 && headers.length > 1) {
+    return [];
+  }
+
   const handles = [];
   const startIdx = (targetColIdx !== -1) ? 1 : 0;
   const colToUse = (targetColIdx !== -1) ? targetColIdx : 0;
@@ -400,7 +405,8 @@ function parseCSVHandles(text) {
       if (raw.includes('twitter.com/') || raw.includes('x.com/')) {
         raw = raw.split('/').pop().split('?')[0].trim();
       }
-      if (raw && /^[A-Za-z0-9_]{1,25}$/.test(raw)) {
+      // Valid Twitter handle must be 1-15 chars and not a pure numeric ID
+      if (raw && /^[A-Za-z0-9_]{1,15}$/.test(raw) && !/^\d+$/.test(raw)) {
         handles.push(raw);
       }
     }
