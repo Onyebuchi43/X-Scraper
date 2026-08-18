@@ -33,6 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
     area.addEventListener('drop', e => area.classList.remove('drag-over'));
   }
 
+  renderCountryChips('f');
   renderCountryChips('c');
   renderCountryChips('edit-c');
   autoConnectActiveCampaign();
@@ -232,11 +233,15 @@ function loadAccountSelects() {
 }
 
 let campaignSelectedCountries = {
+  f: [],
   c: [],
   'edit-c': [],
 };
 
 function addCountryChip(prefix) {
+  if (!campaignSelectedCountries[prefix]) {
+    campaignSelectedCountries[prefix] = [];
+  }
   const sel = document.getElementById(`${prefix}-country`);
   if (!sel) return;
   const val = sel.value;
@@ -465,9 +470,7 @@ async function startScrape(type) {
     payload.limit = parseInt(val('f-limit') || '100');
     payload.min_followers = parseInt(val('f-min-followers') || '0');
     payload.max_followers = parseInt(val('f-max-followers') || '1000');
-    let countryVal = val('f-country');
-    if (countryVal === 'custom') countryVal = val('f-custom-country');
-    payload.country_filter = countryVal;
+    payload.country_filter = (typeof campaignSelectedCountries !== 'undefined' && campaignSelectedCountries['f']) ? campaignSelectedCountries['f'].join(',') : '';
   } else if (type === 'search') {
     payload = {
       ...payload,
