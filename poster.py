@@ -266,32 +266,61 @@ def update_profile_text(
     url: Optional[str] = None,
     proxy: Optional[str | dict] = None,
 ) -> bool:
-    """Update profile text fields (Name, Bio, Location, Website) via Twitter REST API."""
-    data = {}
-    if name is not None: data["name"] = name
-    if description is not None: data["description"] = description
-    if location is not None: data["location"] = location
-    if url is not None: data["url"] = url
-
-    if not data:
+    """Update profile text fields (Name, Bio, Location, Website) via automated browser session."""
+    if not (name or description or location or url):
         return True
 
     try:
-        proxy_url = _get_httpx_proxy_url(proxy)
-        httpx_kwargs = {"proxy": proxy_url} if proxy_url else {}
-        resp = httpx.post(
-            "https://x.com/i/api/1.1/account/update_profile.json",
-            data=data,
-            headers=_headers(ct0, {"Content-Type": "application/x-www-form-urlencoded"}),
-            cookies=_cookies(auth_token, ct0),
-            timeout=20,
-            **httpx_kwargs,
-        )
-        if resp.status_code in (200, 204):
-            logger.info("Profile updated successfully")
-            return True
-        logger.warning("update_profile returned HTTP %d: %s", resp.status_code, resp.text[:200])
-        return False
+        from playwright.sync_api import sync_playwright
+        with sync_playwright() as p:
+            launch_args = ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"]
+            browser = p.chromium.launch(headless=True, args=launch_args)
+            context = browser.new_context(
+                viewport={"width": 1280, "height": 800},
+                user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+            )
+            context.add_cookies([
+                {"name": "auth_token", "value": auth_token, "domain": ".x.com", "path": "/"},
+                {"name": "ct0", "value": ct0, "domain": ".x.com", "path": "/"},
+                {"name": "auth_token", "value": auth_token, "domain": ".twitter.com", "path": "/"},
+                {"name": "ct0", "value": ct0, "domain": ".twitter.com", "path": "/"},
+            ])
+            page = context.new_page()
+            try:
+                page.goto("https://x.com/settings/profile", wait_until="domcontentloaded", timeout=30000)
+                time.sleep(3)
+
+                if name:
+                    name_input = page.locator("input[name='displayName']")
+                    if name_input.count() > 0:
+                        name_input.fill(name)
+
+                if description is not None:
+                    bio_input = page.locator("textarea[name='description']")
+                    if bio_input.count() > 0:
+                        bio_input.fill(description)
+
+                if location is not None:
+                    loc_input = page.locator("input[name='location']")
+                    if loc_input.count() > 0:
+                        loc_input.fill(location)
+
+                if url is not None:
+                    url_input = page.locator("input[name='url']")
+                    if url_input.count() > 0:
+                        url_input.fill(url)
+
+                save_btn = page.locator("[data-testid='Profile_Save_Button']")
+                if save_btn.count() > 0 and save_btn.is_enabled():
+                    save_btn.click()
+                    time.sleep(3)
+                    logger.info("Profile updated successfully via browser session")
+                    return True
+                else:
+                    logger.warning("Save button not found or disabled in profile settings")
+                    return False
+            finally:
+                browser.close()
     except Exception as exc:
         logger.error("update_profile_text failed: %s", exc)
         return False
