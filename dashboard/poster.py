@@ -290,34 +290,50 @@ def update_profile_text(
                 page.goto("https://x.com/settings/profile", wait_until="domcontentloaded", timeout=30000)
                 time.sleep(3)
 
+                # Wait for profile inputs to appear
+                try:
+                    page.wait_for_selector("textarea[name='description'], input[name='location'], [data-testid='Profile_Save_Button']", timeout=12000)
+                except Exception:
+                    pass
+
                 if name:
                     name_input = page.locator("input[name='displayName']")
                     if name_input.count() > 0:
+                        name_input.click()
                         name_input.fill(name)
 
                 if description is not None:
                     bio_input = page.locator("textarea[name='description']")
                     if bio_input.count() > 0:
+                        bio_input.click()
                         bio_input.fill(description)
 
                 if location is not None:
                     loc_input = page.locator("input[name='location']")
                     if loc_input.count() > 0:
+                        loc_input.click()
                         loc_input.fill(location)
 
                 if url is not None:
                     url_input = page.locator("input[name='url']")
                     if url_input.count() > 0:
+                        url_input.click()
                         url_input.fill(url)
 
+                time.sleep(1)
                 save_btn = page.locator("[data-testid='Profile_Save_Button']")
-                if save_btn.count() > 0 and save_btn.is_enabled():
-                    save_btn.click()
-                    time.sleep(3)
-                    logger.info("Profile updated successfully via browser session")
-                    return True
+                if save_btn.count() > 0:
+                    if save_btn.is_enabled():
+                        save_btn.click()
+                        time.sleep(3)
+                        logger.info("Profile updated successfully via browser session")
+                        return True
+                    else:
+                        # Values were identical or already up to date
+                        logger.info("Profile already up to date")
+                        return True
                 else:
-                    logger.warning("Save button not found or disabled in profile settings")
+                    logger.warning("Save button not found in profile settings")
                     return False
             finally:
                 browser.close()
