@@ -1774,6 +1774,14 @@ async function fetchBetaSocksProxiesNow() {
   }
 }
 
+async function resetProxyDailyCount() {
+  const res = await api('/api/proxy/reset_count', { method: 'POST' });
+  if (res && res.msg) {
+    toast('🟢 ' + res.msg, 'success');
+    loadProxySettings();
+  }
+}
+
 // ══ Account Creator Submit ═════════════════════════════════════════════════════
 async function createAccountSubmit(e) {
   if (e) e.preventDefault();

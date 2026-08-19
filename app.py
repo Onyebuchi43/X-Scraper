@@ -1015,6 +1015,16 @@ def proxy_settings_api():
     return jsonify(get_proxy_settings())
 
 
+@app.route("/api/proxy/reset_count", methods=["POST"])
+def proxy_reset_count_api():
+    try:
+        from betasocks_client import reset_daily_fetch_count
+    except ImportError:
+        from dashboard.betasocks_client import reset_daily_fetch_count  # type: ignore
+    reset_daily_fetch_count()
+    return jsonify({"msg": "Daily proxy fetch counter reset to 0"})
+
+
 @app.route("/api/proxy/test", methods=["POST"])
 def proxy_test_api():
     data = request.json or {}

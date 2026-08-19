@@ -443,18 +443,25 @@ _TESTED_PROXY_HEALTH_CACHE: dict[str, float] = {}
 def _auto_heal_account_proxy(account_id: int, log_fn: Callable) -> Optional[str]:
     """
     Auto-healing for account proxies:
-    Fetches exactly 1 fresh proxy from BetaSocks and directly assigns it to the failing account.
-    Does NOT run extra pre-testing loops, preserving proxy allowance.
+    Fetches exactly 1 fresh proxy from BetaSocks strictly respecting daily limit.
     """
     try:
-        log_fn("INFO", f"⚡ Auto-Healing Triggered: Fetching 1 replacement proxy from BetaSocks for Account #{account_id}…")
         try:
-            from betasocks_client import BetaSocksClient
+            from betasocks_client import BetaSocksClient, get_proxy_settings
         except ImportError:
-            from dashboard.betasocks_client import BetaSocksClient  # type: ignore
+            from dashboard.betasocks_client import BetaSocksClient, get_proxy_settings  # type: ignore
 
+        cfg = get_proxy_settings()
+        daily_limit = int(cfg.get("daily_limit", 50))
+        fetched_today = int(cfg.get("fetched_today_count", 0))
+
+        if fetched_today >= daily_limit:
+            log_fn("WARNING", f"⚠️ Strict daily BetaSocks proxy limit reached ({fetched_today}/{daily_limit}). Proxy retrieval blocked.")
+            return None
+
+        log_fn("INFO", f"⚡ Auto-Healing Triggered: Fetching 1 replacement proxy from BetaSocks for Account #{account_id}…")
         client = BetaSocksClient()
-        fresh_proxies = client.fetch_available_proxies(country="all", limit=1, force=True)
+        fresh_proxies = client.fetch_available_proxies(country="all", limit=1)
 
         if fresh_proxies:
             px = fresh_proxies[0]
@@ -474,7 +481,7 @@ def _auto_heal_account_proxy(account_id: int, log_fn: Callable) -> Optional[str]
             log_fn("INFO", f"✅ AUTO-HEAL SUCCESS: Account #{account_id} proxy updated to '{db_proxy}'.")
             return db_proxy
         else:
-            log_fn("WARNING", f"⚠️ Auto-Healing: Could not fetch replacement proxy for Account #{account_id} (BetaSocks empty).")
+            log_fn("WARNING", f"⚠️ Auto-Healing: Could not fetch replacement proxy for Account #{account_id} (BetaSocks daily limit reached or empty).")
             return None
     except Exception as exc:
         log_fn("WARNING", f"Auto-healing failed for Account (ID {account_id}): {exc}")

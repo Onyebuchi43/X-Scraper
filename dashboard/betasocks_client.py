@@ -156,17 +156,17 @@ class BetaSocksClient:
             logger.error("BetaSocks login exception: %s", exc)
             return False
 
-    def fetch_available_proxies(self, country: str = "usa", limit: int = 10, force: bool = False) -> List[str]:
+    def fetch_available_proxies(self, country: str = "usa", limit: int = 10) -> List[str]:
         with _FETCH_LOCK:
             cfg = get_proxy_settings()
             daily_limit = int(cfg.get("daily_limit", 50))
             fetched_today = int(cfg.get("fetched_today_count", 0))
             allowed = max(0, daily_limit - fetched_today)
-            if not force and allowed <= 0:
-                logger.warning("Daily BetaSocks proxy fetch limit (%d/%d) reached", fetched_today, daily_limit)
+            if allowed <= 0:
+                logger.warning("Strict daily BetaSocks limit reached (%d/%d). Blocking proxy fetch.", fetched_today, daily_limit)
                 return []
 
-            effective_limit = min(max(1, limit), allowed) if not force else max(1, limit)
+            effective_limit = min(max(1, limit), allowed)
 
             if not self.login():
                 return []

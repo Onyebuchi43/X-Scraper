@@ -149,10 +149,11 @@
             </div>
           </div>
         </div>
-        <div class="form-actions" style="display:flex;gap:10px;">
+        <div class="form-actions" style="display:flex;gap:10px;flex-wrap:wrap;">
           <button class="btn btn-primary" onclick="saveProxySettings()">💾 Save Settings</button>
           <button class="btn btn-ghost" onclick="testBetaSocksConnection()">⚡ Test BetaSocks Connection</button>
           <button class="btn btn-ghost" onclick="fetchBetaSocksProxiesNow()">🔄 Fetch Fresh USA Proxies</button>
+          <button class="btn btn-ghost" style="color:var(--text-muted);" onclick="resetProxyDailyCount()">🔄 Reset Today Counter</button>
         </div>
       </div>
     </section>
