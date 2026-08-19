@@ -746,6 +746,7 @@ def _scrape_target_tweets_commenters(
         log_fn("ERROR", "No accounts available for scraping.")
         return [], False, 0
 
+    try:
         # Preflight: Ensure 1 dedicated proxy per account (same algorithm as campaign)
         for acc in pool_accounts:
             if not acc.get("proxy"):
