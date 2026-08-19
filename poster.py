@@ -287,12 +287,21 @@ def update_profile_text(
             ])
             page = context.new_page()
             try:
-                page.goto("https://x.com/settings/profile", wait_until="domcontentloaded", timeout=30000)
+                page.goto("https://x.com/home", wait_until="domcontentloaded", timeout=25000)
                 time.sleep(3)
 
-                # Wait for profile inputs to appear
+                prof_nav = page.locator("a[data-testid='AppTabBar_Profile_Link']")
+                if prof_nav.count() > 0:
+                    prof_nav.click()
+                    time.sleep(3)
+
+                edit_btn = page.locator("a[href$='/settings/profile'], button:has-text('Edit profile'), a:has-text('Edit profile')")
+                if edit_btn.count() > 0:
+                    edit_btn.first.click()
+                    time.sleep(2)
+
                 try:
-                    page.wait_for_selector("textarea[name='description'], input[name='location'], [data-testid='Profile_Save_Button']", timeout=12000)
+                    page.wait_for_selector("textarea[name='description'], input[name='location'], [data-testid='Profile_Save_Button']", timeout=10000)
                 except Exception:
                     pass
 
@@ -329,7 +338,6 @@ def update_profile_text(
                         logger.info("Profile updated successfully via browser session")
                         return True
                     else:
-                        # Values were identical or already up to date
                         logger.info("Profile already up to date")
                         return True
                 else:

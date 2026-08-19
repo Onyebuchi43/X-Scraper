@@ -1208,7 +1208,7 @@ def bulk_edit_profiles_api():
         at = acc.get("auth_token", "")
         c0 = acc.get("ct0", "")
         px = acc.get("proxy")
-        uname = acc.get("username", "")
+        uname = acc.get("username", "") or acc.get("label", "") or f"Account #{acc.get('id')}"
 
         ok_text = update_profile_text(at, c0, name=name, description=description, location=location, url=url, proxy=px) if (name or description or location or url) else True
         ok_img = update_profile_image(at, c0, avatar_bytes, proxy=px) if avatar_bytes else True
@@ -1220,7 +1220,7 @@ def bulk_edit_profiles_api():
         else:
             results.append({"username": uname, "status": "failed"})
 
-        time.sleep(2)  # Safe delay between bulk profile edits
+        time.sleep(1)
 
     return jsonify({"updated": updated_count, "total": len(accounts), "results": results})
 
