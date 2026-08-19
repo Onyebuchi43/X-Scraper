@@ -645,11 +645,31 @@ function copyScraperLogs() {
   if (!log) return;
   const text = log.innerText || '';
   if (!text.trim()) { toast('No logs to copy', 'info'); return; }
-  navigator.clipboard.writeText(text).then(() => {
+  
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(text).then(() => {
+      toast('Scraping logs copied to clipboard! 📋', 'success');
+    }).catch(() => fallbackCopyText(text));
+  } else {
+    fallbackCopyText(text);
+  }
+}
+
+function fallbackCopyText(text) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.left = '-9999px';
+  document.body.appendChild(ta);
+  ta.focus();
+  ta.select();
+  try {
+    document.execCommand('copy');
     toast('Scraping logs copied to clipboard! 📋', 'success');
-  }).catch(() => {
+  } catch (e) {
     toast('Failed to copy logs', 'error');
-  });
+  }
+  document.body.removeChild(ta);
 }
 
 function clearScraperFeed() {
