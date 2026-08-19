@@ -254,6 +254,26 @@ function addCountryChip(prefix) {
   sel.value = '';
 }
 
+function addCustomCountryChip(prefix) {
+  if (!campaignSelectedCountries[prefix]) {
+    campaignSelectedCountries[prefix] = [];
+  }
+  const input = document.getElementById(`${prefix}-custom-country`);
+  if (!input) return;
+  const raw = input.value.trim();
+  if (!raw) return;
+
+  // Support single or comma-separated countries
+  const countries = raw.split(',').map(s => s.trim()).filter(Boolean);
+  for (const c of countries) {
+    if (!campaignSelectedCountries[prefix].includes(c)) {
+      campaignSelectedCountries[prefix].push(c);
+    }
+  }
+  input.value = '';
+  renderCountryChips(prefix);
+}
+
 function removeCountryChip(prefix, country) {
   campaignSelectedCountries[prefix] = (campaignSelectedCountries[prefix] || []).filter(c => c !== country);
   renderCountryChips(prefix);

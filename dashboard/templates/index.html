@@ -220,10 +220,14 @@
                 <option value="United Kingdom">🇬🇧 United Kingdom</option>
                 <option value="United States">🇺🇸 United States</option>
               </select>
+              <div style="display:flex;gap:6px;margin-top:8px;">
+                <input type="text" id="f-custom-country" placeholder="Or type a specific target country (e.g. Canada, Germany, Japan)..."
+                  style="flex:1;font-size:13px;" onkeydown="if(event.key==='Enter'){event.preventDefault();addCustomCountryChip('f');}" />
+                <button type="button" class="btn btn-sm btn-secondary" onclick="addCustomCountryChip('f')" style="white-space:nowrap;padding:6px 12px;font-size:12px;">+ Add Country</button>
+              </div>
               <div id="f-country-tags" class="country-tags-container"
                 style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;"></div>
-              <p class="field-hint">Filter scraped profiles by verified 'Account based in' country location. Leave empty
-                for All Countries.</p>
+              <p class="field-hint">Choose from the dropdown or type custom countries above. Click ✕ on any country badge to remove it. Leave empty for All Countries.</p>
             </div>
             <div class="form-group span-2">
               <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
@@ -759,10 +763,14 @@
                   <option value="Zambia">🇿🇲 Zambia</option>
                   <option value="Zimbabwe">🇿🇼 Zimbabwe</option>
                 </select>
+                <div style="display:flex;gap:6px;margin-top:8px;">
+                  <input type="text" id="c-custom-country" placeholder="Or type a specific target country (e.g. Canada, Germany, Japan)..."
+                    style="flex:1;font-size:13px;" onkeydown="if(event.key==='Enter'){event.preventDefault();addCustomCountryChip('c');}" />
+                  <button type="button" class="btn btn-sm btn-secondary" onclick="addCustomCountryChip('c')" style="white-space:nowrap;padding:6px 12px;font-size:12px;">+ Add Country</button>
+                </div>
                 <div id="c-country-tags" class="country-tags-container"
                   style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;"></div>
-                <p class="field-hint">Select one or multiple countries from the dropdown above. Click ✕ on a country
-                  badge to remove it. Leave empty for All Countries.</p>
+                <p class="field-hint">Choose from the dropdown or type custom countries above. Click ✕ on any country badge to remove it. Leave empty for All Countries.</p>
               </div>
               <div class="form-group">
                 <label>Campaign Execution Mode <span class="badge-required">required</span></label>
@@ -1195,10 +1203,14 @@ nohup python3 -m dashboard.app > app.log 2>&1 &
             <option value="Zambia">🇿🇲 Zambia</option>
             <option value="Zimbabwe">🇿🇼 Zimbabwe</option>
           </select>
+          <div style="display:flex;gap:6px;margin-top:8px;">
+            <input type="text" id="edit-c-custom-country" placeholder="Or type a specific target country (e.g. Canada, Germany, Japan)..."
+              style="flex:1;font-size:13px;" onkeydown="if(event.key==='Enter'){event.preventDefault();addCustomCountryChip('edit-c');}" />
+            <button type="button" class="btn btn-sm btn-secondary" onclick="addCustomCountryChip('edit-c')" style="white-space:nowrap;padding:6px 12px;font-size:12px;">+ Add Country</button>
+          </div>
           <div id="edit-c-country-tags" class="country-tags-container"
             style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;"></div>
-          <p class="field-hint">Select one or multiple countries from the dropdown above. Click ✕ on a country badge to
-            remove it. Leave empty for All Countries.</p>
+          <p class="field-hint">Choose from the dropdown or type custom countries above. Click ✕ on any country badge to remove it. Leave empty for All Countries.</p>
         </div>
         <label>Post Message Template</label>
         <textarea id="edit-c-post-template" rows="3"></textarea>
