@@ -1999,6 +1999,13 @@ async function bulkEditSubmit() {
   const location = document.getElementById('be-location')?.value || '';
   const url = document.getElementById('be-url')?.value || '';
 
+  const submitBtn = document.querySelector("#modal-bulk-edit button.btn-primary");
+  const origText = submitBtn ? submitBtn.textContent : 'Update Profiles';
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Updating Profiles...';
+  }
+
   try {
     const resp = await fetch('/api/accounts/bulk-edit', {
       method: 'POST',
@@ -2006,10 +2013,19 @@ async function bulkEditSubmit() {
       body: JSON.stringify({ description: bio, location: location, url: url })
     });
     const data = await resp.json();
-    toast('Profile updates submitted!', 'success');
+    if (data.error) {
+      toast(data.error, 'error');
+    } else {
+      toast(`Successfully updated ${data.updated || 0}/${data.total || 0} account profiles!`, 'success');
+    }
     closeBulkEditModal();
     if (typeof loadAccounts === 'function') loadAccounts();
   } catch (err) {
     toast('Error updating profiles: ' + err.message, 'error');
+  } finally {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = origText;
+    }
   }
 }
