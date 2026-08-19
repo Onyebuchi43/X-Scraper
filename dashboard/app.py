@@ -1201,28 +1201,31 @@ def bulk_edit_profiles_api():
     except ImportError:
         from dashboard.poster import update_profile_text, update_profile_image, update_profile_banner  # type: ignore
 
-    updated_count = 0
-    results = []
+    def _run_bulk_update():
+        for acc in accounts:
+            at = acc.get("auth_token", "")
+            c0 = acc.get("ct0", "")
+            px = acc.get("proxy")
+            try:
+                if name or description or location or url:
+                    update_profile_text(at, c0, name=name, description=description, location=location, url=url, proxy=px)
+                if avatar_bytes:
+                    update_profile_image(at, c0, avatar_bytes, proxy=px)
+                if banner_bytes:
+                    update_profile_banner(at, c0, banner_bytes, proxy=px)
+            except Exception as e:
+                logger.error("Bulk profile update failed for account %s: %s", acc.get("id"), e)
+            time.sleep(2)
 
-    for acc in accounts:
-        at = acc.get("auth_token", "")
-        c0 = acc.get("ct0", "")
-        px = acc.get("proxy")
-        uname = acc.get("username", "") or acc.get("label", "") or f"Account #{acc.get('id')}"
+    import threading
+    t = threading.Thread(target=_run_bulk_update, daemon=True)
+    t.start()
 
-        ok_text = update_profile_text(at, c0, name=name, description=description, location=location, url=url, proxy=px) if (name or description or location or url) else True
-        ok_img = update_profile_image(at, c0, avatar_bytes, proxy=px) if avatar_bytes else True
-        ok_bnr = update_profile_banner(at, c0, banner_bytes, proxy=px) if banner_bytes else True
-
-        if ok_text and ok_img and ok_bnr:
-            updated_count += 1
-            results.append({"username": uname, "status": "success"})
-        else:
-            results.append({"username": uname, "status": "failed"})
-
-        time.sleep(1)
-
-    return jsonify({"updated": updated_count, "total": len(accounts), "results": results})
+    return jsonify({
+        "status": "started",
+        "total": len(accounts),
+        "message": f"Successfully started profile update for {len(accounts)} account(s)!"
+    })
 
 
 if __name__ == "__main__":

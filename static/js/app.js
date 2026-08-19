@@ -2016,10 +2016,10 @@ async function bulkEditSubmit() {
     if (data.error) {
       toast(data.error, 'error');
     } else {
-      toast(`Successfully updated ${data.updated || 0}/${data.total || 0} account profiles!`, 'success');
+      toast(data.message || `Successfully started profile update for ${data.total || 0} account(s)!`, 'success');
+      closeBulkEditModal();
+      if (typeof loadAccounts === 'function') loadAccounts();
     }
-    closeBulkEditModal();
-    if (typeof loadAccounts === 'function') loadAccounts();
   } catch (err) {
     toast('Error updating profiles: ' + err.message, 'error');
   } finally {
