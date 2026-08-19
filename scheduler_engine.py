@@ -775,6 +775,8 @@ def _scrape_target_tweets_commenters(
         start_idx = (scrape_round - 1) % len(cookies_pool_list)
         rotated_cookies = cookies_pool_list[start_idx:] + cookies_pool_list[:start_idx]
 
+        from Scweet import Scweet, ScweetConfig  # type: ignore
+
         cfg = ScweetConfig(daily_requests_limit=100000, daily_tweets_limit=100000)
         s = Scweet(
             cookies=rotated_cookies if len(rotated_cookies) > 1 else rotated_cookies[0],
