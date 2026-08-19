@@ -469,7 +469,7 @@ def _auto_heal_account_proxy(account_id: int, log_fn: Callable) -> Optional[str]
             from dashboard.betasocks_client import BetaSocksClient  # type: ignore
 
         client = BetaSocksClient()
-        fresh_proxies = client.fetch_available_proxies(country="all", limit=1, force=True)
+        fresh_proxies = client.fetch_available_proxies(country="all", limit=1)
 
         working_proxy = None
         for px in fresh_proxies:
