@@ -290,16 +290,25 @@ def update_profile_text(
                 page.goto("https://x.com/home", wait_until="domcontentloaded", timeout=25000)
                 time.sleep(3)
 
-                prof_nav = page.locator("a[data-testid='AppTabBar_Profile_Link']")
-                if prof_nav.count() > 0:
-                    prof_nav.click()
-                    time.sleep(3)
+                # Wait for profile link in sidebar and click
+                try:
+                    prof_nav = page.wait_for_selector("a[data-testid='AppTabBar_Profile_Link']", timeout=12000)
+                    if prof_nav:
+                        prof_nav.click()
+                        time.sleep(3)
+                except Exception:
+                    pass
 
-                edit_btn = page.locator("a[href$='/settings/profile'], button:has-text('Edit profile'), a:has-text('Edit profile')")
-                if edit_btn.count() > 0:
-                    edit_btn.first.click()
-                    time.sleep(2)
+                # Wait for Edit profile button and click
+                try:
+                    edit_btn = page.wait_for_selector("a[href$='/settings/profile'], button:has-text('Edit profile'), a:has-text('Edit profile'), [data-testid='editProfileButton']", timeout=10000)
+                    if edit_btn:
+                        edit_btn.click()
+                        time.sleep(2)
+                except Exception:
+                    pass
 
+                # Wait for profile inputs to appear in modal
                 try:
                     page.wait_for_selector("textarea[name='description'], input[name='location'], [data-testid='Profile_Save_Button']", timeout=10000)
                 except Exception:
