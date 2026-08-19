@@ -893,40 +893,6 @@
         <div class="form-actions" style="margin-top:12px;">
           <button class="btn btn-primary" onclick="loadVpsStatus()">↺ Refresh Server Status</button>
         </div>
-      </div>
-
-      <!-- Production Guide -->
-      <div class="card card-secondary" style="margin-top:16px;">
-        <div class="card-title">📦 Production Setup &amp; Custom Domain Guide</div>
-        <div style="font-size:13px;color:var(--text-2);line-height:1.6;">
-          <h4 style="margin:12px 0 4px;color:var(--text-1);">1. Will campaigns run when my PC is off?</h4>
-          <p><strong>Yes!</strong> When you deploy this application to a Virtual Private Server (VPS) such as
-            DigitalOcean, AWS EC2, Hetzner, Vultr, or Linode, the server runs continuously 24 hours a day, 7 days a
-            week. All active campaigns and scraping threads run on the VPS background scheduler.</p>
-
-          <h4 style="margin:12px 0 4px;color:var(--text-1);">2. Does it need a production database?</h4>
-          <p>Currently, the application runs on a single-file SQLite database (<code>dashboard.db</code>), which works
-            fine on a VPS filesystem. For publishing to a custom domain with high traffic, set the
-            <code>DATABASE_URL</code> environment variable (e.g. <code>postgresql://user:pass@host:5432/dbname</code>)
-            on your VPS to automatically enable production-grade PostgreSQL storage.</p>
-
-          <h4 style="margin:12px 0 4px;color:var(--text-1);">3. Production Deployment Commands (Copy &amp; Run on VPS)
-          </h4>
-          <pre
-            style="background:var(--bg-card);padding:12px;border-radius:6px;border:1px solid var(--border);font-family:monospace;font-size:12px;overflow-x:auto;color:var(--accent);"># 1. Clone your repo on VPS
-git clone https://github.com/yourusername/Scweet.git
-cd Scweet
-
-# 2. Create virtual environment & install requirements
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-
-# 3. Launch 24/7 background service with Gunicorn / Flask
-nohup python3 -m dashboard.app > app.log 2>&1 &
-</pre>
-        </div>
-      </div>
     </section>
 
   </main>
