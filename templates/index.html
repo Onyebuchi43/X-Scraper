@@ -384,7 +384,10 @@
             <div class="card-title" style="margin:0;">📊 Recent Scraping Jobs Database</div>
             <p class="field-hint" style="margin-top:4px;">All completed and active scraping jobs. Download CSV results directly or inspect logs.</p>
           </div>
-          <button class="btn btn-sm btn-ghost" onclick="loadScraperJobsTable()">🔄 Refresh</button>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <button class="btn btn-sm btn-ghost" onclick="loadScraperJobsTable()">🔄 Refresh</button>
+            <button class="btn btn-sm btn-danger" onclick="deleteAllJobs()">🗑️ Delete All Jobs</button>
+          </div>
         </div>
         <div class="table-wrap">
           <table class="data-table" id="scraper-jobs-table">

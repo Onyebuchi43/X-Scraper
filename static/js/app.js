@@ -957,11 +957,12 @@ async function deleteJob(id) {
 }
 
 async function deleteAllJobs() {
-  if (!confirm('Permanently delete ALL scrape jobs and their CSV files?')) return;
+  if (!confirm('Permanently delete ALL scraping jobs and their generated CSV files?')) return;
   const res = await api('/api/jobs/all', { method: 'DELETE' });
   if (res.error) { toast(res.error, 'error'); return; }
-  toast('All scrape jobs deleted', 'info');
-  loadJobs();
+  toast('All scraping jobs deleted', 'info');
+  clearScraperFeed();
+  loadScraperJobsTable();
   loadCSVFiles();
 }
 
