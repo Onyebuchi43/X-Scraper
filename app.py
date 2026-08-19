@@ -729,11 +729,52 @@ def list_campaigns():
     return jsonify(result)
 
 
+def validate_campaign_config(config: dict) -> tuple[bool, str]:
+    if not config.get("account_ids"):
+        return False, "At least one posting account must be selected in Step 5."
+    
+    post_template = (config.get("post_template") or "").strip()
+    if not post_template:
+        return False, "Tweet Template in Step 3 is required."
+    if "{taggings}" not in post_template:
+        return False, "Tweet Template in Step 3 must include the {taggings} placeholder."
+
+    posting_mode = config.get("posting_mode") or "list_card"
+    if posting_mode in ("list_card", "normal_card"):
+        if not (config.get("display_name") or "").strip():
+            return False, "Name / Display Name in Step 1 is required for Generated Card Image mode."
+        if not (config.get("body_text") or "").strip():
+            return False, "Tweet Body text in Step 1 is required for Generated Card Image mode."
+    elif posting_mode == "normal_custom":
+        if not config.get("normal_media_data") and not config.get("media_path"):
+            return False, "Custom Media Image upload in Step 2 is required for Normal Custom Image mode."
+
+    target_type = config.get("target_type") or "followers"
+    if target_type == "csv_list":
+        if not config.get("csv_handles"):
+            return False, "CSV handles list cannot be empty for CSV target mode."
+    elif target_type == "tweet_commenters":
+        src = (config.get("source_profiles") or "").strip()
+        if not src:
+            return False, "Tweet URL or numeric Tweet ID is required in Step 5."
+    else:
+        src = (config.get("source_profiles") or "").strip()
+        if not src:
+            return False, "Source profile username is required in Step 5."
+
+    return True, ""
+
+
 @app.route("/api/campaigns", methods=["POST"])
 def create_campaign():
     data = request.json or {}
     name = (data.get("name") or "Campaign").strip()
     config = data.get("config", {})
+
+    valid, err_msg = validate_campaign_config(config)
+    if not valid:
+        return jsonify({"error": err_msg}), 400
+
     conn = _db()
     cur = conn.execute(
         "INSERT INTO campaigns (name, config) VALUES (?,?)",

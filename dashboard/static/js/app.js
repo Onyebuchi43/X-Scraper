@@ -773,6 +773,33 @@ async function startCampaign() {
   const country_filter = (typeof campaignSelectedCountries !== 'undefined' && campaignSelectedCountries['c']) ? campaignSelectedCountries['c'].join(',') : '';
   const username = val('c-username') || (display_name ? display_name.toLowerCase().replace(/\s+/g, '') : '');
 
+  // Validate Tweet Template (Step 3) for all posting modes
+  if (!post_template || !post_template.trim()) {
+    toast('Please enter a Tweet Template in Step 3', 'error');
+    return;
+  }
+  if (!post_template.includes('{taggings}')) {
+    toast('Tweet Template in Step 3 must include the {taggings} placeholder where target usernames will be inserted.', 'error');
+    return;
+  }
+
+  // Validate Posting Mode Specific Required Parameters
+  if (posting_mode === 'list_card' || posting_mode === 'normal_card') {
+    if (!display_name || !display_name.trim()) {
+      toast('Please enter a Name / Display Name in Step 1 for the Generated Card Image', 'error');
+      return;
+    }
+    if (!body_text || !body_text.trim()) {
+      toast('Please enter the Tweet Body text in Step 1 for the Generated Card Image', 'error');
+      return;
+    }
+  } else if (posting_mode === 'normal_custom') {
+    if (!normal_media_data) {
+      toast('Please upload a Custom Media Image in Step 2 for Normal Custom Image mode', 'error');
+      return;
+    }
+  }
+
   const config = {
     account_ids: accountIds,
     target_type,
@@ -1302,10 +1329,31 @@ async function saveCampaignEdit() {
     editSourceProfiles = `CSV (${editCsvHandles.length} handles)`;
   }
 
+  const editPostingMode = val('edit-c-posting-mode') || 'list_card';
+  const editDisplayName = val('edit-c-display-name') || '';
+  const editBodyText = val('edit-c-body-text') || '';
+  const rawPostTemplate = val('edit-c-post-template') || '';
+
+  if (!rawPostTemplate || !rawPostTemplate.trim()) {
+    toast('Tweet Template is required in Edit Campaign', 'error');
+    return;
+  }
+
+  if (editPostingMode === 'list_card' || editPostingMode === 'normal_card') {
+    if (!editDisplayName || !editDisplayName.trim()) {
+      toast('Display Name in Step 1 is required for Generated Card Image mode', 'error');
+      return;
+    }
+    if (!editBodyText || !editBodyText.trim()) {
+      toast('Tweet Body text in Step 1 is required for Generated Card Image mode', 'error');
+      return;
+    }
+  }
+
   const updatedConfig = {
     ...prevConfig,
     account_ids,
-    posting_mode: val('edit-c-posting-mode') || 'list_card',
+    posting_mode: editPostingMode,
     target_type: editTargetType,
     source_profiles: editSourceProfiles,
     csv_handles: editCsvHandles,
