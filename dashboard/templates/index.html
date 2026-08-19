@@ -165,204 +165,249 @@
           files.</p>
       </div>
 
-      <div class="sub-tabs">
-        <button class="sub-tab active" onclick="switchSubTab('scraper','followers',this)">Followers</button>
-        <button class="sub-tab" onclick="switchSubTab('scraper','search',this)">Search</button>
-        <button class="sub-tab" onclick="switchSubTab('scraper','profile',this)">Profile Timeline</button>
-      </div>
+      <div class="campaign-grid">
+        <div class="campaign-col">
+          <div class="sub-tabs">
+            <button class="sub-tab active" onclick="switchSubTab('scraper','followers',this)">Followers</button>
+            <button class="sub-tab" onclick="switchSubTab('scraper','search',this)">Search</button>
+            <button class="sub-tab" onclick="switchSubTab('scraper','profile',this)">Profile Timeline</button>
+          </div>
 
-      <!-- Followers -->
-      <div class="sub-panel active" id="scraper-followers">
-        <div class="card card-form">
-          <div class="card-title">Followers Scraper</div>
-          <div class="form-grid form-grid-2">
-            <div class="form-group span-2">
-              <label>Scrape Target Type <span class="badge-required">required</span></label>
-              <select id="f-target-type" onchange="toggleScraperTargetType(this.value)">
-                <option value="followers" selected>👤 Followers of Target Profile(s)</option>
-                <option value="tweet_commenters">💬 Commenters / Replies of a Specific Tweet (URL or ID)</option>
-                <option value="target_tweets_commenters">🔥 Commenters on Target Profile's Recent/Top Tweets</option>
-              </select>
-            </div>
-            <div class="form-group span-2" id="group-scraper-target-input">
-              <label id="lbl-scraper-target-input">Target Profile(s) <span
-                  class="badge-required">required</span></label>
-              <input type="text" id="f-targets" placeholder="elonmusk, OpenAI, nasa (comma-separated)" />
-              <p class="field-hint" id="hint-scraper-target-input">Comma-separated usernames. Streamingly scrapes
-                followers without saving CSV files on disk.</p>
-            </div>
-            <div class="form-group">
-              <label>Limit</label>
-              <input type="number" id="f-limit" value="100" min="1" max="10000" />
-            </div>
-            <div class="form-group">
-              <label>Follower Count Range (Consumers vs Influencers)</label>
-              <div style="display:flex;gap:8px;align-items:center;">
-                <input type="number" id="f-min-followers" value="0" min="0" placeholder="Min (0)" />
-                <span>to</span>
-                <input type="number" id="f-max-followers" value="1000" min="0" placeholder="Max (1000)" />
-              </div>
-              <p class="field-hint">Defaults: 0 to 1,000 followers (filters out influencers &amp; celebrities)</p>
-            </div>
-            <div class="form-group span-2">
-              <label>Target Country Filter <span class="badge-optional">optional</span></label>
-              <select id="f-country" onchange="addCountryChip('f')">
-                <option value="" selected>➕ Select a Country to add to filter...</option>
-                <option value="Australia">🇦🇺 Australia</option>
-                <option value="Belgium">🇧🇪 Belgium</option>
-                <option value="Canada">🇨🇦 Canada</option>
-                <option value="Finland">🇫🇮 Finland</option>
-                <option value="France">🇫🇷 France</option>
-                <option value="Germany">🇩🇪 Germany</option>
-                <option value="Netherlands">🇳🇱 Netherlands</option>
-                <option value="New Zealand">🇳🇿 New Zealand</option>
-                <option value="Norway">🇳🇴 Norway</option>
-                <option value="United Kingdom">🇬🇧 United Kingdom</option>
-                <option value="United States">🇺🇸 United States</option>
-              </select>
-              <div style="display:flex;gap:6px;margin-top:8px;">
-                <input type="text" id="f-custom-country" placeholder="Or type a specific target country (e.g. Canada, Germany, Japan)..."
-                  style="flex:1;font-size:13px;" onkeydown="if(event.key==='Enter'){event.preventDefault();addCustomCountryChip('f');}" />
-                <button type="button" class="btn btn-sm btn-secondary" onclick="addCustomCountryChip('f')" style="white-space:nowrap;padding:6px 12px;font-size:12px;">+ Add Country</button>
-              </div>
-              <div id="f-country-tags" class="country-tags-container"
-                style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;"></div>
-              <p class="field-hint">Choose from the dropdown or type custom countries above. Click ✕ on any country badge to remove it. Leave empty for All Countries.</p>
-            </div>
-            <div class="form-group span-2">
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-                <label style="margin:0;">Accounts to use <span id="f-accounts-badge"
-                    style="font-size:12px;font-weight:600;margin-left:6px;"></span></label>
-                <div style="display:flex;gap:6px;">
-                  <button type="button" class="btn btn-sm btn-ghost" style="padding:2px 8px;font-size:11px;"
-                    onclick="selectAllAccounts('f-accounts', true)">Select All</button>
-                  <button type="button" class="btn btn-sm btn-ghost" style="padding:2px 8px;font-size:11px;"
-                    onclick="selectAllAccounts('f-accounts', false)">Deselect All</button>
+          <!-- Followers -->
+          <div class="sub-panel active" id="scraper-followers">
+            <div class="card card-form">
+              <div class="card-title">Followers Scraper</div>
+              <div class="form-grid form-grid-2">
+                <div class="form-group span-2">
+                  <label>Scrape Target Type <span class="badge-required">required</span></label>
+                  <select id="f-target-type" onchange="toggleScraperTargetType(this.value)">
+                    <option value="followers" selected>👤 Followers of Target Profile(s)</option>
+                    <option value="tweet_commenters">💬 Commenters / Replies of a Specific Tweet (URL or ID)</option>
+                    <option value="target_tweets_commenters">🔥 Commenters on Target Profile's Recent/Top Tweets</option>
+                  </select>
+                </div>
+                <div class="form-group span-2" id="group-scraper-target-input">
+                  <label id="lbl-scraper-target-input">Target Profile(s) <span
+                      class="badge-required">required</span></label>
+                  <input type="text" id="f-targets" placeholder="elonmusk, OpenAI, nasa (comma-separated)" />
+                  <p class="field-hint" id="hint-scraper-target-input">Comma-separated usernames. Streamingly scrapes
+                    followers without saving CSV files on disk.</p>
+                </div>
+                <div class="form-group">
+                  <label>Limit</label>
+                  <input type="number" id="f-limit" value="100" min="1" max="10000" />
+                </div>
+                <div class="form-group">
+                  <label>Follower Count Range (Consumers vs Influencers)</label>
+                  <div style="display:flex;gap:8px;align-items:center;">
+                    <input type="number" id="f-min-followers" value="0" min="0" placeholder="Min (0)" />
+                    <span>to</span>
+                    <input type="number" id="f-max-followers" value="1000" min="0" placeholder="Max (1000)" />
+                  </div>
+                  <p class="field-hint">Defaults: 0 to 1,000 followers (filters out influencers &amp; celebrities)</p>
+                </div>
+                <div class="form-group span-2">
+                  <label>Target Country Filter <span class="badge-optional">optional</span></label>
+                  <select id="f-country" onchange="addCountryChip('f')">
+                    <option value="" selected>➕ Select a Country to add to filter...</option>
+                    <option value="Australia">🇦🇺 Australia</option>
+                    <option value="Belgium">🇧🇪 Belgium</option>
+                    <option value="Canada">🇨🇦 Canada</option>
+                    <option value="Finland">🇫🇮 Finland</option>
+                    <option value="France">🇫🇷 France</option>
+                    <option value="Germany">🇩🇪 Germany</option>
+                    <option value="Netherlands">🇳🇱 Netherlands</option>
+                    <option value="New Zealand">🇳🇿 New Zealand</option>
+                    <option value="Norway">🇳🇴 Norway</option>
+                    <option value="United Kingdom">🇬🇧 United Kingdom</option>
+                    <option value="United States">🇺🇸 United States</option>
+                  </select>
+                  <div style="display:flex;gap:6px;margin-top:8px;">
+                    <input type="text" id="f-custom-country" placeholder="Or type a specific target country (e.g. Canada, Germany, Japan)..."
+                      style="flex:1;font-size:13px;" onkeydown="if(event.key==='Enter'){event.preventDefault();addCustomCountryChip('f');}" />
+                    <button type="button" class="btn btn-sm btn-secondary" onclick="addCustomCountryChip('f')" style="white-space:nowrap;padding:6px 12px;font-size:12px;">+ Add Country</button>
+                  </div>
+                  <div id="f-country-tags" class="country-tags-container"
+                    style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;"></div>
+                  <p class="field-hint">Choose from the dropdown or type custom countries above. Click ✕ on any country badge to remove it. Leave empty for All Countries.</p>
+                </div>
+                <div class="form-group span-2">
+                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                    <label style="margin:0;">Accounts to use <span id="f-accounts-badge"
+                        style="font-size:12px;font-weight:600;margin-left:6px;"></span></label>
+                    <div style="display:flex;gap:6px;">
+                      <button type="button" class="btn btn-sm btn-ghost" style="padding:2px 8px;font-size:11px;"
+                        onclick="selectAllAccounts('f-accounts', true)">Select All</button>
+                      <button type="button" class="btn btn-sm btn-ghost" style="padding:2px 8px;font-size:11px;"
+                        onclick="selectAllAccounts('f-accounts', false)">Deselect All</button>
+                    </div>
+                  </div>
+                  <select id="f-accounts" multiple class="multi-select"></select>
                 </div>
               </div>
-              <select id="f-accounts" multiple class="multi-select"></select>
+              <div class="form-actions">
+                <button class="btn btn-primary" onclick="startScrape('followers')">Start Scraping</button>
+              </div>
             </div>
           </div>
-          <div class="form-actions">
-            <button class="btn btn-primary" onclick="startScrape('followers')">Start Scraping</button>
-          </div>
-        </div>
-      </div>
 
-      <!-- Search -->
-      <div class="sub-panel" id="scraper-search">
-        <div class="card card-form">
-          <div class="card-title">Tweet Search</div>
-          <div class="form-grid form-grid-2">
-            <div class="form-group span-2">
-              <label>Search Query</label>
-              <input type="text" id="s-query" placeholder="bitcoin crypto OR ethereum..." />
-            </div>
-            <div class="form-group">
-              <label>From Users</label>
-              <input type="text" id="s-from-users" placeholder="elonmusk, OpenAI" />
-            </div>
-            <div class="form-group">
-              <label>Language</label>
-              <input type="text" id="s-lang" placeholder="en" />
-            </div>
-            <div class="form-group">
-              <label>Since (YYYY-MM-DD)</label>
-              <input type="date" id="s-since" />
-            </div>
-            <div class="form-group">
-              <label>Until (YYYY-MM-DD)</label>
-              <input type="date" id="s-until" />
-            </div>
-            <div class="form-group">
-              <label>Min Likes</label>
-              <input type="number" id="s-min-likes" placeholder="0" min="0" />
-            </div>
-            <div class="form-group">
-              <label>Min Retweets</label>
-              <input type="number" id="s-min-rt" placeholder="0" min="0" />
-            </div>
-            <div class="form-group">
-              <label>Display Type</label>
-              <select id="s-display">
-                <option value="Top">Top</option>
-                <option value="Latest">Latest</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>Limit</label>
-              <input type="number" id="s-limit" value="100" min="1" max="5000" />
-            </div>
-            <div class="form-group">
-              <label>Has Images</label>
-              <select id="s-has-images">
-                <option value="">Any</option>
-                <option value="true">Yes</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-                <label style="margin:0;">Accounts to use <span id="s-accounts-badge"
-                    style="font-size:12px;font-weight:600;margin-left:6px;"></span></label>
-                <div style="display:flex;gap:6px;">
-                  <button type="button" class="btn btn-sm btn-ghost" style="padding:2px 8px;font-size:11px;"
-                    onclick="selectAllAccounts('s-accounts', true)">Select All</button>
-                  <button type="button" class="btn btn-sm btn-ghost" style="padding:2px 8px;font-size:11px;"
-                    onclick="selectAllAccounts('s-accounts', false)">Deselect All</button>
+          <!-- Search -->
+          <div class="sub-panel" id="scraper-search">
+            <div class="card card-form">
+              <div class="card-title">Tweet Search</div>
+              <div class="form-grid form-grid-2">
+                <div class="form-group span-2">
+                  <label>Search Query</label>
+                  <input type="text" id="s-query" placeholder="bitcoin crypto OR ethereum..." />
+                </div>
+                <div class="form-group">
+                  <label>From Users</label>
+                  <input type="text" id="s-from-users" placeholder="elonmusk, OpenAI" />
+                </div>
+                <div class="form-group">
+                  <label>Language</label>
+                  <input type="text" id="s-lang" placeholder="en" />
+                </div>
+                <div class="form-group">
+                  <label>Since (YYYY-MM-DD)</label>
+                  <input type="date" id="s-since" />
+                </div>
+                <div class="form-group">
+                  <label>Until (YYYY-MM-DD)</label>
+                  <input type="date" id="s-until" />
+                </div>
+                <div class="form-group">
+                  <label>Min Likes</label>
+                  <input type="number" id="s-min-likes" placeholder="0" min="0" />
+                </div>
+                <div class="form-group">
+                  <label>Min Retweets</label>
+                  <input type="number" id="s-min-rt" placeholder="0" min="0" />
+                </div>
+                <div class="form-group">
+                  <label>Display Type</label>
+                  <select id="s-display">
+                    <option value="Top">Top</option>
+                    <option value="Latest">Latest</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Limit</label>
+                  <input type="number" id="s-limit" value="100" min="1" max="5000" />
+                </div>
+                <div class="form-group">
+                  <label>Has Images</label>
+                  <select id="s-has-images">
+                    <option value="">Any</option>
+                    <option value="true">Yes</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                    <label style="margin:0;">Accounts to use <span id="s-accounts-badge"
+                        style="font-size:12px;font-weight:600;margin-left:6px;"></span></label>
+                    <div style="display:flex;gap:6px;">
+                      <button type="button" class="btn btn-sm btn-ghost" style="padding:2px 8px;font-size:11px;"
+                        onclick="selectAllAccounts('s-accounts', true)">Select All</button>
+                      <button type="button" class="btn btn-sm btn-ghost" style="padding:2px 8px;font-size:11px;"
+                        onclick="selectAllAccounts('s-accounts', false)">Deselect All</button>
+                    </div>
+                  </div>
+                  <select id="s-accounts" multiple class="multi-select"></select>
                 </div>
               </div>
-              <select id="s-accounts" multiple class="multi-select"></select>
+              <div class="form-actions">
+                <button class="btn btn-primary" onclick="startScrape('search')">Start Search</button>
+              </div>
             </div>
           </div>
-          <div class="form-actions">
-            <button class="btn btn-primary" onclick="startScrape('search')">Start Search</button>
-          </div>
-        </div>
-      </div>
 
-      <!-- Profile Timeline -->
-      <div class="sub-panel" id="scraper-profile">
-        <div class="card card-form">
-          <div class="card-title">Profile Timeline</div>
-          <div class="form-grid form-grid-2">
-            <div class="form-group span-2">
-              <label>Profiles <span class="badge-required">required</span></label>
-              <input type="text" id="p-targets" placeholder="elonmusk, OpenAI" />
-            </div>
-            <div class="form-group">
-              <label>Limit</label>
-              <input type="number" id="p-limit" value="100" min="1" />
-            </div>
-            <div class="form-group span-2">
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-                <label style="margin:0;">Accounts to use <span id="p-accounts-badge"
-                    style="font-size:12px;font-weight:600;margin-left:6px;"></span></label>
-                <div style="display:flex;gap:6px;">
-                  <button type="button" class="btn btn-sm btn-ghost" style="padding:2px 8px;font-size:11px;"
-                    onclick="selectAllAccounts('p-accounts', true)">Select All</button>
-                  <button type="button" class="btn btn-sm btn-ghost" style="padding:2px 8px;font-size:11px;"
-                    onclick="selectAllAccounts('p-accounts', false)">Deselect All</button>
+          <!-- Profile Timeline -->
+          <div class="sub-panel" id="scraper-profile">
+            <div class="card card-form">
+              <div class="card-title">Profile Timeline</div>
+              <div class="form-grid form-grid-2">
+                <div class="form-group span-2">
+                  <label>Profiles <span class="badge-required">required</span></label>
+                  <input type="text" id="p-targets" placeholder="elonmusk, OpenAI" />
+                </div>
+                <div class="form-group">
+                  <label>Limit</label>
+                  <input type="number" id="p-limit" value="100" min="1" />
+                </div>
+                <div class="form-group span-2">
+                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                    <label style="margin:0;">Accounts to use <span id="p-accounts-badge"
+                        style="font-size:12px;font-weight:600;margin-left:6px;"></span></label>
+                    <div style="display:flex;gap:6px;">
+                      <button type="button" class="btn btn-sm btn-ghost" style="padding:2px 8px;font-size:11px;"
+                        onclick="selectAllAccounts('p-accounts', true)">Select All</button>
+                      <button type="button" class="btn btn-sm btn-ghost" style="padding:2px 8px;font-size:11px;"
+                        onclick="selectAllAccounts('p-accounts', false)">Deselect All</button>
+                    </div>
+                  </div>
+                  <select id="p-accounts" multiple class="multi-select"></select>
                 </div>
               </div>
-              <select id="p-accounts" multiple class="multi-select"></select>
+              <div class="form-actions">
+                <button class="btn btn-primary" onclick="startScrape('profile')">Fetch Tweets</button>
+              </div>
             </div>
           </div>
-          <div class="form-actions">
-            <button class="btn btn-primary" onclick="startScrape('profile')">Fetch Tweets</button>
+        </div>
+
+        <!-- Right Column: Live Scraping Feed -->
+        <div class="campaign-col" style="display:flex;flex-direction:column;gap:16px;">
+          <div class="card card-live" id="card-scraper-live">
+            <div class="card-title">Live Scraping Feed
+              <span class="campaign-status-pill" id="scraper-status-pill" data-s="idle">idle</span>
+            </div>
+            <div class="campaign-stats">
+              <div class="stat-box"><div class="stat-num" id="stat-scrape-count">--</div><div class="stat-label">Items Scraped</div></div>
+              <div class="stat-box"><div class="stat-num" id="stat-scrape-matched">--</div><div class="stat-label">Matched / Filtered</div></div>
+              <div class="stat-box"><div class="stat-num" id="stat-scrape-type" style="font-size:16px;line-height:26px;">--</div><div class="stat-label">Scraper Mode</div></div>
+            </div>
+            <div class="log-panel" id="scraper-live-log" style="min-height:240px;max-height:420px;">
+              <div class="log-entry log-info">No active scraping job running. Configure parameters on the left and click "Start Scraping" to monitor live scraping logs.</div>
+            </div>
+            <div class="form-actions" style="margin-top:12px;gap:8px;display:flex;flex-wrap:wrap;">
+              <button class="btn btn-ghost" onclick="copyScraperLogs()">📋 Copy Logs</button>
+              <button class="btn btn-primary" id="scraper-download-btn" style="display:none;" onclick="downloadJob()">⬇ Download CSV</button>
+              <button class="btn btn-ghost" onclick="clearScraperFeed()">🗑 Clear Feed</button>
+            </div>
           </div>
         </div>
-      </div>
+      </div><!-- /campaign-grid -->
 
-      <!-- Job monitor -->
-      <div class="card" id="scraper-job-monitor" style="display:none">
-        <div class="card-title">Job Progress <span class="spinner" id="job-spinner"></span></div>
-        <div class="job-status-bar">
-          <div class="status-pill" id="job-status-pill">running</div>
-          <span id="job-status-text">Starting...</span>
-          <button class="btn btn-sm btn-ghost" id="job-download-btn" style="display:none"
-            onclick="downloadJob()">Download CSV</button>
+      <!-- Recent Scraping Jobs Database -->
+      <div class="card" style="margin-top:24px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <div>
+            <div class="card-title" style="margin:0;">📊 Recent Scraping Jobs Database</div>
+            <p class="field-hint" style="margin-top:4px;">All completed and active scraping jobs. Download CSV results directly or inspect logs.</p>
+          </div>
+          <button class="btn btn-sm btn-ghost" onclick="loadScraperJobsTable()">🔄 Refresh</button>
         </div>
-        <div class="log-panel" id="job-log"></div>
+        <div class="table-wrap">
+          <table class="data-table" id="scraper-jobs-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Job Type</th>
+                <th>Status</th>
+                <th>Target / Query</th>
+                <th>Result CSV File</th>
+                <th>Created</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="scraper-jobs-tbody">
+              <tr>
+                <td colspan="7" class="empty-row">Loading scraping jobs...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </section>
 

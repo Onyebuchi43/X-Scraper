@@ -37,6 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
   renderCountryChips('c');
   renderCountryChips('edit-c');
   autoConnectActiveCampaign();
+  loadScraperJobsTable();
 
   // Global Escape key: close any open modal
   document.addEventListener('keydown', (e) => {
@@ -85,7 +86,7 @@ function switchTab(tab, el) {
   if (tab === 'accounts') loadAccounts();
   if (tab === 'creator') loadAccounts();
   if (tab === 'proxy') loadProxySettings();
-  if (tab === 'scraper') { loadAccountSelects(); loadCSVFiles(); }
+  if (tab === 'scraper') { loadAccountSelects(); loadCSVFiles(); loadScraperJobsTable(); }
   if (tab === 'campaign') { loadAccountSelects(); loadCampaignDbPanel(); loadVpsStatus(); }
   if (tab === 'results') { loadJobs(); loadCSVFiles(); }
   if (tab === 'vps') { loadVpsStatus(); }
@@ -534,9 +535,10 @@ async function startScrape(type) {
   if (res.error) { toast(res.error, 'error'); return; }
 
   currentJobId = res.job_id;
-  toast(`Job started: ${res.job_id.slice(0, 8)}`, 'success');
-  showJobMonitor();
+  toast(`Scrape job started: ${res.job_id.slice(0, 8)} 🚀`, 'success');
+  showScraperFeed(type, res.job_id);
   startJobPoll();
+  loadScraperJobsTable();
 }
 
 function getSelectedAccountIds(prefix) {
@@ -547,48 +549,201 @@ function getSelectedAccountIds(prefix) {
   return Array.from(el.selectedOptions).map(o => parseInt(o.value));
 }
 
-function showJobMonitor() {
-  const mon = document.getElementById('scraper-job-monitor');
-  if (mon) { mon.style.display = 'block'; mon.scrollIntoView({ behavior: 'smooth' }); }
-  document.getElementById('job-spinner').className = 'spinner';
-  document.getElementById('job-download-btn').style.display = 'none';
-  document.getElementById('job-log').innerHTML = '';
+function showScraperFeed(type, jobId) {
+  const pill = document.getElementById('scraper-status-pill');
+  if (pill) { pill.textContent = 'running'; pill.setAttribute('data-s', 'running'); }
+  const typeEl = document.getElementById('stat-scrape-type');
+  if (typeEl) typeEl.textContent = type ? type.toUpperCase() : '--';
+  const cntEl = document.getElementById('stat-scrape-count');
+  if (cntEl) cntEl.textContent = '0';
+  const matchEl = document.getElementById('stat-scrape-matched');
+  if (matchEl) matchEl.textContent = '0';
+  const dlBtn = document.getElementById('scraper-download-btn');
+  if (dlBtn) dlBtn.style.display = 'none';
+
+  const log = document.getElementById('scraper-live-log');
+  if (log) {
+    log.innerHTML = `<div class="log-entry log-info"><span class="log-ts">${new Date().toLocaleTimeString()}</span>🚀 Job ${jobId.slice(0, 8)} started (${type}). Initializing scraper pool...</div>`;
+  }
 }
 
 function startJobPoll() {
   if (jobPollInterval) clearInterval(jobPollInterval);
-  jobPollInterval = setInterval(pollJob, 2000);
+  jobPollInterval = setInterval(pollJob, 1500);
 }
 
 async function pollJob() {
   if (!currentJobId) return;
   const data = await api(`/api/jobs/${currentJobId}`);
-  updateJobUI(data);
+  if (!data || data.error) return;
+  updateScraperFeedUI(data);
+
   if (['done', 'error'].includes(data.status)) {
     clearInterval(jobPollInterval);
-    document.getElementById('job-spinner').className = '';
+    loadScraperJobsTable();
     if (data.status === 'done') {
-      document.getElementById('job-download-btn').style.display = 'inline-flex';
-      toast('Scrape completed!', 'success');
+      const dlBtn = document.getElementById('scraper-download-btn');
+      if (dlBtn) dlBtn.style.display = 'inline-flex';
+      toast('Scrape job completed successfully! 🎉', 'success');
       loadCSVFiles();
       loadCSVSelect();
     }
   }
 }
 
-function updateJobUI(data) {
-  const pill = document.getElementById('job-status-pill');
-  const txt = document.getElementById('job-status-text');
-  if (pill) { pill.textContent = data.status; pill.setAttribute('data-status', data.status); }
-  if (txt) txt.textContent = `Job ${data.id?.slice(0, 8)} · ${data.type}`;
-
-  const log = document.getElementById('job-log');
-  if (log && data.log) {
-    log.innerHTML = data.log.map(e =>
-      `<div class="log-entry log-info"><span class="log-ts">${e.ts}</span>${esc(e.msg)}</div>`
-    ).join('');
-    log.scrollTop = log.scrollHeight;
+function updateScraperFeedUI(data) {
+  const pill = document.getElementById('scraper-status-pill');
+  if (pill) {
+    pill.textContent = data.status || 'idle';
+    pill.setAttribute('data-s', data.status || 'idle');
   }
+  const typeEl = document.getElementById('stat-scrape-type');
+  if (typeEl && data.type) typeEl.textContent = data.type.toUpperCase();
+
+  const log = document.getElementById('scraper-live-log');
+  if (log && data.log && Array.isArray(data.log)) {
+    let rawItemsCount = 0;
+    let matchedCount = 0;
+
+    const formattedHTML = data.log.map(e => {
+      const msg = e.msg || '';
+      let cls = 'log-info';
+      if (msg.includes('ERROR') || msg.includes('failed') || msg.includes('🚨')) cls = 'log-error';
+      else if (msg.includes('WARNING') || msg.includes('RATE LIMIT') || msg.includes('⏳')) cls = 'log-warning';
+      else if (msg.includes('MATCH') || msg.includes('✓') || msg.includes('Done') || msg.includes('Saved')) cls = 'log-success';
+
+      // Parse matches
+      if (msg.includes('MATCH') || msg.includes('✓ MATCH')) matchedCount++;
+      const m1 = msg.match(/\[(\d+)\/(\d+)\]/);
+      if (m1 && parseInt(m1[1]) > rawItemsCount) rawItemsCount = parseInt(m1[1]);
+      const m2 = msg.match(/Scraped\s+(\d+)\s+total/i);
+      if (m2) rawItemsCount = parseInt(m2[1]);
+      const m3 = msg.match(/(\d+)\s+matched\s+criteria/i);
+      if (m3) matchedCount = parseInt(m3[1]);
+
+      return `<div class="log-entry ${cls}"><span class="log-ts">${esc(e.ts || '')}</span>${esc(msg)}</div>`;
+    }).join('');
+
+    const isAtBottom = (log.scrollHeight - log.scrollTop - log.clientHeight) < 80;
+    log.innerHTML = formattedHTML;
+    if (isAtBottom) log.scrollTop = log.scrollHeight;
+
+    const cntEl = document.getElementById('stat-scrape-count');
+    if (cntEl && rawItemsCount > 0) cntEl.textContent = rawItemsCount;
+    const matchEl = document.getElementById('stat-scrape-matched');
+    if (matchEl && matchedCount > 0) matchEl.textContent = matchedCount;
+  }
+
+  if (data.result_file) {
+    const dlBtn = document.getElementById('scraper-download-btn');
+    if (dlBtn) dlBtn.style.display = 'inline-flex';
+  }
+}
+
+function copyScraperLogs() {
+  const log = document.getElementById('scraper-live-log');
+  if (!log) return;
+  const text = log.innerText || '';
+  if (!text.trim()) { toast('No logs to copy', 'info'); return; }
+  navigator.clipboard.writeText(text).then(() => {
+    toast('Scraping logs copied to clipboard! 📋', 'success');
+  }).catch(() => {
+    toast('Failed to copy logs', 'error');
+  });
+}
+
+function clearScraperFeed() {
+  if (jobPollInterval) clearInterval(jobPollInterval);
+  currentJobId = null;
+  const pill = document.getElementById('scraper-status-pill');
+  if (pill) { pill.textContent = 'idle'; pill.setAttribute('data-s', 'idle'); }
+  const cntEl = document.getElementById('stat-scrape-count');
+  if (cntEl) cntEl.textContent = '--';
+  const matchEl = document.getElementById('stat-scrape-matched');
+  if (matchEl) matchEl.textContent = '--';
+  const typeEl = document.getElementById('stat-scrape-type');
+  if (typeEl) typeEl.textContent = '--';
+  const dlBtn = document.getElementById('scraper-download-btn');
+  if (dlBtn) dlBtn.style.display = 'none';
+
+  const log = document.getElementById('scraper-live-log');
+  if (log) {
+    log.innerHTML = '<div class="log-entry log-info">No active scraping job running. Configure parameters on the left and click "Start Scraping" to monitor live scraping logs.</div>';
+  }
+  toast('Scraper live feed cleared', 'info');
+}
+
+async function loadScraperJobsTable() {
+  const tbody = document.getElementById('scraper-jobs-tbody');
+  if (!tbody) return;
+  try {
+    const jobs = await api('/api/jobs');
+    if (!jobs || !Array.isArray(jobs) || !jobs.length) {
+      tbody.innerHTML = '<tr><td colspan="7" class="empty-row">No scraping jobs recorded yet</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = jobs.map(j => {
+      let paramsSummary = '--';
+      try {
+        const p = typeof j.params === 'string' ? JSON.parse(j.params || '{}') : (j.params || {});
+        if (p.targets) paramsSummary = `@${p.targets}`;
+        else if (p.query) paramsSummary = `Query: "${p.query}"`;
+        else if (p.target) paramsSummary = `@${p.target}`;
+      } catch (e) {
+        paramsSummary = String(j.params || '--');
+      }
+
+      const resFile = j.result_file ? j.result_file.split(/[\/\\]/).pop() : '--';
+      const createdStr = j.created_at ? new Date(j.created_at).toLocaleString() : '--';
+      const isDone = j.status === 'done';
+
+      return `
+        <tr>
+          <td><strong>#${j.id.slice(0, 8)}</strong></td>
+          <td><span class="badge badge-secondary" style="text-transform:uppercase;font-size:11px;">${esc(j.type || 'SCRAPE')}</span></td>
+          <td><span class="campaign-status-pill" data-s="${esc(j.status)}">${esc(j.status)}</span></td>
+          <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(paramsSummary)}">${esc(paramsSummary)}</td>
+          <td style="font-family:monospace;font-size:12px;color:var(--blue);">${esc(resFile)}</td>
+          <td style="font-size:12px;color:var(--text-3);">${esc(createdStr)}</td>
+          <td>
+            <div style="display:flex;gap:6px;">
+              ${isDone ? `<button class="btn btn-sm btn-ghost" onclick="downloadJobById('${j.id}')">⬇ CSV</button>` : ''}
+              <button class="btn btn-sm btn-ghost" onclick="viewJobInFeed('${j.id}')">👁 View Log</button>
+              <button class="btn btn-sm btn-danger" style="padding:2px 6px;font-size:11px;" onclick="deleteJobById('${j.id}')">✕</button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  } catch (err) {
+    console.warn("Failed to load scraper jobs table:", err);
+  }
+}
+
+async function downloadJobById(jobId) {
+  window.location.href = `/api/jobs/${jobId}/download`;
+}
+
+async function viewJobInFeed(jobId) {
+  currentJobId = jobId;
+  const data = await api(`/api/jobs/${jobId}`);
+  if (data && !data.error) {
+    updateScraperFeedUI(data);
+    const log = document.getElementById('scraper-live-log');
+    if (log) log.scrollIntoView({ behavior: 'smooth' });
+    toast(`Loaded log for Job #${jobId.slice(0, 8)}`, 'info');
+  }
+}
+
+async function deleteJobById(jobId) {
+  if (!confirm(`Delete scraping job #${jobId.slice(0, 8)}?`)) return;
+  const res = await api(`/api/jobs/${jobId}`, { method: 'DELETE' });
+  if (res.error) { toast(res.error, 'error'); return; }
+  toast('Job deleted', 'info');
+  if (currentJobId === jobId) clearScraperFeed();
+  loadScraperJobsTable();
+  loadCSVFiles();
 }
 
 async function downloadJob() {
