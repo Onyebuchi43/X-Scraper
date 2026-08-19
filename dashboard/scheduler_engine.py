@@ -257,9 +257,14 @@ def _scrape_followers(
             if alias.strip()
         ] if country_filter else []
 
-        fetch_limit = max(limit, 100) if (max_followers and max_followers < 1000000) else limit
+        # If filtering is active (country/follower count), expand raw fetch target so we collect the full requested match limit
+        if country_keywords or (max_followers and max_followers < 1000000):
+            fetch_limit = min(max(limit * 10, 400), 5000)
+        else:
+            fetch_limit = limit
+
         country_msg = f", 'Account based in' filter: {country_filter}" if country_filter else ""
-        log_fn("INFO", f"Initialising streaming Scweet scraper for source profiles: {source_profiles} (fetch limit: {fetch_limit}, followers range: {min_followers}-{max_followers}{country_msg})")
+        log_fn("INFO", f"Initialising streaming Scweet scraper for source profiles: {source_profiles} (target matches: {limit}, followers range: {min_followers}-{max_followers}{country_msg})")
         cfg = ScweetConfig(daily_requests_limit=100000, daily_tweets_limit=100000)
         s = Scweet(
             cookies=rotated_cookies if len(rotated_cookies) > 1 else rotated_cookies[0],
@@ -347,6 +352,9 @@ def _scrape_followers(
         if results:
             log_fn("INFO", f"Inspecting and filtering {len(results)} raw follower profiles (target: {min_followers:,}-{max_followers:,} followers)...")
             for idx, item in enumerate(results, 1):
+                if not country_keywords and len(candidate_items) >= limit:
+                    break
+
                 if isinstance(item, dict):
                     handle = (
                         item.get("username")
@@ -371,7 +379,7 @@ def _scrape_followers(
                         if matched_followers:
                             candidate_items.append({"handle": handle, "bio_location": loc_str})
                             if not country_keywords:
-                                log_fn("INFO", f"  [{idx}/{len(results)}] @{handle} ({fc_int:,} followers) ✓ MATCH")
+                                log_fn("INFO", f"  [{len(candidate_items)}/{limit}] @{handle} ({fc_int:,} followers) ✓ MATCH")
                             else:
                                 log_fn("INFO", f"  [{idx}/{len(results)}] @{handle} ({fc_int:,} followers) ✓ Follower range matched")
                         else:
@@ -382,7 +390,7 @@ def _scrape_followers(
                     if handle:
                         candidate_items.append({"handle": handle, "bio_location": ""})
                         if not country_keywords:
-                            log_fn("INFO", f"  [{idx}/{len(results)}] @{handle} ✓ MATCH")
+                            log_fn("INFO", f"  [{len(candidate_items)}/{limit}] @{handle} ✓ MATCH")
 
         # ── Step 2: "Account based in" country filter (AboutAccountQuery + Bio Location fallback) ────
         if country_keywords:
@@ -396,7 +404,7 @@ def _scrape_followers(
                 scrape_proxy = scrape_account.get("proxy")
                 skipped_cnt = len(candidate_items) - len(unprocessed_candidates)
                 skip_msg = f" ({skipped_cnt} previously checked handles skipped)" if skipped_cnt > 0 else ""
-                log_fn("INFO", f"Country filter '{country_filter}' active — inspecting location for {len(unprocessed_candidates)} candidate profiles{skip_msg}...")
+                log_fn("INFO", f"Country filter '{country_filter}' active — inspecting location for candidates (target matches: {limit}){skip_msg}...")
 
                 def check_candidate(cand):
                     h = cand["handle"]
@@ -408,6 +416,10 @@ def _scrape_followers(
                     futures = [executor.submit(check_candidate, item) for item in unprocessed_candidates]
                     checked_count = 0
                     for future in as_completed(futures):
+                        if len(handles) >= limit:
+                            for f in futures:
+                                f.cancel()
+                            break
                         checked_count += 1
                         handle, bio_loc, account_country = future.result()
                         checked_handles_set.add(handle)
@@ -419,13 +431,13 @@ def _scrape_followers(
                             country_lower = account_country.lower()
                             if any(ck in country_lower for ck in country_keywords):
                                 handles.append(handle)
-                                log_fn("INFO", f"  [{checked_count}/{len(unprocessed_candidates)}] @{handle}: Location '{account_country}' ✓ MATCH")
+                                log_fn("INFO", f"  [{len(handles)}/{limit}] @{handle}: Location '{account_country}' ✓ MATCH")
                             else:
                                 log_fn("INFO", f"  [{checked_count}/{len(unprocessed_candidates)}] @{handle}: Location '{account_country}' — skipped (not in {country_filter})")
                         else:
                             log_fn("INFO", f"  [{checked_count}/{len(unprocessed_candidates)}] @{handle}: Location unavailable — skipped")
         else:
-            handles = [c["handle"] for c in candidate_items]
+            handles = [c["handle"] for c in candidate_items][:limit]
 
         log_fn("INFO", f"Scraped {raw_count} total profiles from Twitter; {len(handles)} matched criteria ({min_followers}-{max_followers} followers{country_msg})")
         return handles, True, raw_count
