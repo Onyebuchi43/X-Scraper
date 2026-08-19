@@ -611,14 +611,25 @@ function updateScraperFeedUI(data) {
       else if (msg.includes('WARNING') || msg.includes('RATE LIMIT') || msg.includes('⏳')) cls = 'log-warning';
       else if (msg.includes('MATCH') || msg.includes('✓') || msg.includes('Done') || msg.includes('Saved')) cls = 'log-success';
 
-      // Parse matches
-      if (msg.includes('MATCH') || msg.includes('✓ MATCH')) matchedCount++;
-      const m1 = msg.match(/\[(\d+)\/(\d+)\]/);
-      if (m1 && parseInt(m1[1]) > rawItemsCount) rawItemsCount = parseInt(m1[1]);
-      const m2 = msg.match(/Scraped\s+(\d+)\s+total/i);
-      if (m2) rawItemsCount = parseInt(m2[1]);
-      const m3 = msg.match(/(\d+)\s+matched\s+criteria/i);
-      if (m3) matchedCount = parseInt(m3[1]);
+      // Parse verified matches (monotonic, strictly accurate):
+      const mMatch = msg.match(/\[(\d+)\/\d+\]\s+@[\w\d_]+.*✓ MATCH/);
+      if (mMatch) {
+        matchedCount = Math.max(matchedCount, parseInt(mMatch[1]));
+      }
+      const mSummary = msg.match(/(\d+)\s+matched\s+criteria/i);
+      if (mSummary) {
+        matchedCount = parseInt(mSummary[1]);
+      }
+      const mSaved = msg.match(/(\d+)\s+matched\s+profiles\s+saved/i);
+      if (mSaved) {
+        matchedCount = parseInt(mSaved[1]);
+      }
+
+      // Raw items count:
+      const mRaw = msg.match(/Scraped\s+(\d+)\s+total/i);
+      if (mRaw) rawItemsCount = Math.max(rawItemsCount, parseInt(mRaw[1]));
+      const mFilterRaw = msg.match(/filtering\s+(\d+)\s+raw/i);
+      if (mFilterRaw) rawItemsCount = Math.max(rawItemsCount, parseInt(mFilterRaw[1]));
 
       return `<div class="log-entry ${cls}"><span class="log-ts">${esc(e.ts || '')}</span>${esc(msg)}</div>`;
     }).join('');
@@ -628,9 +639,9 @@ function updateScraperFeedUI(data) {
     if (isAtBottom) log.scrollTop = log.scrollHeight;
 
     const cntEl = document.getElementById('stat-scrape-count');
-    if (cntEl && rawItemsCount > 0) cntEl.textContent = rawItemsCount;
+    if (cntEl) cntEl.textContent = rawItemsCount;
     const matchEl = document.getElementById('stat-scrape-matched');
-    if (matchEl && matchedCount > 0) matchEl.textContent = matchedCount;
+    if (matchEl) matchEl.textContent = matchedCount;
   }
 
   if (data.result_file) {
