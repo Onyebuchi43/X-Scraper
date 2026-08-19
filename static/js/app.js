@@ -493,26 +493,101 @@ function readFileAsDataURL(file) {
   });
 }
 
+function toggleScraperTargetType(val) {
+  const lbl = document.getElementById('lbl-scraper-target-input');
+  const inp = document.getElementById('f-targets');
+  const hint = document.getElementById('hint-scraper-target-input');
+  if (!lbl || !inp || !hint) return;
+
+  if (val === 'tweet_commenters') {
+    lbl.innerHTML = 'Target Tweet URL or ID <span class="badge-required">required</span>';
+    inp.placeholder = 'https://x.com/elonmusk/status/1880000000000000000 or 1880000000000000000';
+    hint.textContent = 'Direct URL of a tweet or its numeric ID. Scrapes active commenters & repliers on that tweet.';
+  } else if (val === 'target_tweets_commenters') {
+    lbl.innerHTML = 'Target Profile(s) <span class="badge-required">required</span>';
+    inp.placeholder = 'elonmusk, OpenAI, vitalikbuterin (comma-separated)';
+    hint.textContent = 'Target profile username(s). Automatically discovers their recent top tweets and scrapes active commenters.';
+  } else {
+    lbl.innerHTML = 'Target Profile(s) <span class="badge-required">required</span>';
+    inp.placeholder = 'elonmusk, OpenAI, nasa (comma-separated)';
+    hint.textContent = 'Comma-separated usernames. Streamingly scrapes followers without saving CSV files on disk.';
+  }
+}
+
 // ══ Scraping ══════════════════════════════════════════════════════════════════
 async function startScrape(type) {
   const accountIds = getSelectedAccountIds(type);
-  if (!accountIds.length) { toast('Select at least one account', 'error'); return; }
+  if (!accountIds.length) {
+    toast('Please select at least one active Twitter account to scrape with', 'error');
+    return;
+  }
 
   let payload = { account_ids: accountIds };
 
   if (type === 'followers') {
-    const targets = val('f-targets');
-    if (!targets) { toast('Enter at least one target profile or tweet URL', 'error'); return; }
-    payload.targets = targets;
-    payload.target_type = val('f-target-type') || 'followers';
-    payload.limit = parseInt(val('f-limit') || '100');
-    payload.min_followers = parseInt(val('f-min-followers') || '0');
-    payload.max_followers = parseInt(val('f-max-followers') || '1000');
+    const targetType = val('f-target-type') || 'followers';
+    const rawTargets = (val('f-targets') || '').trim();
+
+    if (!rawTargets) {
+      if (targetType === 'tweet_commenters') {
+        toast('Please enter a target Tweet URL or numeric Tweet ID', 'error');
+      } else {
+        toast('Please enter at least one target Twitter profile handle (e.g. elonmusk)', 'error');
+      }
+      return;
+    }
+
+    if (targetType === 'tweet_commenters') {
+      const isUrl = rawTargets.includes('/status/') || rawTargets.includes('status/');
+      const isNumeric = /^\d{5,}$/.test(rawTargets);
+      if (!isUrl && !isNumeric) {
+        toast('Invalid Tweet format: Please provide a full Tweet URL (e.g. https://x.com/user/status/123...) or numeric Tweet ID', 'error');
+        return;
+      }
+    } else {
+      if (rawTargets.includes('/status/')) {
+        toast('You entered a Tweet URL. Please switch Target Type to "Commenters of a Specific Tweet" or enter usernames here.', 'error');
+        return;
+      }
+    }
+
+    const limitVal = parseInt(val('f-limit') || '100');
+    if (isNaN(limitVal) || limitVal < 1) {
+      toast('Scrape limit must be a positive number of at least 1', 'error');
+      return;
+    }
+
+    const minF = parseInt(val('f-min-followers') || '0');
+    const maxF = parseInt(val('f-max-followers') || '1000');
+    if (minF < 0) {
+      toast('Min followers cannot be negative', 'error');
+      return;
+    }
+    if (maxF > 0 && minF > maxF) {
+      toast(`Min followers (${minF}) cannot be greater than Max followers (${maxF})`, 'error');
+      return;
+    }
+
+    payload.targets = rawTargets;
+    payload.target_type = targetType;
+    payload.limit = limitVal;
+    payload.min_followers = minF;
+    payload.max_followers = maxF;
     payload.country_filter = (typeof campaignSelectedCountries !== 'undefined' && campaignSelectedCountries['f']) ? campaignSelectedCountries['f'].join(',') : '';
   } else if (type === 'search') {
+    const q = (val('s-query') || '').trim();
+    if (!q) {
+      toast('Please enter a search keyword, hashtag, or query', 'error');
+      return;
+    }
+    const limitVal = parseInt(val('s-limit') || '100');
+    if (isNaN(limitVal) || limitVal < 1) {
+      toast('Search limit must be at least 1', 'error');
+      return;
+    }
     payload = {
       ...payload,
-      query: val('s-query'),
+      query: q,
       since: val('s-since'),
       until: val('s-until'),
       from_users: val('s-from-users'),
@@ -521,13 +596,21 @@ async function startScrape(type) {
       min_retweets: val('s-min-rt'),
       has_images: document.getElementById('s-has-images').value === 'true' ? true : null,
       display_type: val('s-display'),
-      limit: parseInt(val('s-limit') || '100'),
+      limit: limitVal,
     };
   } else if (type === 'profile') {
-    const targets = val('p-targets');
-    if (!targets) { toast('Enter at least one profile', 'error'); return; }
+    const targets = (val('p-targets') || '').trim();
+    if (!targets) {
+      toast('Please enter at least one Twitter profile username to fetch timeline', 'error');
+      return;
+    }
+    const limitVal = parseInt(val('p-limit') || '100');
+    if (isNaN(limitVal) || limitVal < 1) {
+      toast('Timeline limit must be at least 1', 'error');
+      return;
+    }
     payload.targets = targets;
-    payload.limit = parseInt(val('p-limit') || '100');
+    payload.limit = limitVal;
   }
 
   const res = await api(`/api/scrape/${type}`, { method: 'POST', body: JSON.stringify(payload) });

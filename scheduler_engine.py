@@ -639,56 +639,65 @@ def _scrape_tweet_commenters(
         if country_keywords:
             unprocessed_candidates = [c for c in candidate_items if c["handle"] not in checked_candidates_set]
             if unprocessed_candidates:
-                from concurrent.futures import ThreadPoolExecutor, as_completed
+                log_fn("INFO", f"Country filter '{country_filter}' active — inspecting location for {len(unprocessed_candidates)} commenters...")
 
-                scrape_auth = scrape_account["auth_token"]
-                scrape_ct0 = scrape_account["ct0"]
-                scrape_proxy = scrape_account.get("proxy")
+                checked_count = 0
+                for cand in unprocessed_candidates:
+                    if len(handles) >= limit:
+                        break
 
-                def check_candidate(cand):
                     h = cand["handle"]
+                    if h in checked_candidates_set:
+                        continue
+
                     bio_loc = cand["bio_location"]
                     cand_fc = cand.get("followers_count")
 
-                    if cand_fc is None and (min_followers > 0 or (max_followers and max_followers < 1000000)):
-                        try:
-                            from poster import get_profile_info
-                            pinfo = get_profile_info(scrape_auth, scrape_ct0, h, proxy=scrape_proxy)
-                            if pinfo and pinfo.get("followers_count") is not None:
-                                cand_fc = pinfo.get("followers_count")
-                        except Exception:
-                            pass
-
+                    # Followers check if specified
                     if cand_fc is not None and max_followers and max_followers > 0:
                         if not (min_followers <= cand_fc <= max_followers):
-                            return h, bio_loc, None, False, cand_fc
-
-                    cntry = fetch_account_based_in(scrape_auth, scrape_ct0, h, proxy=scrape_proxy, timeout=6, accounts_pool=pool_accounts)
-                    return h, bio_loc, cntry, True, cand_fc
-
-                with ThreadPoolExecutor(max_workers=3) as executor:
-                    futures = [executor.submit(check_candidate, item) for item in unprocessed_candidates]
-                    checked_count = 0
-                    for future in as_completed(futures):
-                        checked_count += 1
-                        handle, bio_loc, account_country, passed_fc, actual_fc = future.result()
-                        checked_candidates_set.add(handle)
-                        if not passed_fc:
-                            fc_str = f"{actual_fc}" if actual_fc is not None else "unknown"
-                            log_fn("DEBUG", f"  [{checked_count}/{len(unprocessed_candidates)}] @{handle}: Followers ({fc_str}) outside range {min_followers}-{max_followers} — skip")
+                            checked_count += 1
+                            checked_candidates_set.add(h)
+                            log_fn("DEBUG", f"  [{checked_count}/{len(unprocessed_candidates)}] @{h}: Followers ({cand_fc}) outside range {min_followers}-{max_followers} — skipped")
                             continue
+
+                    # Ground-truth AboutAccountQuery with pool rotation & adaptive 429 wait
+                    scrape_auth = scrape_account["auth_token"]
+                    scrape_ct0 = scrape_account["ct0"]
+                    scrape_proxy = scrape_account.get("proxy")
+
+                    while True:
+                        account_country = fetch_account_based_in(
+                            scrape_auth, scrape_ct0, h, proxy=scrape_proxy, timeout=8, accounts_pool=pool_accounts
+                        )
                         if account_country == "RATE_LIMITED":
-                            account_country = bio_loc
-                        if account_country:
-                            if any(ck in account_country.lower() for ck in country_keywords):
-                                handles.append(handle)
-                                log_fn("INFO", f"  [{checked_count}/{len(unprocessed_candidates)}] @{handle}: Location '{account_country}' ✓ MATCH")
-                            else:
-                                log_fn("DEBUG", f"  [{checked_count}/{len(unprocessed_candidates)}] @{handle}: Location '{account_country}' — skip")
+                            wait_time = max(get_pool_min_cooldown_remaining(pool_accounts), 30.0)
+                            log_fn("WARNING", f"⏳ Twitter 'About Account' rate limit reached across scraper pool. Pausing {int(wait_time)}s for window reset... Live scraping will auto-resume.")
+                            remaining = wait_time
+                            while remaining > 0:
+                                sleep_chunk = min(remaining, 15.0)
+                                _time.sleep(sleep_chunk)
+                                remaining -= sleep_chunk
+                                if remaining > 0 and int(remaining) % 60 == 0:
+                                    log_fn("INFO", f"⏳ Rate limit cooldown active: {int(remaining)}s remaining until auto-resume...")
+                            log_fn("INFO", "🔄 Window reset! Resuming ground-truth location inspection...")
+                            continue
+                        break
+
+                    checked_count += 1
+                    checked_candidates_set.add(h)
+
+                    if account_country:
+                        country_lower = account_country.lower()
+                        if any(ck in country_lower for ck in country_keywords):
+                            handles.append(h)
+                            log_fn("INFO", f"  [{len(handles)}/{limit}] @{h}: Location '{account_country}' ✓ MATCH")
                         else:
-                            log_fn("DEBUG", f"  [{checked_count}/{len(unprocessed_candidates)}] @{handle}: Location unavailable — skip")
+                            log_fn("INFO", f"  [{checked_count}/{len(unprocessed_candidates)}] @{h}: Location '{account_country}' — skipped (not in {country_filter})")
+                    else:
+                        log_fn("INFO", f"  [{checked_count}/{len(unprocessed_candidates)}] @{h}: Location not listed on profile — skipped")
         else:
-            handles = [c["handle"] for c in candidate_items if c["handle"] not in checked_candidates_set]
+            handles = [c["handle"] for c in candidate_items if c["handle"] not in checked_candidates_set][:limit]
 
         unique_handles = list(dict.fromkeys(handles))
         log_fn("INFO", f"Scraped {raw_count} commenter handles for target {target_clean}; {len(unique_handles)} matched criteria")
@@ -849,56 +858,65 @@ def _scrape_target_tweets_commenters(
         if country_keywords:
             unprocessed_candidates = [c for c in candidate_items if c["handle"] not in checked_candidates_set]
             if unprocessed_candidates:
-                from concurrent.futures import ThreadPoolExecutor, as_completed
+                log_fn("INFO", f"Country filter '{country_filter}' active — inspecting location for {len(unprocessed_candidates)} top tweet commenters...")
 
-                scrape_auth = scrape_account["auth_token"]
-                scrape_ct0 = scrape_account["ct0"]
-                scrape_proxy = scrape_account.get("proxy")
+                checked_count = 0
+                for cand in unprocessed_candidates:
+                    if len(handles) >= limit:
+                        break
 
-                def check_candidate(cand):
                     h = cand["handle"]
+                    if h in checked_candidates_set:
+                        continue
+
                     bio_loc = cand["bio_location"]
                     cand_fc = cand.get("followers_count")
 
-                    if cand_fc is None and (min_followers > 0 or (max_followers and max_followers < 1000000)):
-                        try:
-                            from poster import get_profile_info
-                            pinfo = get_profile_info(scrape_auth, scrape_ct0, h, proxy=scrape_proxy)
-                            if pinfo and pinfo.get("followers_count") is not None:
-                                cand_fc = pinfo.get("followers_count")
-                        except Exception:
-                            pass
-
+                    # Followers check if specified
                     if cand_fc is not None and max_followers and max_followers > 0:
                         if not (min_followers <= cand_fc <= max_followers):
-                            return h, bio_loc, None, False, cand_fc
-
-                    cntry = fetch_account_based_in(scrape_auth, scrape_ct0, h, proxy=scrape_proxy, timeout=6, accounts_pool=pool_accounts)
-                    return h, bio_loc, cntry, True, cand_fc
-
-                with ThreadPoolExecutor(max_workers=3) as executor:
-                    futures = [executor.submit(check_candidate, item) for item in unprocessed_candidates]
-                    checked_count = 0
-                    for future in as_completed(futures):
-                        checked_count += 1
-                        handle, bio_loc, account_country, passed_fc, actual_fc = future.result()
-                        checked_candidates_set.add(handle)
-                        if not passed_fc:
-                            fc_str = f"{actual_fc}" if actual_fc is not None else "unknown"
-                            log_fn("DEBUG", f"  [{checked_count}/{len(unprocessed_candidates)}] @{handle}: Followers ({fc_str}) outside range {min_followers}-{max_followers} — skip")
+                            checked_count += 1
+                            checked_candidates_set.add(h)
+                            log_fn("DEBUG", f"  [{checked_count}/{len(unprocessed_candidates)}] @{h}: Followers ({cand_fc}) outside range {min_followers}-{max_followers} — skipped")
                             continue
+
+                    # Ground-truth AboutAccountQuery with pool rotation & adaptive 429 wait
+                    scrape_auth = scrape_account["auth_token"]
+                    scrape_ct0 = scrape_account["ct0"]
+                    scrape_proxy = scrape_account.get("proxy")
+
+                    while True:
+                        account_country = fetch_account_based_in(
+                            scrape_auth, scrape_ct0, h, proxy=scrape_proxy, timeout=8, accounts_pool=pool_accounts
+                        )
                         if account_country == "RATE_LIMITED":
-                            account_country = bio_loc
-                        if account_country:
-                            if any(ck in account_country.lower() for ck in country_keywords):
-                                handles.append(handle)
-                                log_fn("INFO", f"  [{checked_count}/{len(unprocessed_candidates)}] @{handle}: Location '{account_country}' ✓ MATCH")
-                            else:
-                                log_fn("DEBUG", f"  [{checked_count}/{len(unprocessed_candidates)}] @{handle}: Location '{account_country}' — skip")
+                            wait_time = max(get_pool_min_cooldown_remaining(pool_accounts), 30.0)
+                            log_fn("WARNING", f"⏳ Twitter 'About Account' rate limit reached across scraper pool. Pausing {int(wait_time)}s for window reset... Live scraping will auto-resume.")
+                            remaining = wait_time
+                            while remaining > 0:
+                                sleep_chunk = min(remaining, 15.0)
+                                _time.sleep(sleep_chunk)
+                                remaining -= sleep_chunk
+                                if remaining > 0 and int(remaining) % 60 == 0:
+                                    log_fn("INFO", f"⏳ Rate limit cooldown active: {int(remaining)}s remaining until auto-resume...")
+                            log_fn("INFO", "🔄 Window reset! Resuming ground-truth location inspection...")
+                            continue
+                        break
+
+                    checked_count += 1
+                    checked_candidates_set.add(h)
+
+                    if account_country:
+                        country_lower = account_country.lower()
+                        if any(ck in country_lower for ck in country_keywords):
+                            handles.append(h)
+                            log_fn("INFO", f"  [{len(handles)}/{limit}] @{h}: Location '{account_country}' ✓ MATCH")
                         else:
-                            log_fn("DEBUG", f"  [{checked_count}/{len(unprocessed_candidates)}] @{handle}: Location unavailable — skip")
+                            log_fn("INFO", f"  [{checked_count}/{len(unprocessed_candidates)}] @{h}: Location '{account_country}' — skipped (not in {country_filter})")
+                    else:
+                        log_fn("INFO", f"  [{checked_count}/{len(unprocessed_candidates)}] @{h}: Location not listed on profile — skipped")
         else:
-            handles = [c["handle"] for c in candidate_items if c["handle"] not in checked_candidates_set]
+            handles = [c["handle"] for c in candidate_items if c["handle"] not in checked_candidates_set][:limit]
 
         unique_handles = list(dict.fromkeys(handles))
         log_fn("INFO", f"Scraped {raw_count} total comments from recent top tweets; {len(unique_handles)} matched criteria")
