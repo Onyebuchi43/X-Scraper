@@ -34,9 +34,6 @@
       <li class="nav-item" data-tab="campaign" onclick="switchTab('campaign',this)">
         <span class="nav-icon">&#128640;</span><span class="nav-label">Campaign</span>
       </li>
-      <li class="nav-item" data-tab="results" onclick="switchTab('results',this)">
-        <span class="nav-icon">&#128202;</span><span class="nav-label">Results</span>
-      </li>
       <li class="nav-item" data-tab="vps" onclick="switchTab('vps',this)">
         <span class="nav-icon">🌐</span><span class="nav-label">VPS &amp; Production</span>
       </li>
@@ -853,47 +850,6 @@
           users it has already tagged so they are never tagged again. You can clear this history to restart tagging from
           scratch or delete campaigns.</p>
         <div id="campaign-db-list"></div>
-      </div>
-    </section>
-
-    <!-- ======= TAB: RESULTS ======= -->
-    <section class="tab-panel" id="tab-results">
-      <div class="panel-header">
-        <h2>Results and Files</h2>
-        <p class="panel-sub">All scrape jobs and their downloadable CSV outputs.</p>
-      </div>
-
-      <div class="card">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-          <div class="card-title" style="margin:0;">Scrape Jobs</div>
-          <div style="display:flex;gap:8px;">
-            <button class="btn btn-sm btn-ghost" onclick="loadJobs()">↺ Refresh</button>
-            <button class="btn btn-sm btn-danger" onclick="deleteAllJobs()">🗑 Clear All Jobs</button>
-          </div>
-        </div>
-        <div class="table-wrap">
-          <table class="data-table" id="jobs-table">
-            <thead>
-              <tr>
-                <th>Target</th>
-                <th>Type</th>
-                <th>Status</th>
-                <th>Created</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody id="jobs-tbody">
-              <tr>
-                <td colspan="5" class="empty-row">No jobs yet</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">Available CSV Files</div>
-        <div id="csv-files-list" class="files-grid"></div>
       </div>
     </section>
 

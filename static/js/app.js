@@ -70,7 +70,6 @@ const TAB_TITLES = {
   proxy: 'Proxy & BetaSocks Settings',
   scraper: 'Twitter Scraper',
   campaign: 'Post Campaign',
-  results: 'Results & Files',
   vps: 'VPS & Production Server Manager',
 };
 
@@ -88,7 +87,6 @@ function switchTab(tab, el) {
   if (tab === 'proxy') loadProxySettings();
   if (tab === 'scraper') { loadAccountSelects(); loadCSVFiles(); loadScraperJobsTable(); }
   if (tab === 'campaign') { loadAccountSelects(); loadCampaignDbPanel(); loadVpsStatus(); }
-  if (tab === 'results') { loadJobs(); loadCSVFiles(); }
   if (tab === 'vps') { loadVpsStatus(); }
 }
 

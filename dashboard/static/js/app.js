@@ -66,11 +66,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
 const TAB_TITLES = {
   accounts: 'Account Manager',
+  creator: 'Account Creator & Bulk Tools',
   proxy: 'Proxy & BetaSocks Settings',
   scraper: 'Twitter Scraper',
   campaign: 'Post Campaign',
-  results: 'Scrape Results',
-  vps: 'VPS & Production Status',
+  vps: 'VPS & Production Server Manager',
 };
 
 function switchTab(tab, el) {
@@ -83,10 +83,10 @@ function switchTab(tab, el) {
   currentTab = tab;
 
   if (tab === 'accounts') loadAccounts();
+  if (tab === 'creator') loadAccounts();
   if (tab === 'proxy') loadProxySettings();
   if (tab === 'scraper') { loadAccountSelects(); loadCSVFiles(); loadScraperJobsTable(); }
   if (tab === 'campaign') { loadAccountSelects(); loadCampaignDbPanel(); loadVpsStatus(); }
-  if (tab === 'results') { loadJobs(); loadCSVFiles(); }
   if (tab === 'vps') { loadVpsStatus(); }
 }
 
