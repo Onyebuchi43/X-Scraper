@@ -301,7 +301,7 @@ def _scrape_followers(
         _scweet_logger = _logging.getLogger("Scweet.api_engine")
         _scweet_logger.addHandler(_capture)
         try:
-            results = s.get_followers(source_profiles, limit=fetch_limit, save=False, resume=True)
+            results = s.get_followers(source_profiles, limit=fetch_limit, save=False, resume=False)
         finally:
             _scweet_logger.removeHandler(_capture)
 
@@ -338,14 +338,15 @@ def _scrape_followers(
                     cookies=cookies_pool_list if len(cookies_pool_list) > 1 else cookies_pool_list[0],
                     config=cfg,
                 )
-                results = s.get_followers(source_profiles, limit=fetch_limit, save=False, resume=True)
+                results = s.get_followers(source_profiles, limit=fetch_limit, save=False, resume=False)
 
         raw_count = len(results) if results else 0
 
-        # ── Step 1: follower count filter (fast, no extra API calls) ─────────
+        # ── Step 1: follower count filter (with granular per-candidate live streaming) ─────────
         candidate_items: List[dict] = []
         if results:
-            for item in results:
+            log_fn("INFO", f"Inspecting and filtering {len(results)} raw follower profiles (target: {min_followers:,}-{max_followers:,} followers)...")
+            for idx, item in enumerate(results, 1):
                 if isinstance(item, dict):
                     handle = (
                         item.get("username")
@@ -355,19 +356,33 @@ def _scrape_followers(
                     ).strip().lstrip("@").lower()
                     loc_str = str(item.get("location") or "").strip().lower()
                     fc = item.get("followers_count") or item.get("followers") or item.get("followers_cnt")
+                    
+                    matched_followers = True
+                    fc_int = 0
                     if fc is not None and max_followers and max_followers > 0:
                         try:
-                            val = int(fc)
-                            if not (min_followers <= val <= max_followers):
-                                continue
+                            fc_int = int(fc)
+                            if not (min_followers <= fc_int <= max_followers):
+                                matched_followers = False
                         except (ValueError, TypeError):
                             pass
+
                     if handle:
-                        candidate_items.append({"handle": handle, "bio_location": loc_str})
+                        if matched_followers:
+                            candidate_items.append({"handle": handle, "bio_location": loc_str})
+                            if not country_keywords:
+                                log_fn("INFO", f"  [{idx}/{len(results)}] @{handle} ({fc_int:,} followers) ✓ MATCH")
+                            else:
+                                log_fn("INFO", f"  [{idx}/{len(results)}] @{handle} ({fc_int:,} followers) ✓ Follower range matched")
+                        else:
+                            log_fn("INFO", f"  [{idx}/{len(results)}] @{handle} ({fc_int:,} followers) — skipped (outside {min_followers}-{max_followers})")
+
                 elif isinstance(item, str):
                     handle = item.strip().lstrip("@").lower()
                     if handle:
                         candidate_items.append({"handle": handle, "bio_location": ""})
+                        if not country_keywords:
+                            log_fn("INFO", f"  [{idx}/{len(results)}] @{handle} ✓ MATCH")
 
         # ── Step 2: "Account based in" country filter (AboutAccountQuery + Bio Location fallback) ────
         if country_keywords:
@@ -381,7 +396,7 @@ def _scrape_followers(
                 scrape_proxy = scrape_account.get("proxy")
                 skipped_cnt = len(candidate_items) - len(unprocessed_candidates)
                 skip_msg = f" ({skipped_cnt} previously checked handles skipped)" if skipped_cnt > 0 else ""
-                log_fn("INFO", f"Country filter active — checking location for {len(unprocessed_candidates)} new candidates{skip_msg}...")
+                log_fn("INFO", f"Country filter '{country_filter}' active — inspecting location for {len(unprocessed_candidates)} candidate profiles{skip_msg}...")
 
                 def check_candidate(cand):
                     h = cand["handle"]
@@ -398,7 +413,6 @@ def _scrape_followers(
                         checked_handles_set.add(handle)
 
                         if account_country == "RATE_LIMITED":
-                            # AboutAccountQuery rate limited — fallback instantly to bio location without 45s delay!
                             account_country = bio_loc
 
                         if account_country:
@@ -407,9 +421,9 @@ def _scrape_followers(
                                 handles.append(handle)
                                 log_fn("INFO", f"  [{checked_count}/{len(unprocessed_candidates)}] @{handle}: Location '{account_country}' ✓ MATCH")
                             else:
-                                log_fn("DEBUG", f"  [{checked_count}/{len(unprocessed_candidates)}] @{handle}: Location '{account_country}' — skip")
+                                log_fn("INFO", f"  [{checked_count}/{len(unprocessed_candidates)}] @{handle}: Location '{account_country}' — skipped (not in {country_filter})")
                         else:
-                            log_fn("DEBUG", f"  [{checked_count}/{len(unprocessed_candidates)}] @{handle}: Location unavailable — skip")
+                            log_fn("INFO", f"  [{checked_count}/{len(unprocessed_candidates)}] @{handle}: Location unavailable — skipped")
         else:
             handles = [c["handle"] for c in candidate_items]
 
