@@ -504,8 +504,9 @@ async function startScrape(type) {
 
   if (type === 'followers') {
     const targets = val('f-targets');
-    if (!targets) { toast('Enter at least one target profile', 'error'); return; }
+    if (!targets) { toast('Enter at least one target profile or tweet URL', 'error'); return; }
     payload.targets = targets;
+    payload.target_type = val('f-target-type') || 'followers';
     payload.limit = parseInt(val('f-limit') || '100');
     payload.min_followers = parseInt(val('f-min-followers') || '0');
     payload.max_followers = parseInt(val('f-max-followers') || '1000');

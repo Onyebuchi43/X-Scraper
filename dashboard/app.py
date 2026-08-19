@@ -255,6 +255,7 @@ def _run_scrape_job(job_id: str, job_type: str, params: dict) -> None:
 
         results = []
         save_name = f"job_{job_id[:8]}"
+        log_fn = lambda level, msg: _append_job_log(job_id, f"[{level}] {msg}")
 
         if job_type == "followers":
             targets = params.get("targets", [])
@@ -266,58 +267,47 @@ def _run_scrape_job(job_id: str, job_type: str, params: dict) -> None:
 
             if target_type == "tweet_commenters":
                 from scheduler_engine import _scrape_tweet_commenters
-                _append_job_log(job_id, f"Scraping commenters of tweet/URL {targets} (limit={limit}, range: {min_followers}-{max_followers}, country: '{country_filter}')")
+                log_fn("INFO", f"Scraping commenters of tweet/URL {targets} (limit={limit}, range: {min_followers}-{max_followers}, country: '{country_filter}')")
                 tweet_target = targets[0] if isinstance(targets, list) and targets else str(targets)
                 handles, ok, raw_count = _scrape_tweet_commenters(
-                    tweet_target, cookies_list, limit, lambda level, msg: _append_job_log(job_id, f"[{level}] {msg}"),
+                    tweet_target, cookies_list, limit, log_fn,
                     min_followers=min_followers, max_followers=max_followers,
                     country_filter=country_filter
                 )
-                results = [{"username": h} for h in handles]
-
             elif target_type == "target_tweets_commenters":
                 from scheduler_engine import _scrape_target_tweets_commenters
-                _append_job_log(job_id, f"Scraping recent top tweets commenters of {targets} (limit={limit}, range: {min_followers}-{max_followers}, country: '{country_filter}')")
+                log_fn("INFO", f"Scraping recent top tweets commenters of {targets} (limit={limit}, range: {min_followers}-{max_followers}, country: '{country_filter}')")
                 handles, ok, raw_count = _scrape_target_tweets_commenters(
                     targets if isinstance(targets, list) else [str(targets)],
-                    cookies_list, limit,
-                    lambda level, msg: _append_job_log(job_id, f"[{level}] {msg}"),
+                    cookies_list, limit, log_fn,
                     min_followers=min_followers, max_followers=max_followers,
                     country_filter=country_filter
                 )
-                results = [{"username": h} for h in handles]
-
             else:
-                _append_job_log(job_id, f"Scraping followers of {targets} (limit={limit}, range: {min_followers}-{max_followers})")
-                results = s.get_followers(targets, limit=limit, save=True, save_name=save_name)
+                from scheduler_engine import _scrape_followers
+                log_fn("INFO", f"Scraping followers of {targets} (limit={limit}, range: {min_followers}-{max_followers}, country: '{country_filter}')")
+                handles, ok, raw_count = _scrape_followers(
+                    targets if isinstance(targets, list) else [str(targets)],
+                    cookies_list, limit, log_fn,
+                    min_followers=min_followers, max_followers=max_followers,
+                    country_filter=country_filter
+                )
 
-                if country_filter and results:
-                    import time as _time
-                    from poster import fetch_account_based_in  # type: ignore
-                    country_keywords = [c.strip().lower() for c in country_filter.split(",") if c.strip()]
-                    _append_job_log(job_id, f"Country filter '{country_filter}' — fetching 'Account based in' for {len(results)} profiles via AboutAccountQuery...")
-                    scrape_cookies = cookies_list[0] if cookies_list else {}
-                    scrape_auth  = scrape_cookies.get("auth_token", "")
-                    scrape_ct0   = scrape_cookies.get("ct0", "")
-                    scrape_proxy = scrape_cookies.get("proxy")
-                    filtered = []
-                    for r in results:
-                        username = ""
-                        if isinstance(r, dict):
-                            username = (r.get("username") or r.get("screen_name") or "").strip().lstrip("@")
-                        elif isinstance(r, str):
-                            username = r.strip().lstrip("@")
-                        if not username:
-                            continue
-                        account_country = fetch_account_based_in(scrape_auth, scrape_ct0, username, proxy=scrape_proxy)
-                        if account_country and any(ck in account_country.lower() for ck in country_keywords):
-                            filtered.append(r)
-                        _time.sleep(0.3)
-                    _append_job_log(job_id, f"Filtered by 'Account based in' '{country_filter}': {len(filtered)} / {len(results)} matches")
-                    results = filtered
+            os.makedirs("outputs", exist_ok=True)
+            result_file = os.path.join("outputs", f"{save_name}.csv")
+            import csv as _csv, datetime as _dt
+            with open(result_file, "w", newline="", encoding="utf-8") as f:
+                writer = _csv.writer(f)
+                writer.writerow(["username", "scraped_at", "source_target", "target_type"])
+                for h in handles:
+                    writer.writerow([h, _dt.datetime.now().isoformat(), ",".join(targets) if isinstance(targets, list) else str(targets), target_type])
+
+            _update_job(job_id, status="done", result_file=result_file)
+            log_fn("SUCCESS", f"Scraping completed! {len(handles)} matched profiles saved -> {result_file}")
+            return
 
         elif job_type == "search":
-            _append_job_log(job_id, "Running tweet search…")
+            log_fn("INFO", f"Running tweet search for query: '{params.get('query')}' (limit={params.get('limit', 100)})…")
             results = s.search(
                 params.get("query", ""),
                 since=params.get("since") or None,
@@ -336,12 +326,12 @@ def _run_scrape_job(job_id: str, job_type: str, params: dict) -> None:
         elif job_type == "profile":
             targets = params.get("targets", [])
             limit = int(params.get("limit", 100))
-            _append_job_log(job_id, f"Fetching profile tweets for {targets}")
+            log_fn("INFO", f"Fetching profile timeline tweets for {targets} (limit={limit})…")
             results = s.get_profile_tweets(targets, limit=limit, save=True, save_name=save_name)
 
         result_file = os.path.join("outputs", f"{save_name}.csv")
         _update_job(job_id, status="done", result_file=result_file)
-        _append_job_log(job_id, f"Done — {len(results)} results -> {result_file}")
+        log_fn("SUCCESS", f"Done — {len(results)} results saved -> {result_file}")
 
     except Exception as exc:
         logger.exception("Scrape job %s failed", job_id)
@@ -484,10 +474,12 @@ def scrape_followers():
         return jsonify({"error": "targets required"}), 400
     params = {
         "targets": targets,
-        "limit": data.get("limit", 100),
+        "target_type": data.get("target_type", "followers"),
+        "limit": int(data.get("limit", 100)),
         "account_ids": data.get("account_ids", []),
-        "min_followers": data.get("min_followers", 0),
-        "max_followers": data.get("max_followers", 1000),
+        "min_followers": int(data.get("min_followers", 0)),
+        "max_followers": int(data.get("max_followers", 1000)),
+        "country_filter": (data.get("country_filter") or "").strip(),
     }
     job_id = _start_job("followers", params)
     return jsonify({"job_id": job_id})
