@@ -72,14 +72,25 @@ def get_proxy_settings() -> dict:
 
 def update_proxy_settings(email: str, password: str, daily_limit: int) -> bool:
     conn = sqlite3.connect(DASH_DB)
+    # If the user sets/adjusts daily limit, ensure fetched_today_count does not exceed new limit
+    today_str = time.strftime("%Y-%m-%d")
     conn.execute(
         """
         UPDATE proxy_settings
-        SET betasocks_email=?, betasocks_password=?, daily_limit=?
+        SET betasocks_email=?, betasocks_password=?, daily_limit=?, last_reset_date=?
         WHERE id=1
         """,
-        (email.strip(), password.strip(), max(1, daily_limit)),
+        (email.strip(), password.strip(), max(1, daily_limit), today_str),
     )
+    conn.commit()
+    conn.close()
+    return True
+
+
+def reset_daily_fetch_count() -> bool:
+    conn = sqlite3.connect(DASH_DB)
+    today_str = time.strftime("%Y-%m-%d")
+    conn.execute("UPDATE proxy_settings SET fetched_today_count=0, last_reset_date=? WHERE id=1", (today_str,))
     conn.commit()
     conn.close()
     return True
@@ -145,17 +156,17 @@ class BetaSocksClient:
             logger.error("BetaSocks login exception: %s", exc)
             return False
 
-    def fetch_available_proxies(self, country: str = "usa", limit: int = 10) -> List[str]:
+    def fetch_available_proxies(self, country: str = "usa", limit: int = 10, force: bool = False) -> List[str]:
         with _FETCH_LOCK:
             cfg = get_proxy_settings()
             daily_limit = int(cfg.get("daily_limit", 50))
             fetched_today = int(cfg.get("fetched_today_count", 0))
             allowed = max(0, daily_limit - fetched_today)
-            if allowed <= 0:
+            if not force and allowed <= 0:
                 logger.warning("Daily BetaSocks proxy fetch limit (%d/%d) reached", fetched_today, daily_limit)
                 return []
 
-            effective_limit = min(max(1, limit), allowed)
+            effective_limit = min(max(1, limit), allowed) if not force else max(1, limit)
 
             if not self.login():
                 return []

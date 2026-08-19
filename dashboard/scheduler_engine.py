@@ -227,6 +227,16 @@ def _scrape_followers(
     try:
         from Scweet import Scweet, ScweetConfig  # type: ignore
 
+        # Preflight: Ensure 1 dedicated proxy per account (same algorithm as campaign)
+        for acc in pool_accounts:
+            if not acc.get("proxy"):
+                aid = acc.get("id")
+                if aid:
+                    log_fn("INFO", f"🔌 Account #{aid} has no assigned proxy. Fetching dedicated BetaSocks proxy (1 sock per account)…")
+                    new_px = _auto_heal_account_proxy(aid, log_fn)
+                    if new_px:
+                        acc["proxy"] = new_px
+
         cookies_pool_list = []
         for acc in pool_accounts:
             entry = {
@@ -295,12 +305,14 @@ def _scrape_followers(
         finally:
             _scweet_logger.removeHandler(_capture)
 
-        # ── Auto-heal ONLY the specific account(s) that encountered proxy errors ──
+        # ── Auto-heal ONLY the specific account(s) that encountered proxy errors & RETRY ──
         if not results and _capture.failing_account_ids:
+            healed_any = False
             for bad_acc_id in _capture.failing_account_ids:
                 log_fn("WARNING", f"🔌 Scraper Account #{bad_acc_id} proxy error detected (407/599). Triggering auto-heal for Account #{bad_acc_id}…")
                 new_proxy = _auto_heal_account_proxy(bad_acc_id, log_fn)
                 if new_proxy:
+                    healed_any = True
                     for pa in pool_accounts:
                         if pa.get("id") == bad_acc_id:
                             pa["proxy"] = new_proxy
@@ -309,6 +321,24 @@ def _scrape_followers(
                             a["proxy"] = new_proxy
                 else:
                     set_account_cooldown(bad_acc_id, 1800)
+
+            if healed_any:
+                log_fn("INFO", "🔄 Retrying follower scraping with newly healed proxy…")
+                cookies_pool_list = []
+                for acc in pool_accounts:
+                    entry = {
+                        "auth_token": acc["auth_token"],
+                        "ct0": acc["ct0"],
+                        "username": f"acc_{acc['id']}" if acc.get("id") else f"acc_{acc['auth_token'][:8]}",
+                    }
+                    if acc.get("proxy"): entry["proxy"] = acc["proxy"]
+                    if acc.get("id"): entry["id"] = acc["id"]
+                    cookies_pool_list.append(entry)
+                s = Scweet(
+                    cookies=cookies_pool_list if len(cookies_pool_list) > 1 else cookies_pool_list[0],
+                    config=cfg,
+                )
+                results = s.get_followers(source_profiles, limit=fetch_limit, save=False, resume=True)
 
         raw_count = len(results) if results else 0
 
@@ -424,7 +454,7 @@ def _auto_heal_account_proxy(account_id: int, log_fn: Callable) -> Optional[str]
             from dashboard.betasocks_client import BetaSocksClient  # type: ignore
 
         client = BetaSocksClient()
-        fresh_proxies = client.fetch_available_proxies(country="all", limit=1)
+        fresh_proxies = client.fetch_available_proxies(country="all", limit=1, force=True)
 
         if fresh_proxies:
             px = fresh_proxies[0]
@@ -444,7 +474,7 @@ def _auto_heal_account_proxy(account_id: int, log_fn: Callable) -> Optional[str]
             log_fn("INFO", f"✅ AUTO-HEAL SUCCESS: Account #{account_id} proxy updated to '{db_proxy}'.")
             return db_proxy
         else:
-            log_fn("WARNING", f"⚠️ Auto-Healing: Could not fetch replacement proxy for Account #{account_id} (Daily limit reached or BetaSocks empty).")
+            log_fn("WARNING", f"⚠️ Auto-Healing: Could not fetch replacement proxy for Account #{account_id} (BetaSocks empty).")
             return None
     except Exception as exc:
         log_fn("WARNING", f"Auto-healing failed for Account (ID {account_id}): {exc}")
@@ -516,6 +546,16 @@ def _scrape_tweet_commenters(
 
     try:
         from Scweet import Scweet, ScweetConfig  # type: ignore
+
+        # Preflight: Ensure 1 dedicated proxy per account (same algorithm as campaign)
+        for acc in pool_accounts:
+            if not acc.get("proxy"):
+                aid = acc.get("id")
+                if aid:
+                    log_fn("INFO", f"🔌 Account #{aid} has no assigned proxy. Fetching dedicated BetaSocks proxy (1 sock per account)…")
+                    new_px = _auto_heal_account_proxy(aid, log_fn)
+                    if new_px:
+                        acc["proxy"] = new_px
 
         cookies_pool_list = []
         for acc in pool_accounts:
@@ -689,6 +729,16 @@ def _scrape_target_tweets_commenters(
 
     try:
         from Scweet import Scweet, ScweetConfig  # type: ignore
+
+        # Preflight: Ensure 1 dedicated proxy per account (same algorithm as campaign)
+        for acc in pool_accounts:
+            if not acc.get("proxy"):
+                aid = acc.get("id")
+                if aid:
+                    log_fn("INFO", f"🔌 Account #{aid} has no assigned proxy. Fetching dedicated BetaSocks proxy (1 sock per account)…")
+                    new_px = _auto_heal_account_proxy(aid, log_fn)
+                    if new_px:
+                        acc["proxy"] = new_px
 
         cookies_pool_list = []
         for acc in pool_accounts:
