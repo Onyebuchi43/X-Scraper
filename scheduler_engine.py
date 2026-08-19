@@ -27,15 +27,15 @@ logger = logging.getLogger(__name__)
 try:
     import poster
     import image_editor
-    from poster import fetch_account_based_in, classify_account_error
+    from poster import fetch_account_based_in, classify_account_error, get_pool_min_cooldown_remaining
 except ImportError:
     try:
         from . import poster, image_editor
-        from .poster import fetch_account_based_in, classify_account_error
+        from .poster import fetch_account_based_in, classify_account_error, get_pool_min_cooldown_remaining
     except ImportError:
         import dashboard.poster as poster
         import dashboard.image_editor as image_editor
-        from dashboard.poster import fetch_account_based_in, classify_account_error
+        from dashboard.poster import fetch_account_based_in, classify_account_error, get_pool_min_cooldown_remaining
 
 DASH_DB = os.path.join(os.path.dirname(__file__), "dashboard.db")
 
@@ -257,14 +257,9 @@ def _scrape_followers(
             if alias.strip()
         ] if country_filter else []
 
-        # If filtering is active (country/follower count), expand raw fetch target so we collect the full requested match limit
-        if country_keywords or (max_followers and max_followers < 1000000):
-            fetch_limit = min(max(limit * 10, 400), 5000)
-        else:
-            fetch_limit = limit
-
+        fetch_limit = max(limit, 100) if (max_followers and max_followers < 1000000) else limit
         country_msg = f", 'Account based in' filter: {country_filter}" if country_filter else ""
-        log_fn("INFO", f"Initialising streaming Scweet scraper for source profiles: {source_profiles} (target matches: {limit}, followers range: {min_followers}-{max_followers}{country_msg})")
+        log_fn("INFO", f"Initialising streaming Scweet scraper for source profiles: {source_profiles} (fetch limit: {fetch_limit}, followers range: {min_followers}-{max_followers}{country_msg})")
         cfg = ScweetConfig(daily_requests_limit=100000, daily_tweets_limit=100000)
         s = Scweet(
             cookies=rotated_cookies if len(rotated_cookies) > 1 else rotated_cookies[0],
@@ -306,7 +301,7 @@ def _scrape_followers(
         _scweet_logger = _logging.getLogger("Scweet.api_engine")
         _scweet_logger.addHandler(_capture)
         try:
-            results = s.get_followers(source_profiles, limit=fetch_limit, save=False, resume=False)
+            results = s.get_followers(source_profiles, limit=fetch_limit, save=False, resume=True)
         finally:
             _scweet_logger.removeHandler(_capture)
 
@@ -343,18 +338,14 @@ def _scrape_followers(
                     cookies=cookies_pool_list if len(cookies_pool_list) > 1 else cookies_pool_list[0],
                     config=cfg,
                 )
-                results = s.get_followers(source_profiles, limit=fetch_limit, save=False, resume=False)
+                results = s.get_followers(source_profiles, limit=fetch_limit, save=False, resume=True)
 
         raw_count = len(results) if results else 0
 
-        # ── Step 1: follower count filter (with granular per-candidate live streaming) ─────────
+        # ── Step 1: follower count filter (fast, no extra API calls) ─────────
         candidate_items: List[dict] = []
         if results:
-            log_fn("INFO", f"Inspecting and filtering {len(results)} raw follower profiles (target: {min_followers:,}-{max_followers:,} followers)...")
-            for idx, item in enumerate(results, 1):
-                if not country_keywords and len(candidate_items) >= limit:
-                    break
-
+            for item in results:
                 if isinstance(item, dict):
                     handle = (
                         item.get("username")
@@ -364,78 +355,75 @@ def _scrape_followers(
                     ).strip().lstrip("@").lower()
                     loc_str = str(item.get("location") or "").strip().lower()
                     fc = item.get("followers_count") or item.get("followers") or item.get("followers_cnt")
-                    
-                    matched_followers = True
-                    fc_int = 0
                     if fc is not None and max_followers and max_followers > 0:
                         try:
-                            fc_int = int(fc)
-                            if not (min_followers <= fc_int <= max_followers):
-                                matched_followers = False
+                            val = int(fc)
+                            if not (min_followers <= val <= max_followers):
+                                continue
                         except (ValueError, TypeError):
                             pass
-
                     if handle:
-                        if matched_followers:
-                            candidate_items.append({"handle": handle, "bio_location": loc_str})
-                            if not country_keywords:
-                                log_fn("INFO", f"  [{len(candidate_items)}/{limit}] @{handle} ({fc_int:,} followers) ✓ MATCH")
-                            else:
-                                log_fn("INFO", f"  [{idx}/{len(results)}] @{handle} ({fc_int:,} followers) ✓ Follower range matched")
-                        else:
-                            log_fn("INFO", f"  [{idx}/{len(results)}] @{handle} ({fc_int:,} followers) — skipped (outside {min_followers}-{max_followers})")
-
+                        candidate_items.append({"handle": handle, "bio_location": loc_str})
                 elif isinstance(item, str):
                     handle = item.strip().lstrip("@").lower()
                     if handle:
                         candidate_items.append({"handle": handle, "bio_location": ""})
-                        if not country_keywords:
-                            log_fn("INFO", f"  [{len(candidate_items)}/{limit}] @{handle} ✓ MATCH")
 
-        # ── Step 2: "Account based in" country filter (AboutAccountQuery + Bio Location fallback) ────
+        # ── Step 2: "Account based in" country filter (AboutAccountQuery with Adaptive 429 Window-Wait & Pool Rotation) ────
         if country_keywords:
             unprocessed_candidates = [c for c in candidate_items if c["handle"] not in checked_handles_set]
             if unprocessed_candidates:
-                from concurrent.futures import ThreadPoolExecutor, as_completed
-
-                scrape_account = pool_accounts[(scrape_round - 1) % len(pool_accounts)]
-                scrape_auth  = scrape_account["auth_token"]
-                scrape_ct0   = scrape_account["ct0"]
-                scrape_proxy = scrape_account.get("proxy")
                 skipped_cnt = len(candidate_items) - len(unprocessed_candidates)
                 skip_msg = f" ({skipped_cnt} previously checked handles skipped)" if skipped_cnt > 0 else ""
-                log_fn("INFO", f"Country filter '{country_filter}' active — inspecting location for candidates (target matches: {limit}){skip_msg}...")
+                log_fn("INFO", f"Country filter '{country_filter}' active — inspecting ground-truth location for candidates (target matches: {limit}){skip_msg}...")
 
-                def check_candidate(cand):
+                checked_count = 0
+                for cand in unprocessed_candidates:
+                    if len(handles) >= limit:
+                        break
+
                     h = cand["handle"]
-                    bio_loc = cand["bio_location"]
-                    cntry = fetch_account_based_in(scrape_auth, scrape_ct0, h, proxy=scrape_proxy, timeout=6, accounts_pool=pool_accounts)
-                    return h, bio_loc, cntry
+                    if h in checked_handles_set:
+                        continue
 
-                with ThreadPoolExecutor(max_workers=3) as executor:
-                    futures = [executor.submit(check_candidate, item) for item in unprocessed_candidates]
-                    checked_count = 0
-                    for future in as_completed(futures):
-                        if len(handles) >= limit:
-                            for f in futures:
-                                f.cancel()
-                            break
-                        checked_count += 1
-                        handle, bio_loc, account_country = future.result()
-                        checked_handles_set.add(handle)
+                    # Ground-truth AboutAccountQuery with scraper pool rotation & adaptive 429 wait
+                    scrape_account = pool_accounts[(scrape_round - 1) % len(pool_accounts)]
+                    scrape_auth  = scrape_account["auth_token"]
+                    scrape_ct0   = scrape_account["ct0"]
+                    scrape_proxy = scrape_account.get("proxy")
 
+                    while True:
+                        account_country = fetch_account_based_in(
+                            scrape_auth, scrape_ct0, h, proxy=scrape_proxy, timeout=8, accounts_pool=pool_accounts
+                        )
                         if account_country == "RATE_LIMITED":
-                            account_country = bio_loc
+                            wait_time = max(get_pool_min_cooldown_remaining(pool_accounts), 30.0)
+                            log_fn("WARNING", f"⏳ Twitter 'About Account' rate limit reached across all {len(pool_accounts)} scraper accounts. Pausing {int(wait_time)}s for window reset... Live scraping will auto-resume.")
+                            
+                            remaining = wait_time
+                            while remaining > 0:
+                                sleep_chunk = min(remaining, 15.0)
+                                _time.sleep(sleep_chunk)
+                                remaining -= sleep_chunk
+                                if remaining > 0 and int(remaining) % 60 == 0:
+                                    log_fn("INFO", f"⏳ Rate limit cooldown active: {int(remaining)}s remaining until auto-resume...")
+                            
+                            log_fn("INFO", "🔄 Window reset! Resuming ground-truth location inspection with refreshed scraper pool...")
+                            continue
+                        break
 
-                        if account_country:
-                            country_lower = account_country.lower()
-                            if any(ck in country_lower for ck in country_keywords):
-                                handles.append(handle)
-                                log_fn("INFO", f"  [{len(handles)}/{limit}] @{handle}: Location '{account_country}' ✓ MATCH")
-                            else:
-                                log_fn("INFO", f"  [{checked_count}/{len(unprocessed_candidates)}] @{handle}: Location '{account_country}' — skipped (not in {country_filter})")
+                    checked_count += 1
+                    checked_handles_set.add(h)
+
+                    if account_country:
+                        country_lower = account_country.lower()
+                        if any(ck in country_lower for ck in country_keywords):
+                            handles.append(h)
+                            log_fn("INFO", f"  [{len(handles)}/{limit}] @{h}: Location '{account_country}' ✓ MATCH")
                         else:
-                            log_fn("INFO", f"  [{checked_count}/{len(unprocessed_candidates)}] @{handle}: Location unavailable — skipped")
+                            log_fn("INFO", f"  [{checked_count}/{len(unprocessed_candidates)}] @{h}: Location '{account_country}' — skipped (not in {country_filter})")
+                    else:
+                        log_fn("INFO", f"  [{checked_count}/{len(unprocessed_candidates)}] @{h}: Location not listed on profile — skipped")
         else:
             handles = [c["handle"] for c in candidate_items][:limit]
 
@@ -469,27 +457,19 @@ _TESTED_PROXY_HEALTH_CACHE: dict[str, float] = {}
 def _auto_heal_account_proxy(account_id: int, log_fn: Callable) -> Optional[str]:
     """
     When an account encounters a proxy error or lacks an assigned proxy:
-    1. Fetches 1 fresh dedicated SOCKS5 proxy from BetaSocks (strictly respecting daily limit).
+    1. Fetches 1 fresh dedicated SOCKS5 proxy from BetaSocks (1 sock per account).
     2. Updates database accounts table for account_id with new proxy (ip:port:user:pass).
     3. Returns new proxy string.
     """
     try:
-        try:
-            from betasocks_client import BetaSocksClient, get_proxy_settings
-        except ImportError:
-            from dashboard.betasocks_client import BetaSocksClient, get_proxy_settings  # type: ignore
-
-        cfg = get_proxy_settings()
-        daily_limit = int(cfg.get("daily_limit", 50))
-        fetched_today = int(cfg.get("fetched_today_count", 0))
-
-        if fetched_today >= daily_limit:
-            log_fn("WARNING", f"⚠️ Strict daily BetaSocks proxy limit reached ({fetched_today}/{daily_limit}). Auto-heal proxy retrieval blocked.")
-            return None
-
         log_fn("INFO", f"⚡ Auto-Healing Triggered: Fetching 1 dedicated replacement proxy from BetaSocks for Account #{account_id}…")
+        try:
+            from betasocks_client import BetaSocksClient
+        except ImportError:
+            from dashboard.betasocks_client import BetaSocksClient  # type: ignore
+
         client = BetaSocksClient()
-        fresh_proxies = client.fetch_available_proxies(country="all", limit=1)
+        fresh_proxies = client.fetch_available_proxies(country="all", limit=1, force=True)
 
         working_proxy = None
         for px in fresh_proxies:
@@ -513,7 +493,7 @@ def _auto_heal_account_proxy(account_id: int, log_fn: Callable) -> Optional[str]
             log_fn("INFO", f"✅ AUTO-HEAL SUCCESS: Account #{account_id} proxy updated to '{working_proxy}'.")
             return working_proxy
         else:
-            log_fn("WARNING", f"⚠️ Auto-Healing: Could not find working BetaSocks proxy for Account (ID {account_id}) right now (daily limit reached or empty list).")
+            log_fn("WARNING", f"⚠️ Auto-Healing: Could not find working BetaSocks proxy for Account (ID {account_id}) right now.")
             return None
     except Exception as exc:
         log_fn("WARNING", f"Auto-healing failed for Account (ID {account_id}): {exc}")
@@ -765,9 +745,6 @@ def _scrape_target_tweets_commenters(
     if not pool_accounts:
         log_fn("ERROR", "No accounts available for scraping.")
         return [], False, 0
-
-    try:
-        from Scweet import Scweet, ScweetConfig  # type: ignore
 
         # Preflight: Ensure 1 dedicated proxy per account (same algorithm as campaign)
         for acc in pool_accounts:

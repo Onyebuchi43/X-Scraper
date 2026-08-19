@@ -382,6 +382,24 @@ def _save_location_to_db(username: str, country: Optional[str]) -> None:
         pass
 
 
+_ACCOUNT_429_COOLDOWNS: dict[str, float] = {}
+
+
+def get_pool_min_cooldown_remaining(accounts_pool: Optional[list[dict]]) -> float:
+    if not accounts_pool:
+        return 0.0
+    now = time.time()
+    remaining_times = []
+    for acc in accounts_pool:
+        key = str(acc.get("id") or acc.get("auth_token", "")[:12])
+        cd = _ACCOUNT_429_COOLDOWNS.get(key, 0.0)
+        if cd > now:
+            remaining_times.append(cd - now)
+        else:
+            return 0.0  # At least one account is active and ready right now
+    return min(remaining_times) if remaining_times else 0.0
+
+
 def fetch_account_based_in(
     auth_token: str,
     ct0: str,
@@ -391,14 +409,12 @@ def fetch_account_based_in(
     accounts_pool: Optional[list[dict]] = None,
 ) -> Optional[str]:
     """
-    Fetch the 'Account based in' country for *username* using X's internal
-    AboutAccountQuery GraphQL endpoint — the same data shown in X's
-    'About this account' panel. This is based on the phone/app country used
-    to register the account, NOT the user-typed profile location.
+    Fetch the ground-truth 'Account based in' country for *username* using X's internal
+    AboutAccountQuery GraphQL endpoint — the verified data from carrier/phone registration.
 
     Returns:
-    - Country string (e.g. "Nigeria", "United States")
-    - "RATE_LIMITED" if Twitter rate-limited all accounts in the pool
+    - Country string (e.g. "United States", "United Kingdom", "Nigeria")
+    - "RATE_LIMITED" if ALL accounts in the pool are currently in 429 cooldown
     - None if query succeeded but no country data is present on account
     """
     clean_username = username.lstrip("@").lower()
@@ -415,12 +431,24 @@ def fetch_account_based_in(
     }
 
     pool = accounts_pool if accounts_pool else [{"auth_token": auth_token, "ct0": ct0, "proxy": proxy}]
+    now = time.time()
+
+    # Select accounts whose 15-minute 429 cooldown has expired
+    available_pool = []
+    for acc in pool:
+        key = str(acc.get("id") or acc.get("auth_token", "")[:12])
+        if _ACCOUNT_429_COOLDOWNS.get(key, 0.0) <= now:
+            available_pool.append(acc)
+
+    if not available_pool:
+        return "RATE_LIMITED"
 
     hit_429 = False
-    for acc in pool:
+    for acc in available_pool:
         at = acc.get("auth_token", auth_token)
         c0 = acc.get("ct0", ct0)
         px = acc.get("proxy", proxy)
+        key = str(acc.get("id") or at[:12])
         proxy_url = _get_httpx_proxy_url(px)
         httpx_kwargs = {"proxy": proxy_url} if proxy_url else {}
 
@@ -435,8 +463,9 @@ def fetch_account_based_in(
             )
             if resp.status_code == 429:
                 hit_429 = True
-                logger.debug("AboutAccountQuery for @%s returned 429 — rotating account credential...", clean_username)
-                time.sleep(0.3)
+                _ACCOUNT_429_COOLDOWNS[key] = time.time() + 900  # 15 min cooldown for this specific account
+                logger.info("AboutAccountQuery for @%s returned 429 on Account %s — rotating to next account...", clean_username, key)
+                time.sleep(0.2)
                 continue
             if resp.status_code != 200:
                 logger.debug("AboutAccountQuery for @%s returned HTTP %s", clean_username, resp.status_code)
