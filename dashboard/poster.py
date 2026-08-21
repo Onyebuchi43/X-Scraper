@@ -297,14 +297,11 @@ def update_profile_text(
                 ])
                 page = context.new_page()
                 try:
-                    # 1. Fetch real username for instant direct profile navigation
-                    real_username = fetch_real_twitter_username(auth_token, ct0, proxy)
-                    target_url = f"https://x.com/{real_username}" if real_username else "https://x.com/home"
+                    # Direct navigation to settings/profile instantly opens the complete profile editor
+                    page.goto("https://x.com/settings/profile", wait_until="domcontentloaded", timeout=25000)
+                    time.sleep(3)
 
-                    page.goto(target_url, wait_until="domcontentloaded", timeout=25000)
-                    time.sleep(2.5)
-
-                    # Dismiss any overlay dialog
+                    # Dismiss any overlay dialog if present
                     try:
                         close_dialog = page.locator("[data-testid='app-bar-close'], [aria-label='Close'], button:has-text('Not now'), button:has-text('Dismiss')")
                         if close_dialog.count() > 0 and close_dialog.first.is_visible():
@@ -313,45 +310,12 @@ def update_profile_text(
                     except Exception:
                         pass
 
-                    # If we landed on home, navigate to profile
-                    if "home" in page.url:
+                    # If not already on editor modal, try fallback navigation
+                    if page.locator("input[name='displayName'], textarea[name='description']").count() == 0:
                         try:
-                            prof_nav = page.locator("a[data-testid='AppTabBar_Profile_Link']")
-                            if prof_nav.count() > 0:
-                                prof_nav.first.click()
-                                time.sleep(3)
-                        except Exception:
-                            pass
-
-                    # Wait for Edit profile or Set up profile button and click
-                    try:
-                        edit_btn = page.wait_for_selector(
-                            "a[href$='/settings/profile'], button:has-text('Edit profile'), a:has-text('Edit profile'), button:has-text('Set up profile'), a:has-text('Set up profile'), [data-testid='editProfileButton']",
-                            timeout=12000
-                        )
-                        if edit_btn:
-                            edit_btn.click()
-                            time.sleep(2)
-                    except Exception:
-                        pass
-
-                    # Dismiss any onboarding wizard steps
-                    had_wizard = False
-                    for _ in range(7):
-                        wizard_btn = page.locator("button:has-text('Skip for now'), button:has-text('Skip'), button:has-text('See profile')")
-                        if wizard_btn.count() > 0 and wizard_btn.first.is_visible():
-                            had_wizard = True
-                            wizard_btn.first.click()
-                            time.sleep(1.5)
-                        else:
-                            break
-
-                    # If wizard was dismissed, click 'Edit profile' to open the standard modal
-                    if had_wizard or page.locator("input[name='displayName'], textarea[name='description']").count() == 0:
-                        try:
-                            re_btn = page.locator("a[href$='/settings/profile'], button:has-text('Edit profile'), a:has-text('Edit profile'), [data-testid='editProfileButton']")
-                            if re_btn.count() > 0 and re_btn.first.is_visible():
-                                re_btn.first.click()
+                            edit_btn = page.locator("a[href$='/settings/profile'], button:has-text('Edit profile'), a:has-text('Edit profile'), [data-testid='editProfileButton']")
+                            if edit_btn.count() > 0 and edit_btn.first.is_visible():
+                                edit_btn.first.click()
                                 time.sleep(2)
                         except Exception:
                             pass
@@ -399,7 +363,7 @@ def update_profile_text(
                         if save_btn.first.is_enabled():
                             save_btn.first.click()
                             time.sleep(3)
-                            logger.info("Profile updated successfully via browser session")
+                            logger.info("Profile updated successfully via direct profile settings session")
                             return True
                         else:
                             logger.info("Profile already up to date")
