@@ -2067,7 +2067,16 @@ async function bulkEditSubmit() {
       method: 'POST',
       body: fd
     });
-    const data = await resp.json();
+    let data;
+    try {
+      data = await resp.json();
+    } catch (parseErr) {
+      if (!resp.ok) {
+        toast(`Server error (${resp.status}): File size may be too large or request invalid.`, 'error');
+        return;
+      }
+      throw parseErr;
+    }
     if (data.error) {
       toast(data.error, 'error');
     } else {
