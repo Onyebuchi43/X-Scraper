@@ -299,18 +299,40 @@ def update_profile_text(
                 except Exception:
                     pass
 
-                # Wait for Edit profile button and click
+                # Wait for Edit profile or Set up profile button and click
                 try:
-                    edit_btn = page.wait_for_selector("a[href$='/settings/profile'], button:has-text('Edit profile'), a:has-text('Edit profile'), [data-testid='editProfileButton']", timeout=10000)
+                    edit_btn = page.wait_for_selector(
+                        "a[href$='/settings/profile'], button:has-text('Edit profile'), a:has-text('Edit profile'), button:has-text('Set up profile'), a:has-text('Set up profile'), [data-testid='editProfileButton']",
+                        timeout=10000
+                    )
                     if edit_btn:
                         edit_btn.click()
                         time.sleep(2)
                 except Exception:
                     pass
 
+                # Dismiss any onboarding wizard steps ("Pick a profile picture", "Pick a header")
+                for _ in range(5):
+                    skip_btn = page.locator("button:has-text('Skip for now'), button:has-text('Skip')")
+                    if skip_btn.count() > 0 and skip_btn.first.is_visible():
+                        skip_btn.first.click()
+                        time.sleep(1.5)
+                    else:
+                        break
+
+                # If needed, re-open Edit profile modal
+                if page.locator("input[name='displayName'], textarea[name='description']").count() == 0:
+                    try:
+                        re_btn = page.locator("a[href$='/settings/profile'], button:has-text('Edit profile'), a:has-text('Edit profile'), button:has-text('Set up profile'), [data-testid='editProfileButton']")
+                        if re_btn.count() > 0 and re_btn.first.is_visible():
+                            re_btn.first.click()
+                            time.sleep(2)
+                    except Exception:
+                        pass
+
                 # Wait for profile inputs to appear in modal
                 try:
-                    page.wait_for_selector("textarea[name='description'], input[name='location'], [data-testid='Profile_Save_Button']", timeout=10000)
+                    page.wait_for_selector("textarea[name='description'], input[name='location'], [data-testid='Profile_Save_Button'], button:has-text('Save')", timeout=10000)
                 except Exception:
                     pass
 
@@ -339,10 +361,10 @@ def update_profile_text(
                         url_input.fill(url)
 
                 time.sleep(1)
-                save_btn = page.locator("[data-testid='Profile_Save_Button']")
+                save_btn = page.locator("[data-testid='Profile_Save_Button'], button:has-text('Save')")
                 if save_btn.count() > 0:
-                    if save_btn.is_enabled():
-                        save_btn.click()
+                    if save_btn.first.is_enabled():
+                        save_btn.first.click()
                         time.sleep(3)
                         logger.info("Profile updated successfully via browser session")
                         return True
