@@ -89,6 +89,18 @@
         </div>
       </div>
 
+      <!-- Bulk Profile Update Live Status Banner -->
+      <div id="bulk-profile-status-banner" style="display:none;margin-bottom:15px;background:rgba(37,99,235,0.1);border:1px solid #3b82f6;border-radius:10px;padding:14px 18px;color:#e2e8f0;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <div style="display:flex;align-items:center;gap:10px;font-weight:600;color:#60a5fa;">
+            <span class="spinner" style="display:inline-block;width:14px;height:14px;border:2px solid #60a5fa;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;"></span>
+            <span id="bulk-profile-status-title">Updating Account Profiles...</span>
+          </div>
+          <span id="bulk-profile-status-count" style="font-size:12px;color:#94a3b8;">0 / 0</span>
+        </div>
+        <div id="bulk-profile-status-log" style="font-size:12px;color:#cbd5e1;font-family:monospace;white-space:pre-wrap;max-height:100px;overflow-y:auto;background:rgba(15,23,42,0.6);padding:8px;border-radius:6px;"></div>
+      </div>
+
       <div class="card">
         <div class="card-title">Registered Accounts <span class="counter" id="accounts-count">0</span></div>
         <div class="table-wrap">
@@ -1305,7 +1317,7 @@
   <!-- TOAST -->
   <div class="toast-container" id="toast-container"></div>
 
-  <script src="/static/js/app.js?v=9"></script>
+  <script src="/static/js/app.js?v=20260821_2"></script>
 </body>
 
 </html>

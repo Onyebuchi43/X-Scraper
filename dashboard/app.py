@@ -1159,9 +1159,23 @@ def bulk_import_accounts_api():
     return jsonify({"imported": imported, "total": len(lines), "errors": errors})
 
 
-# ── Bulk Profile Editor Endpoint ─────────────────────────────────────────────
+# ── Bulk Profile Editor Endpoint & Live Progress ───────────────────────────
+_bulk_profile_status = {
+    "status": "idle",
+    "total": 0,
+    "current": 0,
+    "account_label": "",
+    "logs": [],
+    "finished_at": None,
+}
+
+@app.route("/api/accounts/bulk-edit/status", methods=["GET"])
+def bulk_edit_status_api():
+    return jsonify(_bulk_profile_status)
+
 @app.route("/api/accounts/bulk-edit", methods=["POST"])
 def bulk_edit_profiles_api():
+    global _bulk_profile_status
     data = request.form if request.form else (request.json or {})
     account_ids_raw = data.get("account_ids", "[]")
     if isinstance(account_ids_raw, str):
@@ -1190,7 +1204,7 @@ def bulk_edit_profiles_api():
             a = conn.execute("SELECT * FROM accounts WHERE id=?", (aid,)).fetchone()
             if a: accounts.append(dict(a))
     else:
-        accounts = [dict(a) for a in conn.execute("SELECT * FROM accounts").fetchall()]
+        accounts = [dict(a) for a in conn.execute("SELECT * FROM accounts ORDER BY id").fetchall()]
     conn.close()
 
     if not accounts:
@@ -1201,21 +1215,51 @@ def bulk_edit_profiles_api():
     except ImportError:
         from dashboard.poster import update_profile_text, update_profile_image, update_profile_banner  # type: ignore
 
+    _bulk_profile_status = {
+        "status": "running",
+        "total": len(accounts),
+        "current": 0,
+        "account_label": "",
+        "logs": [f"Started profile update for {len(accounts)} accounts..."],
+        "finished_at": None,
+    }
+
     def _run_bulk_update():
-        for acc in accounts:
+        global _bulk_profile_status
+        success_count = 0
+        for idx, acc in enumerate(accounts, 1):
+            aid = acc.get("id")
+            label = acc.get("label") or f"Account #{aid}"
             at = acc.get("auth_token", "")
             c0 = acc.get("ct0", "")
             px = acc.get("proxy")
+
+            _bulk_profile_status["current"] = idx
+            _bulk_profile_status["account_label"] = label
+            _bulk_profile_status["logs"].append(f"[{idx}/{len(accounts)}] Updating {label}...")
+
             try:
+                ok = True
                 if name or description or location or url:
-                    update_profile_text(at, c0, name=name, description=description, location=location, url=url, proxy=px)
+                    ok = update_profile_text(at, c0, name=name, description=description, location=location, url=url, proxy=px)
                 if avatar_bytes:
                     update_profile_image(at, c0, avatar_bytes, proxy=px)
                 if banner_bytes:
                     update_profile_banner(at, c0, banner_bytes, proxy=px)
+
+                if ok:
+                    success_count += 1
+                    _bulk_profile_status["logs"].append(f"✓ [{idx}/{len(accounts)}] {label} updated successfully!")
+                else:
+                    _bulk_profile_status["logs"].append(f"✗ [{idx}/{len(accounts)}] {label} failed to update.")
             except Exception as e:
-                logger.error("Bulk profile update failed for account %s: %s", acc.get("id"), e)
+                logger.error("Bulk profile update failed for account %s: %s", aid, e)
+                _bulk_profile_status["logs"].append(f"✗ [{idx}/{len(accounts)}] {label} error: {e}")
             time.sleep(2)
+
+        _bulk_profile_status["status"] = "completed"
+        _bulk_profile_status["logs"].append(f"Finished: {success_count}/{len(accounts)} accounts updated successfully!")
+        _bulk_profile_status["finished_at"] = time.time()
 
     import threading
     t = threading.Thread(target=_run_bulk_update, daemon=True)

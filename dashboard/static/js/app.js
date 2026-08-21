@@ -1988,6 +1988,52 @@ function closeBulkEditModal() {
   if (m) m.style.display = 'none';
 }
 
+let bulkEditPollInterval = null;
+
+function pollBulkEditStatus() {
+  if (bulkEditPollInterval) clearInterval(bulkEditPollInterval);
+  bulkEditPollInterval = setInterval(async () => {
+    try {
+      const resp = await fetch('/api/accounts/bulk-edit/status');
+      const data = await resp.json();
+      const banner = document.getElementById('bulk-profile-status-banner');
+      const title = document.getElementById('bulk-profile-status-title');
+      const count = document.getElementById('bulk-profile-status-count');
+      const logBox = document.getElementById('bulk-profile-status-log');
+
+      if (data.status === 'running') {
+        if (banner) banner.style.display = 'block';
+        if (title) title.textContent = `Updating Profiles: ${data.account_label || 'In Progress'}...`;
+        if (count) count.textContent = `${data.current} / ${data.total}`;
+        if (logBox && data.logs) {
+          logBox.textContent = data.logs.join('\n');
+          logBox.scrollTop = logBox.scrollHeight;
+        }
+      } else if (data.status === 'completed') {
+        if (banner) banner.style.display = 'block';
+        if (title) title.innerHTML = `✓ Profile Updates Finished!`;
+        if (count) count.textContent = `${data.total} / ${data.total}`;
+        if (logBox && data.logs) {
+          logBox.textContent = data.logs.join('\n');
+          logBox.scrollTop = logBox.scrollHeight;
+        }
+        clearInterval(bulkEditPollInterval);
+        bulkEditPollInterval = null;
+        if (typeof loadAccounts === 'function') loadAccounts();
+        setTimeout(() => {
+          if (banner) banner.style.display = 'none';
+        }, 10000);
+      } else {
+        if (banner) banner.style.display = 'none';
+        clearInterval(bulkEditPollInterval);
+        bulkEditPollInterval = null;
+      }
+    } catch (e) {
+      console.error('Error polling bulk edit status:', e);
+    }
+  }, 2000);
+}
+
 async function bulkEditSubmit() {
   const name = document.getElementById('be-name')?.value || '';
   const bio = document.getElementById('be-bio')?.value || '';
@@ -2013,7 +2059,7 @@ async function bulkEditSubmit() {
     } else {
       toast(data.message || `Successfully started profile update for ${data.total || 0} account(s)!`, 'success');
       closeBulkEditModal();
-      if (typeof loadAccounts === 'function') loadAccounts();
+      pollBulkEditStatus();
     }
   } catch (err) {
     toast('Error updating profiles: ' + err.message, 'error');
