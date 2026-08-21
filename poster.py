@@ -287,23 +287,47 @@ def update_profile_text(
             ])
             page = context.new_page()
             try:
+                # 1. First fetch real username if possible so we have direct URL fallback
+                real_username = fetch_real_twitter_username(auth_token, ct0, proxy)
+
                 page.goto("https://x.com/home", wait_until="domcontentloaded", timeout=25000)
                 time.sleep(3)
 
-                # Wait for profile link in sidebar and click
+                # Dismiss any overlay on home
                 try:
-                    prof_nav = page.wait_for_selector("a[data-testid='AppTabBar_Profile_Link']", timeout=12000)
-                    if prof_nav:
-                        prof_nav.click()
-                        time.sleep(3)
+                    close_dialog = page.locator("[data-testid='app-bar-close'], [aria-label='Close'], button:has-text('Not now'), button:has-text('Dismiss')")
+                    if close_dialog.count() > 0 and close_dialog.first.is_visible():
+                        close_dialog.first.click()
+                        time.sleep(1)
                 except Exception:
                     pass
+
+                # Navigate to profile via sidebar or direct URL
+                navigated = False
+                try:
+                    prof_nav = page.locator("a[data-testid='AppTabBar_Profile_Link']")
+                    if prof_nav.count() > 0:
+                        href = prof_nav.first.get_attribute("href")
+                        prof_nav.first.click()
+                        time.sleep(3)
+                        if page.url != "https://x.com/home":
+                            navigated = True
+                        elif href:
+                            page.goto(f"https://x.com{href}", wait_until="domcontentloaded", timeout=20000)
+                            time.sleep(3)
+                            navigated = True
+                except Exception:
+                    pass
+
+                if not navigated and real_username:
+                    page.goto(f"https://x.com/{real_username}", wait_until="domcontentloaded", timeout=20000)
+                    time.sleep(3)
 
                 # Wait for Edit profile or Set up profile button and click
                 try:
                     edit_btn = page.wait_for_selector(
                         "a[href$='/settings/profile'], button:has-text('Edit profile'), a:has-text('Edit profile'), button:has-text('Set up profile'), a:has-text('Set up profile'), [data-testid='editProfileButton']",
-                        timeout=10000
+                        timeout=12000
                     )
                     if edit_btn:
                         edit_btn.click()
@@ -311,21 +335,21 @@ def update_profile_text(
                 except Exception:
                     pass
 
-                # Dismiss any onboarding wizard steps ("Pick a profile picture", "Pick a header")
-                had_skip = False
-                for _ in range(5):
-                    skip_btn = page.locator("button:has-text('Skip for now'), button:has-text('Skip')")
-                    if skip_btn.count() > 0 and skip_btn.first.is_visible():
-                        had_skip = True
-                        skip_btn.first.click()
+                # Dismiss any onboarding wizard steps ("Pick a profile picture", "Pick a header", "Describe yourself", "Where do you live?", "See profile")
+                had_wizard = False
+                for _ in range(7):
+                    wizard_btn = page.locator("button:has-text('Skip for now'), button:has-text('Skip'), button:has-text('See profile')")
+                    if wizard_btn.count() > 0 and wizard_btn.first.is_visible():
+                        had_wizard = True
+                        wizard_btn.first.click()
                         time.sleep(1.5)
                     else:
                         break
 
-                # If needed after dismissing wizard, re-open Edit profile modal
-                if had_skip and page.locator("input[name='displayName'], textarea[name='description']").count() == 0:
+                # If wizard was dismissed, click 'Edit profile' to open the standard modal
+                if had_wizard or page.locator("input[name='displayName'], textarea[name='description']").count() == 0:
                     try:
-                        re_btn = page.locator("a[href$='/settings/profile'], button:has-text('Edit profile'), a:has-text('Edit profile'), button:has-text('Set up profile'), [data-testid='editProfileButton']")
+                        re_btn = page.locator("a[href$='/settings/profile'], button:has-text('Edit profile'), a:has-text('Edit profile'), [data-testid='editProfileButton']")
                         if re_btn.count() > 0 and re_btn.first.is_visible():
                             re_btn.first.click()
                             time.sleep(2)
