@@ -1995,6 +1995,7 @@ function closeBulkEditModal() {
 }
 
 async function bulkEditSubmit() {
+  const name = document.getElementById('be-name')?.value || '';
   const bio = document.getElementById('be-bio')?.value || '';
   const location = document.getElementById('be-location')?.value || '';
   const url = document.getElementById('be-url')?.value || '';
@@ -2010,7 +2011,7 @@ async function bulkEditSubmit() {
     const resp = await fetch('/api/accounts/bulk-edit', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ description: bio, location: location, url: url })
+      body: JSON.stringify({ name: name, description: bio, location: location, url: url })
     });
     const data = await resp.json();
     if (data.error) {

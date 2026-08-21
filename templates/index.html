@@ -1267,9 +1267,15 @@
         <button onclick="closeBulkEditModal()"
           style="background:none;border:none;color:#94a3b8;font-size:1.5rem;cursor:pointer;">&times;</button>
       </div>
-      <p style="font-size:0.85rem;color:#94a3b8;margin-bottom:15px;">Update profile bio, location, or website URL for
+      <p style="font-size:0.85rem;color:#94a3b8;margin-bottom:15px;">Update profile display name, bio, location, or website URL for
         registered accounts.</p>
       <div class="form-grid form-grid-2">
+        <div class="form-group span-2">
+          <label>Display Name</label>
+          <input type="text" id="be-name"
+            style="width:100%;background:#0f172a;border:1px solid #334155;border-radius:8px;color:#fff;padding:8px;"
+            placeholder="Alex | Web3 Dev" />
+        </div>
         <div class="form-group span-2">
           <label>Bio / Description</label>
           <textarea id="be-bio" rows="2"

@@ -320,19 +320,19 @@ def update_profile_text(
                         name_input.click()
                         name_input.fill(name)
 
-                if description is not None:
+                if description:
                     bio_input = page.locator("textarea[name='description']")
                     if bio_input.count() > 0:
                         bio_input.click()
                         bio_input.fill(description)
 
-                if location is not None:
+                if location:
                     loc_input = page.locator("input[name='location']")
                     if loc_input.count() > 0:
                         loc_input.click()
                         loc_input.fill(location)
 
-                if url is not None:
+                if url:
                     url_input = page.locator("input[name='url']")
                     if url_input.count() > 0:
                         url_input.click()
