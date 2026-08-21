@@ -1176,7 +1176,10 @@ def bulk_edit_status_api():
 @app.route("/api/accounts/bulk-edit", methods=["POST"])
 def bulk_edit_profiles_api():
     global _bulk_profile_status
-    data = request.form if request.form else (request.json or {})
+    if request.is_json:
+        data = request.get_json(silent=True) or {}
+    else:
+        data = request.form or {}
     account_ids_raw = data.get("account_ids", "[]")
     if isinstance(account_ids_raw, str):
         try:
