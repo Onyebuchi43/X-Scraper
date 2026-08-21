@@ -265,153 +265,161 @@ def update_profile_text(
     location: Optional[str] = None,
     url: Optional[str] = None,
     proxy: Optional[str | dict] = None,
+    max_retries: int = 2,
 ) -> bool:
     """Update profile text fields (Name, Bio, Location, Website) via automated browser session."""
     if not (name or description or location or url):
         return True
 
-    try:
-        from playwright.sync_api import sync_playwright
-        with sync_playwright() as p:
-            launch_args = ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"]
-            browser = p.chromium.launch(headless=True, args=launch_args)
-            context = browser.new_context(
-                viewport={"width": 1280, "height": 800},
-                user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-            )
-            context.add_cookies([
-                {"name": "auth_token", "value": auth_token, "domain": ".x.com", "path": "/"},
-                {"name": "ct0", "value": ct0, "domain": ".x.com", "path": "/"},
-                {"name": "auth_token", "value": auth_token, "domain": ".twitter.com", "path": "/"},
-                {"name": "ct0", "value": ct0, "domain": ".twitter.com", "path": "/"},
-            ])
-            page = context.new_page()
-            try:
-                # 1. First fetch real username if possible so we have direct URL fallback
-                real_username = fetch_real_twitter_username(auth_token, ct0, proxy)
-
-                page.goto("https://x.com/home", wait_until="domcontentloaded", timeout=25000)
-                time.sleep(3)
-
-                # Dismiss any overlay on home
+    import gc
+    for attempt in range(1, max_retries + 1):
+        try:
+            from playwright.sync_api import sync_playwright
+            with sync_playwright() as p:
+                launch_args = [
+                    "--no-sandbox",
+                    "--disable-setuid-sandbox",
+                    "--disable-dev-shm-usage",
+                    "--disable-gpu",
+                    "--no-zygote",
+                    "--single-process",
+                ]
+                browser = p.chromium.launch(headless=True, args=launch_args)
+                context = browser.new_context(
+                    viewport={"width": 1280, "height": 800},
+                    user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+                )
+                context.add_cookies([
+                    {"name": "auth_token", "value": auth_token, "domain": ".x.com", "path": "/"},
+                    {"name": "ct0", "value": ct0, "domain": ".x.com", "path": "/"},
+                    {"name": "auth_token", "value": auth_token, "domain": ".twitter.com", "path": "/"},
+                    {"name": "ct0", "value": ct0, "domain": ".twitter.com", "path": "/"},
+                ])
+                page = context.new_page()
                 try:
-                    close_dialog = page.locator("[data-testid='app-bar-close'], [aria-label='Close'], button:has-text('Not now'), button:has-text('Dismiss')")
-                    if close_dialog.count() > 0 and close_dialog.first.is_visible():
-                        close_dialog.first.click()
-                        time.sleep(1)
-                except Exception:
-                    pass
+                    # 1. Fetch real username for instant direct profile navigation
+                    real_username = fetch_real_twitter_username(auth_token, ct0, proxy)
+                    target_url = f"https://x.com/{real_username}" if real_username else "https://x.com/home"
 
-                # Navigate to profile via sidebar or direct URL
-                navigated = False
-                try:
-                    prof_nav = page.locator("a[data-testid='AppTabBar_Profile_Link']")
-                    if prof_nav.count() > 0:
-                        href = prof_nav.first.get_attribute("href")
-                        prof_nav.first.click()
-                        time.sleep(3)
-                        if page.url != "https://x.com/home":
-                            navigated = True
-                        elif href:
-                            page.goto(f"https://x.com{href}", wait_until="domcontentloaded", timeout=20000)
-                            time.sleep(3)
-                            navigated = True
-                except Exception:
-                    pass
+                    page.goto(target_url, wait_until="domcontentloaded", timeout=25000)
+                    time.sleep(2.5)
 
-                if not navigated and real_username:
-                    page.goto(f"https://x.com/{real_username}", wait_until="domcontentloaded", timeout=20000)
-                    time.sleep(3)
-
-                # Wait for Edit profile or Set up profile button and click
-                try:
-                    edit_btn = page.wait_for_selector(
-                        "a[href$='/settings/profile'], button:has-text('Edit profile'), a:has-text('Edit profile'), button:has-text('Set up profile'), a:has-text('Set up profile'), [data-testid='editProfileButton']",
-                        timeout=12000
-                    )
-                    if edit_btn:
-                        edit_btn.click()
-                        time.sleep(2)
-                except Exception:
-                    pass
-
-                # Dismiss any onboarding wizard steps ("Pick a profile picture", "Pick a header", "Describe yourself", "Where do you live?", "See profile")
-                had_wizard = False
-                for _ in range(7):
-                    wizard_btn = page.locator("button:has-text('Skip for now'), button:has-text('Skip'), button:has-text('See profile')")
-                    if wizard_btn.count() > 0 and wizard_btn.first.is_visible():
-                        had_wizard = True
-                        wizard_btn.first.click()
-                        time.sleep(1.5)
-                    else:
-                        break
-
-                # If wizard was dismissed, click 'Edit profile' to open the standard modal
-                if had_wizard or page.locator("input[name='displayName'], textarea[name='description']").count() == 0:
+                    # Dismiss any overlay dialog
                     try:
-                        re_btn = page.locator("a[href$='/settings/profile'], button:has-text('Edit profile'), a:has-text('Edit profile'), [data-testid='editProfileButton']")
-                        if re_btn.count() > 0 and re_btn.first.is_visible():
-                            re_btn.first.click()
+                        close_dialog = page.locator("[data-testid='app-bar-close'], [aria-label='Close'], button:has-text('Not now'), button:has-text('Dismiss')")
+                        if close_dialog.count() > 0 and close_dialog.first.is_visible():
+                            close_dialog.first.click()
+                            time.sleep(1)
+                    except Exception:
+                        pass
+
+                    # If we landed on home, navigate to profile
+                    if "home" in page.url:
+                        try:
+                            prof_nav = page.locator("a[data-testid='AppTabBar_Profile_Link']")
+                            if prof_nav.count() > 0:
+                                prof_nav.first.click()
+                                time.sleep(3)
+                        except Exception:
+                            pass
+
+                    # Wait for Edit profile or Set up profile button and click
+                    try:
+                        edit_btn = page.wait_for_selector(
+                            "a[href$='/settings/profile'], button:has-text('Edit profile'), a:has-text('Edit profile'), button:has-text('Set up profile'), a:has-text('Set up profile'), [data-testid='editProfileButton']",
+                            timeout=12000
+                        )
+                        if edit_btn:
+                            edit_btn.click()
                             time.sleep(2)
                     except Exception:
                         pass
 
-                # Wait for profile inputs to appear in modal
-                try:
-                    page.wait_for_selector(
-                        "textarea[name='description'], input[name='displayName'], [data-testid='Profile_Save_Button'], button:has-text('Save')",
-                        timeout=12000
-                    )
-                except Exception:
-                    pass
+                    # Dismiss any onboarding wizard steps
+                    had_wizard = False
+                    for _ in range(7):
+                        wizard_btn = page.locator("button:has-text('Skip for now'), button:has-text('Skip'), button:has-text('See profile')")
+                        if wizard_btn.count() > 0 and wizard_btn.first.is_visible():
+                            had_wizard = True
+                            wizard_btn.first.click()
+                            time.sleep(1.5)
+                        else:
+                            break
 
-                if name:
-                    name_input = page.locator("input[name='displayName']")
-                    if name_input.count() > 0:
-                        name_input.first.click()
-                        name_input.first.fill("")
-                        name_input.first.fill(name)
+                    # If wizard was dismissed, click 'Edit profile' to open the standard modal
+                    if had_wizard or page.locator("input[name='displayName'], textarea[name='description']").count() == 0:
+                        try:
+                            re_btn = page.locator("a[href$='/settings/profile'], button:has-text('Edit profile'), a:has-text('Edit profile'), [data-testid='editProfileButton']")
+                            if re_btn.count() > 0 and re_btn.first.is_visible():
+                                re_btn.first.click()
+                                time.sleep(2)
+                        except Exception:
+                            pass
 
-                if description:
-                    bio_input = page.locator("textarea[name='description']")
-                    if bio_input.count() > 0:
-                        bio_input.first.click()
-                        bio_input.first.fill("")
-                        bio_input.first.fill(description)
+                    # Wait for profile inputs to appear in modal
+                    try:
+                        page.wait_for_selector(
+                            "textarea[name='description'], input[name='displayName'], [data-testid='Profile_Save_Button'], button:has-text('Save')",
+                            timeout=12000
+                        )
+                    except Exception:
+                        pass
 
-                if location:
-                    loc_input = page.locator("input[name='location']")
-                    if loc_input.count() > 0:
-                        loc_input.first.click()
-                        loc_input.first.fill("")
-                        loc_input.first.fill(location)
+                    if name:
+                        name_input = page.locator("input[name='displayName']")
+                        if name_input.count() > 0:
+                            name_input.first.click()
+                            name_input.first.fill("")
+                            name_input.first.fill(name)
 
-                if url:
-                    url_input = page.locator("input[name='url']")
-                    if url_input.count() > 0:
-                        url_input.first.click()
-                        url_input.first.fill("")
-                        url_input.first.fill(url)
+                    if description:
+                        bio_input = page.locator("textarea[name='description']")
+                        if bio_input.count() > 0:
+                            bio_input.first.click()
+                            bio_input.first.fill("")
+                            bio_input.first.fill(description)
 
-                time.sleep(1)
-                save_btn = page.locator("[data-testid='Profile_Save_Button'], button:has-text('Save'), div[role='dialog'] button:has-text('Save')")
-                if save_btn.count() > 0:
-                    if save_btn.first.is_enabled():
-                        save_btn.first.click()
-                        time.sleep(3)
-                        logger.info("Profile updated successfully via browser session")
-                        return True
+                    if location:
+                        loc_input = page.locator("input[name='location']")
+                        if loc_input.count() > 0:
+                            loc_input.first.click()
+                            loc_input.first.fill("")
+                            loc_input.first.fill(location)
+
+                    if url:
+                        url_input = page.locator("input[name='url']")
+                        if url_input.count() > 0:
+                            url_input.first.click()
+                            url_input.first.fill("")
+                            url_input.first.fill(url)
+
+                    time.sleep(1)
+                    save_btn = page.locator("[data-testid='Profile_Save_Button'], button:has-text('Save'), div[role='dialog'] button:has-text('Save')")
+                    if save_btn.count() > 0:
+                        if save_btn.first.is_enabled():
+                            save_btn.first.click()
+                            time.sleep(3)
+                            logger.info("Profile updated successfully via browser session")
+                            return True
+                        else:
+                            logger.info("Profile already up to date")
+                            return True
                     else:
-                        logger.info("Profile already up to date")
-                        return True
-                else:
-                    logger.warning("Save button not found in profile settings")
-                    return False
-            finally:
-                browser.close()
-    except Exception as exc:
-        logger.error("update_profile_text failed: %s", exc)
-        return False
+                        logger.warning("Save button not found in profile settings (attempt %d/%d)", attempt, max_retries)
+                        if attempt < max_retries:
+                            time.sleep(2)
+                            continue
+                        return False
+                finally:
+                    browser.close()
+                    gc.collect()
+        except Exception as exc:
+            logger.error("update_profile_text failed (attempt %d/%d): %s", attempt, max_retries, exc)
+            if attempt < max_retries:
+                time.sleep(2)
+                continue
+            return False
+    return False
 
 
 def update_profile_image(auth_token: str, ct0: str, image_bytes: bytes, proxy: Optional[str | dict] = None) -> bool:
