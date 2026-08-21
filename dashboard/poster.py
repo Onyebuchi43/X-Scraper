@@ -312,16 +312,18 @@ def update_profile_text(
                     pass
 
                 # Dismiss any onboarding wizard steps ("Pick a profile picture", "Pick a header")
+                had_skip = False
                 for _ in range(5):
                     skip_btn = page.locator("button:has-text('Skip for now'), button:has-text('Skip')")
                     if skip_btn.count() > 0 and skip_btn.first.is_visible():
+                        had_skip = True
                         skip_btn.first.click()
                         time.sleep(1.5)
                     else:
                         break
 
-                # If needed, re-open Edit profile modal
-                if page.locator("input[name='displayName'], textarea[name='description']").count() == 0:
+                # If needed after dismissing wizard, re-open Edit profile modal
+                if had_skip and page.locator("input[name='displayName'], textarea[name='description']").count() == 0:
                     try:
                         re_btn = page.locator("a[href$='/settings/profile'], button:has-text('Edit profile'), a:has-text('Edit profile'), button:has-text('Set up profile'), [data-testid='editProfileButton']")
                         if re_btn.count() > 0 and re_btn.first.is_visible():
