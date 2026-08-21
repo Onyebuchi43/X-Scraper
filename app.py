@@ -1173,6 +1173,9 @@ def bulk_edit_profiles_api():
     avatar_bytes = avatar_file.read() if avatar_file else None
     banner_bytes = banner_file.read() if banner_file else None
 
+    if not (name or description or location or url or avatar_bytes or banner_bytes):
+        return jsonify({"error": "Please provide at least one field or image/banner to update"}), 400
+
     conn = _db()
     accounts = []
     if account_ids:
@@ -1219,9 +1222,13 @@ def bulk_edit_profiles_api():
                 if name or description or location or url:
                     ok = update_profile_text(at, c0, name=name, description=description, location=location, url=url, proxy=px)
                 if avatar_bytes:
-                    update_profile_image(at, c0, avatar_bytes, proxy=px)
+                    img_ok = update_profile_image(at, c0, avatar_bytes, proxy=px)
+                    if not (name or description or location or url):
+                        ok = img_ok
                 if banner_bytes:
-                    update_profile_banner(at, c0, banner_bytes, proxy=px)
+                    ban_ok = update_profile_banner(at, c0, banner_bytes, proxy=px)
+                    if not (name or description or location or url or avatar_bytes):
+                        ok = ban_ok
 
                 if ok:
                     success_count += 1

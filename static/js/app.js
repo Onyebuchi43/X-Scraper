@@ -2045,6 +2045,13 @@ async function bulkEditSubmit() {
   const bio = document.getElementById('be-bio')?.value || '';
   const location = document.getElementById('be-location')?.value || '';
   const url = document.getElementById('be-url')?.value || '';
+  const avatarFile = document.getElementById('be-avatar')?.files?.[0];
+  const bannerFile = document.getElementById('be-banner')?.files?.[0];
+
+  if (!name && !bio && !location && !url && !avatarFile && !bannerFile) {
+    toast('Please fill in at least one field or select an image/banner to update', 'warning');
+    return;
+  }
 
   const submitBtn = document.querySelector("#modal-bulk-edit button.btn-primary");
   const origText = submitBtn ? submitBtn.textContent : 'Update Profiles';
@@ -2054,10 +2061,17 @@ async function bulkEditSubmit() {
   }
 
   try {
+    const fd = new FormData();
+    if (name) fd.append('name', name);
+    if (bio) fd.append('description', bio);
+    if (location) fd.append('location', location);
+    if (url) fd.append('url', url);
+    if (avatarFile) fd.append('avatar', avatarFile);
+    if (bannerFile) fd.append('banner', bannerFile);
+
     const resp = await fetch('/api/accounts/bulk-edit', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: name, description: bio, location: location, url: url })
+      body: fd
     });
     const data = await resp.json();
     if (data.error) {

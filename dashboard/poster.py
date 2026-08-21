@@ -389,20 +389,19 @@ def update_profile_text(
 def update_profile_image(auth_token: str, ct0: str, image_bytes: bytes, proxy: Optional[str | dict] = None) -> bool:
     """Upload image and set it as the Twitter/X profile avatar picture."""
     try:
-        media_id = upload_media(auth_token, ct0, image_bytes, proxy=proxy)
-        if not media_id:
-            return False
+        import base64
+        b64_img = base64.b64encode(image_bytes).decode("utf-8")
         proxy_url = _get_httpx_proxy_url(proxy)
         httpx_kwargs = {"proxy": proxy_url} if proxy_url else {}
         resp = httpx.post(
             "https://x.com/i/api/1.1/account/update_profile_image.json",
-            data={"media_id": media_id},
+            data={"image": b64_img},
             headers=_headers(ct0, {"Content-Type": "application/x-www-form-urlencoded"}),
             cookies=_cookies(auth_token, ct0),
             timeout=25,
             **httpx_kwargs,
         )
-        if resp.status_code in (200, 204):
+        if resp.status_code in (200, 201, 204):
             logger.info("Profile avatar updated successfully")
             return True
         logger.warning("update_profile_image returned HTTP %d: %s", resp.status_code, resp.text[:200])
@@ -415,20 +414,19 @@ def update_profile_image(auth_token: str, ct0: str, image_bytes: bytes, proxy: O
 def update_profile_banner(auth_token: str, ct0: str, image_bytes: bytes, proxy: Optional[str | dict] = None) -> bool:
     """Upload image and set it as the Twitter/X profile header banner."""
     try:
-        media_id = upload_media(auth_token, ct0, image_bytes, proxy=proxy)
-        if not media_id:
-            return False
+        import base64
+        b64_banner = base64.b64encode(image_bytes).decode("utf-8")
         proxy_url = _get_httpx_proxy_url(proxy)
         httpx_kwargs = {"proxy": proxy_url} if proxy_url else {}
         resp = httpx.post(
             "https://x.com/i/api/1.1/account/update_profile_banner.json",
-            data={"media_id": media_id},
+            data={"banner": b64_banner},
             headers=_headers(ct0, {"Content-Type": "application/x-www-form-urlencoded"}),
             cookies=_cookies(auth_token, ct0),
             timeout=25,
             **httpx_kwargs,
         )
-        if resp.status_code in (200, 204):
+        if resp.status_code in (200, 201, 204):
             logger.info("Profile banner updated successfully")
             return True
         logger.warning("update_profile_banner returned HTTP %d: %s", resp.status_code, resp.text[:200])
