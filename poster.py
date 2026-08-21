@@ -334,36 +334,43 @@ def update_profile_text(
 
                 # Wait for profile inputs to appear in modal
                 try:
-                    page.wait_for_selector("textarea[name='description'], input[name='location'], [data-testid='Profile_Save_Button'], button:has-text('Save')", timeout=10000)
+                    page.wait_for_selector(
+                        "textarea[name='description'], input[name='displayName'], [data-testid='Profile_Save_Button'], button:has-text('Save')",
+                        timeout=12000
+                    )
                 except Exception:
                     pass
 
                 if name:
                     name_input = page.locator("input[name='displayName']")
                     if name_input.count() > 0:
-                        name_input.click()
-                        name_input.fill(name)
+                        name_input.first.click()
+                        name_input.first.fill("")
+                        name_input.first.fill(name)
 
                 if description:
                     bio_input = page.locator("textarea[name='description']")
                     if bio_input.count() > 0:
-                        bio_input.click()
-                        bio_input.fill(description)
+                        bio_input.first.click()
+                        bio_input.first.fill("")
+                        bio_input.first.fill(description)
 
                 if location:
                     loc_input = page.locator("input[name='location']")
                     if loc_input.count() > 0:
-                        loc_input.click()
-                        loc_input.fill(location)
+                        loc_input.first.click()
+                        loc_input.first.fill("")
+                        loc_input.first.fill(location)
 
                 if url:
                     url_input = page.locator("input[name='url']")
                     if url_input.count() > 0:
-                        url_input.click()
-                        url_input.fill(url)
+                        url_input.first.click()
+                        url_input.first.fill("")
+                        url_input.first.fill(url)
 
                 time.sleep(1)
-                save_btn = page.locator("[data-testid='Profile_Save_Button'], button:has-text('Save')")
+                save_btn = page.locator("[data-testid='Profile_Save_Button'], button:has-text('Save'), div[role='dialog'] button:has-text('Save')")
                 if save_btn.count() > 0:
                     if save_btn.first.is_enabled():
                         save_btn.first.click()
