@@ -272,13 +272,10 @@ def _scrape_followers(
             config=cfg,
         )
 
-        import time as _time
-        import logging as _logging
-
         handles: List[str] = []
 
         try:
-            log_fn("INFO", f"📡 Connecting to Twitter endpoint via proxy and fetching followers batch...")
+            log_fn("INFO", "📡 Connecting to Twitter endpoint via proxy and fetching followers batch...")
             results = s.get_followers(source_profiles, limit=fetch_limit, save=False, resume=True)
         except Exception as scrap_exc:
             err_type = classify_account_error(scrap_exc)
@@ -390,7 +387,7 @@ def _scrape_followers(
                                     log_fn("WARNING", "⏹ Scraping stopped by user.")
                                     return handles, True, raw_count
                                 sleep_chunk = min(remaining, 5.0)
-                                _time.sleep(sleep_chunk)
+                                time.sleep(sleep_chunk)
                                 remaining -= sleep_chunk
                                 if remaining > 0 and int(remaining) % 60 == 0:
                                     log_fn("INFO", f"⏳ Rate limit cooldown active: {int(remaining)}s remaining until auto-resume...")
@@ -423,7 +420,7 @@ def _scrape_followers(
                 fc_str = f" ({fc_val} followers)" if fc_val is not None else ""
                 handles.append(h)
                 log_fn("INFO", f"  [{len(handles)}/{limit}] @{h}{fc_str} ✓ MATCH")
-                _time.sleep(0.05)  # Micro-yield to allow smooth live UI streaming
+                time.sleep(0.05)  # Micro-yield to allow smooth live UI streaming
 
         log_fn("INFO", f"Scraped {raw_count} total profiles from Twitter; {len(handles)} matched criteria ({min_followers}-{max_followers} followers{country_msg})")
         return handles, True, raw_count
@@ -703,7 +700,7 @@ def _scrape_tweet_commenters(
                                     log_fn("WARNING", "⏹ Scraping stopped by user.")
                                     return handles, True, raw_count
                                 sleep_chunk = min(remaining, 5.0)
-                                _time.sleep(sleep_chunk)
+                                time.sleep(sleep_chunk)
                                 remaining -= sleep_chunk
                                 if remaining > 0 and int(remaining) % 60 == 0:
                                     log_fn("INFO", f"⏳ Rate limit cooldown active: {int(remaining)}s remaining until auto-resume...")
@@ -936,7 +933,7 @@ def _scrape_target_tweets_commenters(
                                     log_fn("WARNING", "⏹ Scraping stopped by user.")
                                     return handles, True, raw_count
                                 sleep_chunk = min(remaining, 5.0)
-                                _time.sleep(sleep_chunk)
+                                time.sleep(sleep_chunk)
                                 remaining -= sleep_chunk
                                 if remaining > 0 and int(remaining) % 60 == 0:
                                     log_fn("INFO", f"⏳ Rate limit cooldown active: {int(remaining)}s remaining until auto-resume...")
