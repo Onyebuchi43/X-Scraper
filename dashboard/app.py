@@ -455,9 +455,13 @@ def delete_all_accounts():
     conn = _db()
     count = conn.execute("SELECT COUNT(*) FROM accounts").fetchone()[0]
     conn.execute("DELETE FROM accounts")
+    try:
+        conn.execute("DELETE FROM sqlite_sequence WHERE name='accounts'")
+    except Exception:
+        pass
     conn.commit()
     conn.close()
-    logger.info("Removed all %d accounts from database", count)
+    logger.info("Removed all %d accounts from database and reset ID sequence", count)
     return jsonify({"msg": f"Successfully removed {count} account(s) from database", "deleted_count": count})
 
 
