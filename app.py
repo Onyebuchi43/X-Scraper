@@ -300,6 +300,10 @@ def _run_scrape_job(job_id: str, job_type: str, params: dict, is_resume: bool = 
                 log_fn("SUCCESS", f"Target limit of {total_limit} profiles already reached! Job complete.")
                 return
 
+            # Keep a clean copy of handles already saved to disk so newly verified handles are never skipped
+            already_saved_set = set(existing_handles_set)
+            candidate_checked_set = set(existing_handles_set)
+
             if target_type == "tweet_commenters":
                 from scheduler_engine import _scrape_tweet_commenters
                 log_fn("INFO", f"Scraping commenters of tweet/URL {targets} (remaining: {needed_limit}/{total_limit}, range: {min_followers}-{max_followers}, country: '{country_filter}')")
@@ -308,7 +312,7 @@ def _run_scrape_job(job_id: str, job_type: str, params: dict, is_resume: bool = 
                     tweet_target, cookies_list, needed_limit, log_fn,
                     min_followers=min_followers, max_followers=max_followers,
                     country_filter=country_filter,
-                    checked_candidates_set=existing_handles_set,
+                    checked_candidates_set=candidate_checked_set,
                     is_stopped_fn=is_stopped_fn,
                 )
             elif target_type == "target_tweets_commenters":
@@ -319,7 +323,7 @@ def _run_scrape_job(job_id: str, job_type: str, params: dict, is_resume: bool = 
                     cookies_list, needed_limit, log_fn,
                     min_followers=min_followers, max_followers=max_followers,
                     country_filter=country_filter,
-                    checked_candidates_set=existing_handles_set,
+                    checked_candidates_set=candidate_checked_set,
                     is_stopped_fn=is_stopped_fn,
                 )
             else:
@@ -330,7 +334,7 @@ def _run_scrape_job(job_id: str, job_type: str, params: dict, is_resume: bool = 
                     cookies_list, needed_limit, log_fn,
                     min_followers=min_followers, max_followers=max_followers,
                     country_filter=country_filter,
-                    checked_handles_set=existing_handles_set,
+                    checked_handles_set=candidate_checked_set,
                     is_stopped_fn=is_stopped_fn,
                 )
 
@@ -341,9 +345,9 @@ def _run_scrape_job(job_id: str, job_type: str, params: dict, is_resume: bool = 
                 if file_mode == "w":
                     writer.writerow(["username", "scraped_at", "source_target", "target_type"])
                 for h in handles:
-                    if h.lower() not in existing_handles_set:
+                    if h.lower() not in already_saved_set:
                         writer.writerow([h, _dt.datetime.now().isoformat(), ",".join(targets) if isinstance(targets, list) else str(targets), target_type])
-                        existing_handles_set.add(h.lower())
+                        already_saved_set.add(h.lower())
                         existing_handles_list.append(h)
 
             total_collected = len(existing_handles_list)
