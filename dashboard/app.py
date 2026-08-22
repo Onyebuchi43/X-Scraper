@@ -183,6 +183,7 @@ def _resume_running_campaigns():
 
 _resume_running_campaigns()
 _jobs: dict[str, threading.Thread] = {}
+_scrape_stop_events: dict[str, threading.Event] = {}
 
 
 def _update_job(job_id: str, **kwargs):
@@ -224,6 +225,9 @@ def _run_scrape_job(job_id: str, job_type: str, params: dict) -> None:
     try:
         from Scweet import Scweet, ScweetConfig  # type: ignore
         from dashboard.poster import classify_account_error  # type: ignore
+
+        stop_ev = _scrape_stop_events.get(job_id)
+        is_stopped_fn = stop_ev.is_set if stop_ev else None
 
         _update_job(job_id, status="running")
         _append_job_log(job_id, "Initializing Scweet…")
@@ -272,7 +276,8 @@ def _run_scrape_job(job_id: str, job_type: str, params: dict) -> None:
                 handles, ok, raw_count = _scrape_tweet_commenters(
                     tweet_target, cookies_list, limit, log_fn,
                     min_followers=min_followers, max_followers=max_followers,
-                    country_filter=country_filter
+                    country_filter=country_filter,
+                    is_stopped_fn=is_stopped_fn,
                 )
             elif target_type == "target_tweets_commenters":
                 from scheduler_engine import _scrape_target_tweets_commenters
@@ -281,7 +286,8 @@ def _run_scrape_job(job_id: str, job_type: str, params: dict) -> None:
                     targets if isinstance(targets, list) else [str(targets)],
                     cookies_list, limit, log_fn,
                     min_followers=min_followers, max_followers=max_followers,
-                    country_filter=country_filter
+                    country_filter=country_filter,
+                    is_stopped_fn=is_stopped_fn,
                 )
             else:
                 from scheduler_engine import _scrape_followers
@@ -290,7 +296,8 @@ def _run_scrape_job(job_id: str, job_type: str, params: dict) -> None:
                     targets if isinstance(targets, list) else [str(targets)],
                     cookies_list, limit, log_fn,
                     min_followers=min_followers, max_followers=max_followers,
-                    country_filter=country_filter
+                    country_filter=country_filter,
+                    is_stopped_fn=is_stopped_fn,
                 )
 
             os.makedirs("outputs", exist_ok=True)
@@ -302,8 +309,12 @@ def _run_scrape_job(job_id: str, job_type: str, params: dict) -> None:
                 for h in handles:
                     writer.writerow([h, _dt.datetime.now().isoformat(), ",".join(targets) if isinstance(targets, list) else str(targets), target_type])
 
-            _update_job(job_id, status="done", result_file=result_file)
-            log_fn("SUCCESS", f"Scraping completed! {len(handles)} matched profiles saved -> {result_file}")
+            if stop_ev and stop_ev.is_set():
+                _update_job(job_id, status="stopped", result_file=result_file if handles else None)
+                log_fn("WARNING", f"Scraping stopped by user! {len(handles)} matched profiles saved -> {result_file}")
+            else:
+                _update_job(job_id, status="done", result_file=result_file)
+                log_fn("SUCCESS", f"Scraping completed! {len(handles)} matched profiles saved -> {result_file}")
             return
 
         elif job_type == "search":
@@ -377,20 +388,6 @@ def add_account():
     label = (data.get("label") or "").strip() or None
     if not auth_token or not ct0:
         return jsonify({"error": "auth_token and ct0 are required"}), 400
-
-    if not proxy:
-        try:
-            try:
-                from betasocks_client import BetaSocksClient
-            except ImportError:
-                from dashboard.betasocks_client import BetaSocksClient  # type: ignore
-            bs = BetaSocksClient()
-            fresh_px = bs.get_first_working_socks()
-            if fresh_px:
-                proxy = fresh_px
-        except Exception as exc:
-            logger.warning("Could not auto-fetch BetaSocks proxy on account add: %s", exc)
-
     conn = _db()
     cur = conn.execute(
         "INSERT INTO accounts (auth_token, ct0, proxy, label) VALUES (?,?,?,?)",
@@ -399,7 +396,7 @@ def add_account():
     conn.commit()
     account_id = cur.lastrowid
     conn.close()
-    return jsonify({"id": account_id, "proxy": proxy, "msg": "Account added"})
+    return jsonify({"id": account_id, "msg": "Account added"})
 
 
 @app.route("/api/accounts/<int:account_id>", methods=["GET", "PUT", "DELETE"])
@@ -474,6 +471,8 @@ def delete_all_accounts():
 # ── Scrape jobs ────────────────────────────────────────────────────────────────
 def _start_job(job_type: str, params: dict) -> str:
     job_id = str(uuid.uuid4())
+    stop_ev = threading.Event()
+    _scrape_stop_events[job_id] = stop_ev
     conn = _db()
     conn.execute(
         "INSERT INTO jobs (id, type, params) VALUES (?,?,?)",
@@ -610,6 +609,43 @@ def job_status(job_id: str):
     d = dict(row)
     d["log"] = json.loads(d.get("log") or "[]")
     return jsonify(d)
+
+
+@app.route("/api/jobs/<job_id>/stop", methods=["POST"])
+def stop_job_api(job_id: str):
+    conn = _db()
+    row = conn.execute("SELECT status FROM jobs WHERE id=?", (job_id,)).fetchone()
+    conn.close()
+    if not row:
+        return jsonify({"error": "Job not found"}), 404
+
+    stop_ev = _scrape_stop_events.get(job_id)
+    if stop_ev:
+        stop_ev.set()
+
+    _update_job(job_id, status="stopped")
+    _append_job_log(job_id, "⏹ Scraping stopped by user.")
+    return jsonify({"msg": "Scraping job stopped", "status": "stopped"})
+
+
+@app.route("/api/scrape/stop", methods=["POST"])
+def stop_current_scrape():
+    data = request.get_json(silent=True) or {} if request.is_json else request.form or {}
+    job_id = data.get("job_id")
+    if job_id:
+        return stop_job_api(job_id)
+
+    conn = _db()
+    running_jobs = conn.execute("SELECT id FROM jobs WHERE status='running'").fetchall()
+    conn.close()
+    for r in running_jobs:
+        jid = r["id"]
+        stop_ev = _scrape_stop_events.get(jid)
+        if stop_ev:
+            stop_ev.set()
+        _update_job(jid, status="stopped")
+        _append_job_log(jid, "⏹ Scraping stopped by user.")
+    return jsonify({"msg": f"Stopped {len(running_jobs)} running scrape job(s)"})
 
 
 @app.route("/api/jobs/<job_id>/download")
@@ -1144,33 +1180,23 @@ def bulk_import_accounts_api():
     imported = 0
     errors = []
 
+    try:
+        from account_creator import register_email_account
+    except ImportError:
+        from dashboard.account_creator import register_email_account  # type: ignore
+
     for idx, line in enumerate(lines, 1):
         parts = line.split(":")
         if len(parts) >= 2:
             auth_token = parts[0].strip()
             ct0 = parts[1].strip()
-            label = parts[2].strip() if len(parts) > 2 else f"Account #{idx}"
+            username = parts[2].strip() if len(parts) > 2 else f"user_{uuid.uuid4().hex[:6]}"
             proxy = parts[3].strip() if len(parts) > 3 else None
-            if not proxy:
-                try:
-                    try:
-                        from betasocks_client import BetaSocksClient
-                    except ImportError:
-                        from dashboard.betasocks_client import BetaSocksClient  # type: ignore
-                    bs = BetaSocksClient()
-                    fresh_px = bs.get_first_working_socks()
-                    if fresh_px:
-                        proxy = fresh_px
-                except Exception:
-                    pass
             try:
-                conn = _db()
-                conn.execute(
-                    "INSERT INTO accounts (auth_token, ct0, proxy, label) VALUES (?,?,?,?)",
-                    (auth_token, ct0, proxy, label)
+                register_email_account(
+                    email="", name=username, password="",
+                    auth_token=auth_token, ct0=ct0, proxy=proxy, username=username
                 )
-                conn.commit()
-                conn.close()
                 imported += 1
             except Exception as e:
                 errors.append(f"Line {idx}: {e}")

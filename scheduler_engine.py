@@ -196,6 +196,7 @@ def _scrape_followers(
     country_filter: str = "",
     scrape_round: int = 1,
     checked_handles_set: Optional[set] = None,
+    is_stopped_fn: Optional[Callable[[], bool]] = None,
 ) -> Tuple[List[str], bool, int]:
     """
     Scrape follower handles from `source_profiles`.
@@ -379,6 +380,10 @@ def _scrape_followers(
 
                 checked_count = 0
                 for cand in unprocessed_candidates:
+                    if is_stopped_fn and is_stopped_fn():
+                        log_fn("WARNING", "⏹ Scraping stopped by user.")
+                        return handles, True, raw_count
+
                     if len(handles) >= limit:
                         break
 
@@ -393,6 +398,10 @@ def _scrape_followers(
                     scrape_proxy = scrape_account.get("proxy")
 
                     while True:
+                        if is_stopped_fn and is_stopped_fn():
+                            log_fn("WARNING", "⏹ Scraping stopped by user.")
+                            return handles, True, raw_count
+
                         account_country = fetch_account_based_in(
                             scrape_auth, scrape_ct0, h, proxy=scrape_proxy, timeout=8, accounts_pool=pool_accounts
                         )
@@ -402,7 +411,10 @@ def _scrape_followers(
                             
                             remaining = wait_time
                             while remaining > 0:
-                                sleep_chunk = min(remaining, 15.0)
+                                if is_stopped_fn and is_stopped_fn():
+                                    log_fn("WARNING", "⏹ Scraping stopped by user.")
+                                    return handles, True, raw_count
+                                sleep_chunk = min(remaining, 5.0)
                                 _time.sleep(sleep_chunk)
                                 remaining -= sleep_chunk
                                 if remaining > 0 and int(remaining) % 60 == 0:
@@ -513,6 +525,7 @@ def _scrape_tweet_commenters(
     country_filter: str = "",
     scrape_round: int = 1,
     checked_candidates_set: set = None,
+    is_stopped_fn: Optional[Callable[[], bool]] = None,
 ) -> Tuple[List[str], bool, int]:
     """
     Scrape handles of users who commented on / replied to a target tweet URL or ID.
@@ -643,6 +656,10 @@ def _scrape_tweet_commenters(
 
                 checked_count = 0
                 for cand in unprocessed_candidates:
+                    if is_stopped_fn and is_stopped_fn():
+                        log_fn("WARNING", "⏹ Scraping stopped by user.")
+                        return handles, True, raw_count
+
                     if len(handles) >= limit:
                         break
 
@@ -667,6 +684,10 @@ def _scrape_tweet_commenters(
                     scrape_proxy = scrape_account.get("proxy")
 
                     while True:
+                        if is_stopped_fn and is_stopped_fn():
+                            log_fn("WARNING", "⏹ Scraping stopped by user.")
+                            return handles, True, raw_count
+
                         account_country = fetch_account_based_in(
                             scrape_auth, scrape_ct0, h, proxy=scrape_proxy, timeout=8, accounts_pool=pool_accounts
                         )
@@ -675,7 +696,10 @@ def _scrape_tweet_commenters(
                             log_fn("WARNING", f"⏳ Twitter 'About Account' rate limit reached across scraper pool. Pausing {int(wait_time)}s for window reset... Live scraping will auto-resume.")
                             remaining = wait_time
                             while remaining > 0:
-                                sleep_chunk = min(remaining, 15.0)
+                                if is_stopped_fn and is_stopped_fn():
+                                    log_fn("WARNING", "⏹ Scraping stopped by user.")
+                                    return handles, True, raw_count
+                                sleep_chunk = min(remaining, 5.0)
                                 _time.sleep(sleep_chunk)
                                 remaining -= sleep_chunk
                                 if remaining > 0 and int(remaining) % 60 == 0:
@@ -735,6 +759,7 @@ def _scrape_target_tweets_commenters(
     country_filter: str = "",
     scrape_round: int = 1,
     checked_candidates_set: set = None,
+    is_stopped_fn: Optional[Callable[[], bool]] = None,
 ) -> Tuple[List[str], bool, int]:
     """
     Scrape commenters/repliers from recent top tweets originally posted by target profiles.
@@ -864,6 +889,10 @@ def _scrape_target_tweets_commenters(
 
                 checked_count = 0
                 for cand in unprocessed_candidates:
+                    if is_stopped_fn and is_stopped_fn():
+                        log_fn("WARNING", "⏹ Scraping stopped by user.")
+                        return handles, True, raw_count
+
                     if len(handles) >= limit:
                         break
 
@@ -888,6 +917,10 @@ def _scrape_target_tweets_commenters(
                     scrape_proxy = scrape_account.get("proxy")
 
                     while True:
+                        if is_stopped_fn and is_stopped_fn():
+                            log_fn("WARNING", "⏹ Scraping stopped by user.")
+                            return handles, True, raw_count
+
                         account_country = fetch_account_based_in(
                             scrape_auth, scrape_ct0, h, proxy=scrape_proxy, timeout=8, accounts_pool=pool_accounts
                         )
@@ -896,7 +929,10 @@ def _scrape_target_tweets_commenters(
                             log_fn("WARNING", f"⏳ Twitter 'About Account' rate limit reached across scraper pool. Pausing {int(wait_time)}s for window reset... Live scraping will auto-resume.")
                             remaining = wait_time
                             while remaining > 0:
-                                sleep_chunk = min(remaining, 15.0)
+                                if is_stopped_fn and is_stopped_fn():
+                                    log_fn("WARNING", "⏹ Scraping stopped by user.")
+                                    return handles, True, raw_count
+                                sleep_chunk = min(remaining, 5.0)
                                 _time.sleep(sleep_chunk)
                                 remaining -= sleep_chunk
                                 if remaining > 0 and int(remaining) % 60 == 0:

@@ -664,6 +664,8 @@ function showScraperFeed(type, jobId) {
   if (matchEl) matchEl.textContent = '0';
   const dlBtn = document.getElementById('scraper-download-btn');
   if (dlBtn) dlBtn.style.display = 'none';
+  const stopBtn = document.getElementById('scraper-stop-btn');
+  if (stopBtn) stopBtn.style.display = 'inline-flex';
 
   const log = document.getElementById('scraper-live-log');
   if (log) {
@@ -682,15 +684,26 @@ async function pollJob() {
   if (!data || data.error) return;
   updateScraperFeedUI(data);
 
-  if (['done', 'error'].includes(data.status)) {
+  if (['done', 'error', 'stopped'].includes(data.status)) {
     clearInterval(jobPollInterval);
     loadScraperJobsTable();
+    const stopBtn = document.getElementById('scraper-stop-btn');
+    if (stopBtn) stopBtn.style.display = 'none';
+
     if (data.status === 'done') {
       const dlBtn = document.getElementById('scraper-download-btn');
       if (dlBtn) dlBtn.style.display = 'inline-flex';
       toast('Scrape job completed successfully! 🎉', 'success');
       loadCSVFiles();
       loadCSVSelect();
+    } else if (data.status === 'stopped') {
+      toast('Scrape job stopped', 'info');
+      if (data.result_file) {
+        const dlBtn = document.getElementById('scraper-download-btn');
+        if (dlBtn) dlBtn.style.display = 'inline-flex';
+        loadCSVFiles();
+        loadCSVSelect();
+      }
     }
   }
 }
@@ -704,6 +717,15 @@ function updateScraperFeedUI(data) {
   const typeEl = document.getElementById('stat-scrape-type');
   if (typeEl && data.type) typeEl.textContent = data.type.toUpperCase();
 
+  const stopBtn = document.getElementById('scraper-stop-btn');
+  if (stopBtn) {
+    if (data.status === 'running') {
+      stopBtn.style.display = 'inline-flex';
+    } else {
+      stopBtn.style.display = 'none';
+    }
+  }
+
   const log = document.getElementById('scraper-live-log');
   if (log && data.log && Array.isArray(data.log)) {
     let rawItemsCount = 0;
@@ -713,7 +735,7 @@ function updateScraperFeedUI(data) {
       const msg = e.msg || '';
       let cls = 'log-info';
       if (msg.includes('ERROR') || msg.includes('failed') || msg.includes('🚨')) cls = 'log-error';
-      else if (msg.includes('WARNING') || msg.includes('RATE LIMIT') || msg.includes('⏳')) cls = 'log-warning';
+      else if (msg.includes('WARNING') || msg.includes('RATE LIMIT') || msg.includes('⏳') || msg.includes('stopped') || msg.includes('⏹')) cls = 'log-warning';
       else if (msg.includes('MATCH') || msg.includes('✓') || msg.includes('Done') || msg.includes('Saved')) cls = 'log-success';
 
       // Parse verified matches (monotonic, strictly accurate):
@@ -752,6 +774,50 @@ function updateScraperFeedUI(data) {
   if (data.result_file) {
     const dlBtn = document.getElementById('scraper-download-btn');
     if (dlBtn) dlBtn.style.display = 'inline-flex';
+  }
+}
+
+async function stopScraping() {
+  if (!currentJobId) {
+    const res = await api('/api/scrape/stop', { method: 'POST' });
+    toast(res.msg || 'Scraping stopped', 'info');
+    loadScraperJobsTable();
+    return;
+  }
+  try {
+    const res = await api(`/api/jobs/${currentJobId}/stop`, { method: 'POST' });
+    if (res.error) {
+      toast(res.error, 'error');
+    } else {
+      toast('Scraping stopped by user ⏹', 'info');
+      const pill = document.getElementById('scraper-status-pill');
+      if (pill) { pill.textContent = 'stopped'; pill.setAttribute('data-s', 'stopped'); }
+      const stopBtn = document.getElementById('scraper-stop-btn');
+      if (stopBtn) stopBtn.style.display = 'none';
+      loadScraperJobsTable();
+    }
+  } catch (err) {
+    toast('Error stopping scraper: ' + err.message, 'error');
+  }
+}
+
+async function stopJobById(jobId) {
+  try {
+    const res = await api(`/api/jobs/${jobId}/stop`, { method: 'POST' });
+    if (res.error) {
+      toast(res.error, 'error');
+    } else {
+      toast('Scraping job stopped ⏹', 'info');
+      if (currentJobId === jobId) {
+        const pill = document.getElementById('scraper-status-pill');
+        if (pill) { pill.textContent = 'stopped'; pill.setAttribute('data-s', 'stopped'); }
+        const stopBtn = document.getElementById('scraper-stop-btn');
+        if (stopBtn) stopBtn.style.display = 'none';
+      }
+      loadScraperJobsTable();
+    }
+  } catch (err) {
+    toast('Error stopping job: ' + err.message, 'error');
   }
 }
 
@@ -800,6 +866,8 @@ function clearScraperFeed() {
   if (typeEl) typeEl.textContent = '--';
   const dlBtn = document.getElementById('scraper-download-btn');
   if (dlBtn) dlBtn.style.display = 'none';
+  const stopBtn = document.getElementById('scraper-stop-btn');
+  if (stopBtn) stopBtn.style.display = 'none';
 
   const log = document.getElementById('scraper-live-log');
   if (log) {
@@ -832,6 +900,7 @@ async function loadScraperJobsTable() {
       const resFile = j.result_file ? j.result_file.split(/[\/\\]/).pop() : '--';
       const createdStr = j.created_at ? new Date(j.created_at).toLocaleString() : '--';
       const isDone = j.status === 'done';
+      const isRunning = j.status === 'running';
 
       return `
         <tr>
@@ -843,7 +912,8 @@ async function loadScraperJobsTable() {
           <td style="font-size:12px;color:var(--text-3);">${esc(createdStr)}</td>
           <td>
             <div style="display:flex;gap:6px;">
-              ${isDone ? `<button class="btn btn-sm btn-ghost" onclick="downloadJobById('${j.id}')">⬇ CSV</button>` : ''}
+              ${isRunning ? `<button class="btn btn-sm btn-danger" onclick="stopJobById('${j.id}')">Stop</button>` : ''}
+              ${(isDone || j.result_file) ? `<button class="btn btn-sm btn-ghost" onclick="downloadJobById('${j.id}')">⬇ CSV</button>` : ''}
               <button class="btn btn-sm btn-ghost" onclick="viewJobInFeed('${j.id}')">👁 View Log</button>
               <button class="btn btn-sm btn-danger" style="padding:2px 6px;font-size:11px;" onclick="deleteJobById('${j.id}')">✕</button>
             </div>
@@ -1180,6 +1250,7 @@ async function stopCampaignId(cid) {
 async function stopCampaignById(cid) {
   await api(`/api/campaigns/${cid}/stop`, { method: 'POST' });
   toast(`Campaign #${cid} stopped`, 'info');
+  // Remove this campaign's live feed card with a smooth fade
   const cardEl = document.getElementById(`card-live-${cid}`);
   if (cardEl) {
     cardEl.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
@@ -1720,7 +1791,12 @@ async function deleteCampaign(cid) {
 }
 
 async function clearCampaignTagged(cid) {
-  await clearCampaignTaggedById(cid);
+  if (!confirm(`Clear tagged history for campaign #${cid}?`)) return;
+  const res = await api(`/api/campaigns/${cid}/tagged`, { method: 'DELETE' });
+  if (res.error) { toast(res.error, 'error'); return; }
+  toast(`Cleared tagged users for campaign #${cid}`, 'success');
+  if (currentCampaignId === cid) document.getElementById('stat-tagged').textContent = '0';
+  loadCampaignDbPanel();
 }
 
 // ══ Utilities ═════════════════════════════════════════════════════════════════
