@@ -213,6 +213,28 @@ async function deleteAccount(id) {
   loadAccounts();
 }
 
+async function removeAllAccounts() {
+  if (!accounts || accounts.length === 0) {
+    toast('No registered accounts to remove', 'info');
+    return;
+  }
+  const count = accounts.length;
+  if (!confirm(`⚠️ ARE YOU SURE?\n\nThis will permanently delete ALL ${count} account(s) from the database.\nThis action cannot be undone.`)) {
+    return;
+  }
+  try {
+    const res = await api('/api/accounts/delete-all', { method: 'POST' });
+    if (res && res.error) {
+      toast(res.error, 'error');
+    } else {
+      toast(res.msg || `Successfully removed all ${count} accounts!`, 'success');
+      loadAccounts();
+    }
+  } catch (err) {
+    toast('Failed to remove accounts: ' + err.message, 'error');
+  }
+}
+
 function loadAccountSelects() {
   const selectors = ['f-accounts', 's-accounts', 'p-accounts', 'c-accounts'];
   selectors.forEach(id => {

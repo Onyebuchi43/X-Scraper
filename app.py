@@ -436,6 +436,17 @@ def handle_account(account_id: int):
         return jsonify({"msg": "Deleted"})
 
 
+@app.route("/api/accounts/delete-all", methods=["POST", "DELETE"])
+def delete_all_accounts():
+    conn = _db()
+    count = conn.execute("SELECT COUNT(*) FROM accounts").fetchone()[0]
+    conn.execute("DELETE FROM accounts")
+    conn.commit()
+    conn.close()
+    logger.info("Removed all %d accounts from database", count)
+    return jsonify({"msg": f"Successfully removed {count} account(s) from database", "deleted_count": count})
+
+
 # ── Scrape jobs ────────────────────────────────────────────────────────────────
 def _start_job(job_type: str, params: dict) -> str:
     job_id = str(uuid.uuid4())
