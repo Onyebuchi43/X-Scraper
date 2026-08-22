@@ -261,7 +261,8 @@ def _scrape_followers(
             if alias.strip()
         ] if country_filter else []
 
-        fetch_limit = max(limit, 100) if (max_followers and max_followers < 1000000) else limit
+        has_filters = bool(country_keywords or (max_followers and max_followers < 1000000))
+        fetch_limit = max(limit * 4, 300) if has_filters else limit
         country_msg = f", 'Account based in' filter: {country_filter}" if country_filter else ""
         log_fn("INFO", f"Initialising streaming Scweet scraper for source profiles: {source_profiles} (target: {limit} matches, followers range: {min_followers}-{max_followers}{country_msg})")
         cfg = ScweetConfig(daily_requests_limit=100000, daily_tweets_limit=100000)
