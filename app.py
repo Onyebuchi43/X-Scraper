@@ -431,6 +431,12 @@ def handle_account(account_id: int):
     elif request.method == "DELETE":
         conn = _db()
         conn.execute("DELETE FROM accounts WHERE id=?", (account_id,))
+        remaining = conn.execute("SELECT COUNT(*) FROM accounts").fetchone()[0]
+        if remaining == 0:
+            try:
+                conn.execute("DELETE FROM sqlite_sequence WHERE name='accounts'")
+            except Exception:
+                pass
         conn.commit()
         conn.close()
         return jsonify({"msg": "Deleted"})
