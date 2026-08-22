@@ -658,10 +658,6 @@ function showScraperFeed(type, jobId) {
   if (pill) { pill.textContent = 'running'; pill.setAttribute('data-s', 'running'); }
   const typeEl = document.getElementById('stat-scrape-type');
   if (typeEl && type) typeEl.textContent = type.toUpperCase();
-  const cntEl = document.getElementById('stat-scrape-count');
-  if (cntEl) cntEl.textContent = '0';
-  const matchEl = document.getElementById('stat-scrape-matched');
-  if (matchEl) matchEl.textContent = '0';
   const dlBtn = document.getElementById('scraper-download-btn');
   if (dlBtn) dlBtn.style.display = 'none';
   const stopBtn = document.getElementById('scraper-stop-btn');
@@ -749,21 +745,27 @@ function updateScraperFeedUI(data) {
       else if (msg.includes('WARNING') || msg.includes('RATE LIMIT') || msg.includes('⏳') || msg.includes('stopped') || msg.includes('⏹')) cls = 'log-warning';
       else if (msg.includes('MATCH') || msg.includes('✓') || msg.includes('Done') || msg.includes('Saved') || msg.includes('Resuming')) cls = 'log-success';
 
-      // Parse verified matches (monotonic, strictly accurate):
-      const mMatch = msg.match(/\[(\d+)\/\d+\]\s+@[\w\d_]+.*✓ MATCH/);
+      // Parse verified matches across all log entries:
+      const mMatch = msg.match(/\[(\d+)\/\d+\]\s+@[\w\d_]+.*(?:✓|MATCH)/i);
       if (mMatch) {
         matchedCount = Math.max(matchedCount, parseInt(mMatch[1]));
       }
+      const mResume = msg.match(/\((\d+)\s+profiles\s+already\s+collected\)/i);
+      if (mResume) {
+        matchedCount = Math.max(matchedCount, parseInt(mResume[1]));
+      }
       const mSummary = msg.match(/(\d+)\s+matched\s+criteria/i);
       if (mSummary) {
-        matchedCount = parseInt(mSummary[1]);
+        matchedCount = Math.max(matchedCount, parseInt(mSummary[1]));
       }
       const mSaved = msg.match(/(\d+)\s+matched\s+profiles\s+saved/i);
       if (mSaved) {
-        matchedCount = parseInt(mSaved[1]);
+        matchedCount = Math.max(matchedCount, parseInt(mSaved[1]));
       }
 
       // Raw items count:
+      const mRetrieved = msg.match(/Retrieved\s+(\d+)\s+raw/i);
+      if (mRetrieved) rawItemsCount = Math.max(rawItemsCount, parseInt(mRetrieved[1]));
       const mRaw = msg.match(/Scraped\s+(\d+)\s+total/i);
       if (mRaw) rawItemsCount = Math.max(rawItemsCount, parseInt(mRaw[1]));
       const mFilterRaw = msg.match(/filtering\s+(\d+)\s+raw/i);
