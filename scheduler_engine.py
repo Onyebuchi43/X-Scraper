@@ -267,6 +267,7 @@ def _scrape_followers(
         cfg = ScweetConfig(daily_requests_limit=100000, daily_tweets_limit=100000)
         s = Scweet(
             cookies=rotated_cookies if len(rotated_cookies) > 1 else rotated_cookies[0],
+            db_path=":memory:",
             config=cfg,
         )
 
@@ -288,7 +289,7 @@ def _scrape_followers(
                 if new_proxy:
                     active_acc["proxy"] = new_proxy
                     cookies_pool_list[0]["proxy"] = new_proxy
-                    s = Scweet(cookies=cookies_pool_list[0], config=cfg)
+                    s = Scweet(cookies=cookies_pool_list[0], db_path=":memory:", config=cfg)
                     results = s.get_followers(source_profiles, limit=fetch_limit, save=False, resume=True)
                 else:
                     results = []
@@ -305,7 +306,7 @@ def _scrape_followers(
                 if new_proxy:
                     active_acc["proxy"] = new_proxy
                     cookies_pool_list[0]["proxy"] = new_proxy
-                    s = Scweet(cookies=cookies_pool_list[0], config=cfg)
+                    s = Scweet(cookies=cookies_pool_list[0], db_path=":memory:", config=cfg)
                     results = s.get_followers(source_profiles, limit=fetch_limit, save=False, resume=True)
 
         raw_count = len(results) if results else 0
@@ -602,6 +603,7 @@ def _scrape_tweet_commenters(
         cfg = ScweetConfig(daily_requests_limit=100000, daily_tweets_limit=100000)
         s = Scweet(
             cookies=rotated_cookies if len(rotated_cookies) > 1 else rotated_cookies[0],
+            db_path=":memory:",
             config=cfg,
         )
 

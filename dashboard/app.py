@@ -274,6 +274,7 @@ def _run_scrape_job(job_id: str, job_type: str, params: dict, is_resume: bool = 
         cfg = ScweetConfig(daily_requests_limit=10000, daily_tweets_limit=10000)
         s = Scweet(
             cookies=cookies_list if len(cookies_list) > 1 else cookies_list[0],
+            db_path=":memory:",
             config=cfg,
         )
 
