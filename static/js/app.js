@@ -657,7 +657,7 @@ function showScraperFeed(type, jobId) {
   const pill = document.getElementById('scraper-status-pill');
   if (pill) { pill.textContent = 'running'; pill.setAttribute('data-s', 'running'); }
   const typeEl = document.getElementById('stat-scrape-type');
-  if (typeEl) typeEl.textContent = type ? type.toUpperCase() : '--';
+  if (typeEl && type) typeEl.textContent = type.toUpperCase();
   const cntEl = document.getElementById('stat-scrape-count');
   if (cntEl) cntEl.textContent = '0';
   const matchEl = document.getElementById('stat-scrape-matched');
@@ -666,9 +666,11 @@ function showScraperFeed(type, jobId) {
   if (dlBtn) dlBtn.style.display = 'none';
   const stopBtn = document.getElementById('scraper-stop-btn');
   if (stopBtn) stopBtn.style.display = 'inline-flex';
+  const resumeBtn = document.getElementById('scraper-resume-btn');
+  if (resumeBtn) resumeBtn.style.display = 'none';
 
   const log = document.getElementById('scraper-live-log');
-  if (log) {
+  if (log && type) {
     log.innerHTML = `<div class="log-entry log-info"><span class="log-ts">${new Date().toLocaleTimeString()}</span>🚀 Job ${jobId.slice(0, 8)} started (${type}). Initializing scraper pool...</div>`;
   }
 }
@@ -689,14 +691,17 @@ async function pollJob() {
     loadScraperJobsTable();
     const stopBtn = document.getElementById('scraper-stop-btn');
     if (stopBtn) stopBtn.style.display = 'none';
+    const resumeBtn = document.getElementById('scraper-resume-btn');
 
     if (data.status === 'done') {
+      if (resumeBtn) resumeBtn.style.display = 'none';
       const dlBtn = document.getElementById('scraper-download-btn');
       if (dlBtn) dlBtn.style.display = 'inline-flex';
       toast('Scrape job completed successfully! 🎉', 'success');
       loadCSVFiles();
       loadCSVSelect();
     } else if (data.status === 'stopped') {
+      if (resumeBtn) resumeBtn.style.display = 'inline-flex';
       toast('Scrape job stopped', 'info');
       if (data.result_file) {
         const dlBtn = document.getElementById('scraper-download-btn');
@@ -704,6 +709,8 @@ async function pollJob() {
         loadCSVFiles();
         loadCSVSelect();
       }
+    } else if (data.status === 'error') {
+      if (resumeBtn) resumeBtn.style.display = 'none';
     }
   }
 }
@@ -718,12 +725,16 @@ function updateScraperFeedUI(data) {
   if (typeEl && data.type) typeEl.textContent = data.type.toUpperCase();
 
   const stopBtn = document.getElementById('scraper-stop-btn');
-  if (stopBtn) {
-    if (data.status === 'running') {
-      stopBtn.style.display = 'inline-flex';
-    } else {
-      stopBtn.style.display = 'none';
-    }
+  const resumeBtn = document.getElementById('scraper-resume-btn');
+  if (data.status === 'running') {
+    if (stopBtn) stopBtn.style.display = 'inline-flex';
+    if (resumeBtn) resumeBtn.style.display = 'none';
+  } else if (data.status === 'stopped') {
+    if (stopBtn) stopBtn.style.display = 'none';
+    if (resumeBtn) resumeBtn.style.display = 'inline-flex';
+  } else {
+    if (stopBtn) stopBtn.style.display = 'none';
+    if (resumeBtn) resumeBtn.style.display = 'none';
   }
 
   const log = document.getElementById('scraper-live-log');
@@ -736,7 +747,7 @@ function updateScraperFeedUI(data) {
       let cls = 'log-info';
       if (msg.includes('ERROR') || msg.includes('failed') || msg.includes('🚨')) cls = 'log-error';
       else if (msg.includes('WARNING') || msg.includes('RATE LIMIT') || msg.includes('⏳') || msg.includes('stopped') || msg.includes('⏹')) cls = 'log-warning';
-      else if (msg.includes('MATCH') || msg.includes('✓') || msg.includes('Done') || msg.includes('Saved')) cls = 'log-success';
+      else if (msg.includes('MATCH') || msg.includes('✓') || msg.includes('Done') || msg.includes('Saved') || msg.includes('Resuming')) cls = 'log-success';
 
       // Parse verified matches (monotonic, strictly accurate):
       const mMatch = msg.match(/\[(\d+)\/\d+\]\s+@[\w\d_]+.*✓ MATCH/);
@@ -794,10 +805,37 @@ async function stopScraping() {
       if (pill) { pill.textContent = 'stopped'; pill.setAttribute('data-s', 'stopped'); }
       const stopBtn = document.getElementById('scraper-stop-btn');
       if (stopBtn) stopBtn.style.display = 'none';
+      const resumeBtn = document.getElementById('scraper-resume-btn');
+      if (resumeBtn) resumeBtn.style.display = 'inline-flex';
       loadScraperJobsTable();
     }
   } catch (err) {
     toast('Error stopping scraper: ' + err.message, 'error');
+  }
+}
+
+async function resumeScraping() {
+  if (!currentJobId) {
+    toast('No stopped scraping job selected to resume', 'error');
+    return;
+  }
+  try {
+    const res = await api(`/api/jobs/${currentJobId}/resume`, { method: 'POST' });
+    if (res.error) {
+      toast(res.error, 'error');
+    } else {
+      toast('Scraping job resumed! 🚀', 'success');
+      const pill = document.getElementById('scraper-status-pill');
+      if (pill) { pill.textContent = 'running'; pill.setAttribute('data-s', 'running'); }
+      const stopBtn = document.getElementById('scraper-stop-btn');
+      if (stopBtn) stopBtn.style.display = 'inline-flex';
+      const resumeBtn = document.getElementById('scraper-resume-btn');
+      if (resumeBtn) resumeBtn.style.display = 'none';
+      startJobPoll();
+      loadScraperJobsTable();
+    }
+  } catch (err) {
+    toast('Error resuming scraper: ' + err.message, 'error');
   }
 }
 
@@ -813,11 +851,30 @@ async function stopJobById(jobId) {
         if (pill) { pill.textContent = 'stopped'; pill.setAttribute('data-s', 'stopped'); }
         const stopBtn = document.getElementById('scraper-stop-btn');
         if (stopBtn) stopBtn.style.display = 'none';
+        const resumeBtn = document.getElementById('scraper-resume-btn');
+        if (resumeBtn) resumeBtn.style.display = 'inline-flex';
       }
       loadScraperJobsTable();
     }
   } catch (err) {
     toast('Error stopping job: ' + err.message, 'error');
+  }
+}
+
+async function resumeJobById(jobId) {
+  try {
+    const res = await api(`/api/jobs/${jobId}/resume`, { method: 'POST' });
+    if (res.error) {
+      toast(res.error, 'error');
+    } else {
+      toast('Scraping job resumed! 🚀', 'success');
+      currentJobId = jobId;
+      showScraperFeed(null, jobId);
+      startJobPoll();
+      loadScraperJobsTable();
+    }
+  } catch (err) {
+    toast('Error resuming job: ' + err.message, 'error');
   }
 }
 
@@ -868,6 +925,8 @@ function clearScraperFeed() {
   if (dlBtn) dlBtn.style.display = 'none';
   const stopBtn = document.getElementById('scraper-stop-btn');
   if (stopBtn) stopBtn.style.display = 'none';
+  const resumeBtn = document.getElementById('scraper-resume-btn');
+  if (resumeBtn) resumeBtn.style.display = 'none';
 
   const log = document.getElementById('scraper-live-log');
   if (log) {
@@ -901,6 +960,7 @@ async function loadScraperJobsTable() {
       const createdStr = j.created_at ? new Date(j.created_at).toLocaleString() : '--';
       const isDone = j.status === 'done';
       const isRunning = j.status === 'running';
+      const isStopped = j.status === 'stopped';
 
       return `
         <tr>
@@ -913,6 +973,7 @@ async function loadScraperJobsTable() {
           <td>
             <div style="display:flex;gap:6px;">
               ${isRunning ? `<button class="btn btn-sm btn-danger" onclick="stopJobById('${j.id}')">Stop</button>` : ''}
+              ${isStopped ? `<button class="btn btn-sm btn-success" onclick="resumeJobById('${j.id}')">▶ Resume</button>` : ''}
               ${(isDone || j.result_file) ? `<button class="btn btn-sm btn-ghost" onclick="downloadJobById('${j.id}')">⬇ CSV</button>` : ''}
               <button class="btn btn-sm btn-ghost" onclick="viewJobInFeed('${j.id}')">👁 View Log</button>
               <button class="btn btn-sm btn-danger" style="padding:2px 6px;font-size:11px;" onclick="deleteJobById('${j.id}')">✕</button>

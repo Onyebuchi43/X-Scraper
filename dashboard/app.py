@@ -221,7 +221,7 @@ def _delete_account_from_db(account_id: int) -> None:
 # ── ──────────────────────────────────────────────────────────────────────────
 # Scraping job runner (background thread)
 # ────────────────────────────────────────────────────────────────────────────
-def _run_scrape_job(job_id: str, job_type: str, params: dict) -> None:
+def _run_scrape_job(job_id: str, job_type: str, params: dict, is_resume: bool = False) -> None:
     try:
         from Scweet import Scweet, ScweetConfig  # type: ignore
         from dashboard.poster import classify_account_error  # type: ignore
@@ -230,7 +230,28 @@ def _run_scrape_job(job_id: str, job_type: str, params: dict) -> None:
         is_stopped_fn = stop_ev.is_set if stop_ev else None
 
         _update_job(job_id, status="running")
-        _append_job_log(job_id, "Initializing Scweet…")
+
+        save_name = f"job_{job_id[:8]}"
+        os.makedirs("outputs", exist_ok=True)
+        result_file = os.path.join("outputs", f"{save_name}.csv")
+
+        # Load existing handles if resuming
+        existing_handles_list: list[str] = []
+        existing_handles_set: set = set()
+        if is_resume and os.path.isfile(result_file):
+            import csv as _csv
+            try:
+                with open(result_file, "r", encoding="utf-8") as f:
+                    reader = _csv.reader(f)
+                    header = next(reader, None)
+                    for row in reader:
+                        if row and row[0]:
+                            h = row[0].strip().lstrip("@").lower()
+                            if h and h not in existing_handles_set:
+                                existing_handles_set.add(h)
+                                existing_handles_list.append(h)
+            except Exception as e:
+                logger.warning("Failed to load existing handles for resume: %s", e)
 
         # Build cookies list from selected account IDs
         account_ids: list[int] = params.get("account_ids", [])
@@ -255,66 +276,82 @@ def _run_scrape_job(job_id: str, job_type: str, params: dict) -> None:
             cookies=cookies_list if len(cookies_list) > 1 else cookies_list[0],
             config=cfg,
         )
-        _append_job_log(job_id, f"Scweet initialized with {len(cookies_list)} account(s)")
+
+        log_fn = lambda level, msg: _append_job_log(job_id, f"[{level}] {msg}")
+        if is_resume:
+            log_fn("INFO", f"🔄 Resuming scrape job #{job_id[:8]} ({len(existing_handles_list)} profiles already collected)...")
+        else:
+            log_fn("INFO", f"Initializing Scweet with {len(cookies_list)} account(s)…")
 
         results = []
-        save_name = f"job_{job_id[:8]}"
-        log_fn = lambda level, msg: _append_job_log(job_id, f"[{level}] {msg}")
 
         if job_type == "followers":
             targets = params.get("targets", [])
-            limit = int(params.get("limit", 100))
+            total_limit = int(params.get("limit", 100))
+            needed_limit = max(1, total_limit - len(existing_handles_list))
             country_filter = params.get("country_filter", "")
             min_followers = int(params.get("min_followers", 0))
             max_followers = int(params.get("max_followers", 1000))
             target_type = params.get("target_type", "followers")
 
+            if len(existing_handles_list) >= total_limit:
+                _update_job(job_id, status="done", result_file=result_file)
+                log_fn("SUCCESS", f"Target limit of {total_limit} profiles already reached! Job complete.")
+                return
+
             if target_type == "tweet_commenters":
                 from scheduler_engine import _scrape_tweet_commenters
-                log_fn("INFO", f"Scraping commenters of tweet/URL {targets} (limit={limit}, range: {min_followers}-{max_followers}, country: '{country_filter}')")
+                log_fn("INFO", f"Scraping commenters of tweet/URL {targets} (remaining: {needed_limit}/{total_limit}, range: {min_followers}-{max_followers}, country: '{country_filter}')")
                 tweet_target = targets[0] if isinstance(targets, list) and targets else str(targets)
                 handles, ok, raw_count = _scrape_tweet_commenters(
-                    tweet_target, cookies_list, limit, log_fn,
+                    tweet_target, cookies_list, needed_limit, log_fn,
                     min_followers=min_followers, max_followers=max_followers,
                     country_filter=country_filter,
+                    checked_candidates_set=existing_handles_set,
                     is_stopped_fn=is_stopped_fn,
                 )
             elif target_type == "target_tweets_commenters":
                 from scheduler_engine import _scrape_target_tweets_commenters
-                log_fn("INFO", f"Scraping recent top tweets commenters of {targets} (limit={limit}, range: {min_followers}-{max_followers}, country: '{country_filter}')")
+                log_fn("INFO", f"Scraping recent top tweets commenters of {targets} (remaining: {needed_limit}/{total_limit}, range: {min_followers}-{max_followers}, country: '{country_filter}')")
                 handles, ok, raw_count = _scrape_target_tweets_commenters(
                     targets if isinstance(targets, list) else [str(targets)],
-                    cookies_list, limit, log_fn,
+                    cookies_list, needed_limit, log_fn,
                     min_followers=min_followers, max_followers=max_followers,
                     country_filter=country_filter,
+                    checked_candidates_set=existing_handles_set,
                     is_stopped_fn=is_stopped_fn,
                 )
             else:
                 from scheduler_engine import _scrape_followers
-                log_fn("INFO", f"Scraping followers of {targets} (limit={limit}, range: {min_followers}-{max_followers}, country: '{country_filter}')")
+                log_fn("INFO", f"Scraping followers of {targets} (remaining: {needed_limit}/{total_limit}, range: {min_followers}-{max_followers}, country: '{country_filter}')")
                 handles, ok, raw_count = _scrape_followers(
                     targets if isinstance(targets, list) else [str(targets)],
-                    cookies_list, limit, log_fn,
+                    cookies_list, needed_limit, log_fn,
                     min_followers=min_followers, max_followers=max_followers,
                     country_filter=country_filter,
+                    checked_handles_set=existing_handles_set,
                     is_stopped_fn=is_stopped_fn,
                 )
 
-            os.makedirs("outputs", exist_ok=True)
-            result_file = os.path.join("outputs", f"{save_name}.csv")
             import csv as _csv, datetime as _dt
-            with open(result_file, "w", newline="", encoding="utf-8") as f:
+            file_mode = "a" if is_resume and os.path.isfile(result_file) else "w"
+            with open(result_file, file_mode, newline="", encoding="utf-8") as f:
                 writer = _csv.writer(f)
-                writer.writerow(["username", "scraped_at", "source_target", "target_type"])
+                if file_mode == "w":
+                    writer.writerow(["username", "scraped_at", "source_target", "target_type"])
                 for h in handles:
-                    writer.writerow([h, _dt.datetime.now().isoformat(), ",".join(targets) if isinstance(targets, list) else str(targets), target_type])
+                    if h.lower() not in existing_handles_set:
+                        writer.writerow([h, _dt.datetime.now().isoformat(), ",".join(targets) if isinstance(targets, list) else str(targets), target_type])
+                        existing_handles_set.add(h.lower())
+                        existing_handles_list.append(h)
 
+            total_collected = len(existing_handles_list)
             if stop_ev and stop_ev.is_set():
-                _update_job(job_id, status="stopped", result_file=result_file if handles else None)
-                log_fn("WARNING", f"Scraping stopped by user! {len(handles)} matched profiles saved -> {result_file}")
+                _update_job(job_id, status="stopped", result_file=result_file if total_collected > 0 else None)
+                log_fn("WARNING", f"Scraping stopped by user! {total_collected} matched profiles saved -> {result_file}")
             else:
                 _update_job(job_id, status="done", result_file=result_file)
-                log_fn("SUCCESS", f"Scraping completed! {len(handles)} matched profiles saved -> {result_file}")
+                log_fn("SUCCESS", f"Scraping completed! {total_collected} matched profiles saved -> {result_file}")
             return
 
         elif job_type == "search":
@@ -626,6 +663,36 @@ def stop_job_api(job_id: str):
     _update_job(job_id, status="stopped")
     _append_job_log(job_id, "⏹ Scraping stopped by user.")
     return jsonify({"msg": "Scraping job stopped", "status": "stopped"})
+
+
+@app.route("/api/jobs/<job_id>/resume", methods=["POST"])
+def resume_job_api(job_id: str):
+    conn = _db()
+    row = conn.execute("SELECT * FROM jobs WHERE id=?", (job_id,)).fetchone()
+    conn.close()
+    if not row:
+        return jsonify({"error": "Job not found"}), 404
+
+    current_status = row["status"]
+    if current_status == "running":
+        return jsonify({"msg": "Job is already running", "job_id": job_id})
+
+    try:
+        params = json.loads(row["params"] or "{}")
+    except Exception:
+        params = {}
+
+    job_type = row["type"]
+
+    stop_ev = threading.Event()
+    _scrape_stop_events[job_id] = stop_ev
+    _update_job(job_id, status="running")
+
+    t = threading.Thread(target=_run_scrape_job, args=(job_id, job_type, params, True), daemon=True)
+    _jobs[job_id] = t
+    t.start()
+
+    return jsonify({"msg": "Scraping job resumed", "job_id": job_id, "status": "running"})
 
 
 @app.route("/api/scrape/stop", methods=["POST"])
