@@ -1270,10 +1270,11 @@ async function startCampaign() {
     min_delay_minutes: parseInt(val('c-min-delay') || '8'),
     max_delay_minutes: parseInt(val('c-max-delay') || '20'),
     max_posts_per_account: parseInt(val('c-max-posts') || '30'),
-    min_followers:     parseInt(val('c-min-followers') || '0'),
-    max_followers:     parseInt(val('c-max-followers') || '1000'),
+    cooldown_minutes:      parseInt(val('c-cooldown-mins') || '30'),
+    min_followers:         parseInt(val('c-min-followers') || '0'),
+    max_followers:         parseInt(val('c-max-followers') || '1000'),
     country_filter,
-    execution_mode:    val('c-execution-mode') || 'vps',
+    execution_mode:        val('c-execution-mode') || 'vps',
   };
 
   const name = val('c-name') || ('Campaign ' + new Date().toLocaleString());
