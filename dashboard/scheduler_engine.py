@@ -225,18 +225,21 @@ def _scrape_followers(
     if checked_handles_set is None:
         checked_handles_set = set()
 
+    for acc in pool_accounts:
+        aid = acc.get("id")
+        px = acc.get("proxy")
+        if not px:
+            if aid:
+                log_fn("INFO", f"🔌 Account #{aid} has no assigned proxy. Requesting dedicated BetaSocks proxy (1 sock per account)…")
+                new_px = _auto_heal_account_proxy(aid, log_fn)
+                if new_px:
+                    acc["proxy"] = new_px
+        else:
+            masked_px = px.split("@")[-1] if "@" in px else px.split(":")[0] + ":" + px.split(":")[1] if len(px.split(":")) >= 2 else px
+            log_fn("INFO", f"🔌 Account #{aid or 1} routing scraper requests through dedicated proxy ({masked_px})")
+
     try:
         from Scweet import Scweet, ScweetConfig  # type: ignore
-
-        # Preflight: Ensure 1 dedicated proxy per account (same algorithm as campaign)
-        for acc in pool_accounts:
-            if not acc.get("proxy"):
-                aid = acc.get("id")
-                if aid:
-                    log_fn("INFO", f"🔌 Account #{aid} has no assigned proxy. Fetching dedicated BetaSocks proxy (1 sock per account)…")
-                    new_px = _auto_heal_account_proxy(aid, log_fn)
-                    if new_px:
-                        acc["proxy"] = new_px
 
         cookies_pool_list = []
         for acc in pool_accounts:
@@ -260,7 +263,7 @@ def _scrape_followers(
 
         fetch_limit = max(limit, 100) if (max_followers and max_followers < 1000000) else limit
         country_msg = f", 'Account based in' filter: {country_filter}" if country_filter else ""
-        log_fn("INFO", f"Initialising streaming Scweet scraper for source profiles: {source_profiles} (fetch limit: {fetch_limit}, followers range: {min_followers}-{max_followers}{country_msg})")
+        log_fn("INFO", f"Initialising streaming Scweet scraper for source profiles: {source_profiles} (target: {limit} matches, followers range: {min_followers}-{max_followers}{country_msg})")
         cfg = ScweetConfig(daily_requests_limit=100000, daily_tweets_limit=100000)
         s = Scweet(
             cookies=rotated_cookies if len(rotated_cookies) > 1 else rotated_cookies[0],
@@ -302,6 +305,7 @@ def _scrape_followers(
         _scweet_logger = _logging.getLogger("Scweet.api_engine")
         _scweet_logger.addHandler(_capture)
         try:
+            log_fn("INFO", f"📡 Connecting to Twitter endpoint via proxy and fetching followers batch...")
             results = s.get_followers(source_profiles, limit=fetch_limit, save=False, resume=True)
         finally:
             _scweet_logger.removeHandler(_capture)
@@ -310,7 +314,7 @@ def _scrape_followers(
         if not results and _capture.failing_account_ids:
             healed_any = False
             for bad_acc_id in _capture.failing_account_ids:
-                log_fn("WARNING", f"🔌 Scraper Account #{bad_acc_id} proxy error detected (407/599). Triggering auto-heal for Account #{bad_acc_id}…")
+                log_fn("WARNING", f"🔌 Scraper Account #{bad_acc_id} proxy error detected (407/599). Requesting proxy change & auto-heal…")
                 new_proxy = _auto_heal_account_proxy(bad_acc_id, log_fn)
                 if new_proxy:
                     healed_any = True
@@ -324,7 +328,7 @@ def _scrape_followers(
                     set_account_cooldown(bad_acc_id, 1800)
 
             if healed_any:
-                log_fn("INFO", "🔄 Retrying follower scraping with newly healed proxy…")
+                log_fn("INFO", "🔄 Retrying follower scraping with newly assigned proxy…")
                 cookies_pool_list = []
                 for acc in pool_accounts:
                     entry = {
@@ -342,11 +346,16 @@ def _scrape_followers(
                 results = s.get_followers(source_profiles, limit=fetch_limit, save=False, resume=True)
 
         raw_count = len(results) if results else 0
+        log_fn("INFO", f"📥 Retrieved {raw_count} raw profiles from Twitter stream. Processing & verifying candidates live...")
 
-        # ── Step 1: follower count filter (fast, no extra API calls) ─────────
+        # ── Step 1: follower count filter (fast, live streaming log) ─────────
         candidate_items: List[dict] = []
         if results:
-            for item in results:
+            for idx, item in enumerate(results, 1):
+                if is_stopped_fn and is_stopped_fn():
+                    log_fn("WARNING", "⏹ Scraping stopped by user.")
+                    return handles, True, raw_count
+
                 if isinstance(item, dict):
                     handle = (
                         item.get("username")
@@ -360,17 +369,18 @@ def _scrape_followers(
                         try:
                             val = int(fc)
                             if not (min_followers <= val <= max_followers):
+                                log_fn("DEBUG", f"  [{idx}/{raw_count}] @{handle} (Followers: {val}) — skipped (outside {min_followers}-{max_followers})")
                                 continue
                         except (ValueError, TypeError):
                             pass
                     if handle:
-                        candidate_items.append({"handle": handle, "bio_location": loc_str})
+                        candidate_items.append({"handle": handle, "bio_location": loc_str, "followers_count": fc})
                 elif isinstance(item, str):
                     handle = item.strip().lstrip("@").lower()
                     if handle:
-                        candidate_items.append({"handle": handle, "bio_location": ""})
+                        candidate_items.append({"handle": handle, "bio_location": "", "followers_count": None})
 
-        # ── Step 2: "Account based in" country filter (AboutAccountQuery with Adaptive 429 Window-Wait & Pool Rotation) ────
+        # ── Step 2: "Account based in" country filter or Direct Streaming Match ────
         if country_keywords:
             unprocessed_candidates = [c for c in candidate_items if c["handle"] not in checked_handles_set]
             if unprocessed_candidates:
@@ -437,7 +447,18 @@ def _scrape_followers(
                     else:
                         log_fn("INFO", f"  [{checked_count}/{len(unprocessed_candidates)}] @{h}: Location not listed on profile — skipped")
         else:
-            handles = [c["handle"] for c in candidate_items][:limit]
+            for cand in candidate_items:
+                if is_stopped_fn and is_stopped_fn():
+                    log_fn("WARNING", "⏹ Scraping stopped by user.")
+                    return handles, True, raw_count
+                if len(handles) >= limit:
+                    break
+                h = cand["handle"]
+                fc_val = cand.get("followers_count")
+                fc_str = f" ({fc_val} followers)" if fc_val is not None else ""
+                handles.append(h)
+                log_fn("INFO", f"  [{len(handles)}/{limit}] @{h}{fc_str} ✓ MATCH")
+                _time.sleep(0.05)  # Micro-yield to allow smooth live UI streaming
 
         log_fn("INFO", f"Scraped {raw_count} total profiles from Twitter; {len(handles)} matched criteria ({min_followers}-{max_followers} followers{country_msg})")
         return handles, True, raw_count
