@@ -275,75 +275,38 @@ def _scrape_followers(
 
         handles: List[str] = []
 
-        # ── Log interceptor: pinpoint the EXACT scraper account whose proxy failed ──
-        class _ScweetProxyErrorCapture(_logging.Handler):
-            def __init__(self):
-                super().__init__()
-                self.failing_account_ids: set = set()
-                self._proxy_kw = [
-                    "599", "407", "connect tunnel failed", "tunnel failed",
-                    "response 407", "curl: (7)",
-                ]
-            def emit(self, record):
-                if record.levelno < _logging.WARNING:
-                    return
-                msg = record.getMessage()
-                msg_lower = msg.lower()
-                if any(k in msg_lower for k in self._proxy_kw):
-                    matched = False
-                    for acc in pool_accounts:
-                        aid = acc.get("id")
-                        if aid and (f"acc_{aid}" in msg or f":{aid}" in msg):
-                            self.failing_account_ids.add(aid)
-                            matched = True
-                    if not matched and rotated_cookies:
-                        active_first_id = rotated_cookies[0].get("id")
-                        if active_first_id:
-                            self.failing_account_ids.add(active_first_id)
-
-        _capture = _ScweetProxyErrorCapture()
-        _scweet_logger = _logging.getLogger("Scweet.api_engine")
-        _scweet_logger.addHandler(_capture)
         try:
             log_fn("INFO", f"📡 Connecting to Twitter endpoint via proxy and fetching followers batch...")
             results = s.get_followers(source_profiles, limit=fetch_limit, save=False, resume=True)
-        finally:
-            _scweet_logger.removeHandler(_capture)
-
-        # ── Auto-heal ONLY the specific account(s) that encountered proxy errors & RETRY ──
-        if not results and _capture.failing_account_ids:
-            healed_any = False
-            for bad_acc_id in _capture.failing_account_ids:
-                log_fn("WARNING", f"🔌 Scraper Account #{bad_acc_id} proxy error detected (407/599). Requesting proxy change & auto-heal…")
-                new_proxy = _auto_heal_account_proxy(bad_acc_id, log_fn)
+        except Exception as scrap_exc:
+            err_type = classify_account_error(scrap_exc)
+            active_acc = pool_accounts[0] if pool_accounts else {}
+            active_acc_id = active_acc.get("id")
+            if (err_type == "PROXY_ERROR" or not _is_proxy_working(active_acc.get("proxy"))) and active_acc_id:
+                log_fn("WARNING", f"🔌 Scraper Account #{active_acc_id} proxy unreachable. Auto-healing proxy…")
+                new_proxy = _auto_heal_account_proxy(active_acc_id, log_fn)
                 if new_proxy:
-                    healed_any = True
-                    for pa in pool_accounts:
-                        if pa.get("id") == bad_acc_id:
-                            pa["proxy"] = new_proxy
-                    for a in accounts:
-                        if a.get("id") == bad_acc_id:
-                            a["proxy"] = new_proxy
+                    active_acc["proxy"] = new_proxy
+                    cookies_pool_list[0]["proxy"] = new_proxy
+                    s = Scweet(cookies=cookies_pool_list[0], config=cfg)
+                    results = s.get_followers(source_profiles, limit=fetch_limit, save=False, resume=True)
                 else:
-                    set_account_cooldown(bad_acc_id, 1800)
+                    results = []
+            else:
+                raise scrap_exc
 
-            if healed_any:
-                log_fn("INFO", "🔄 Retrying follower scraping with newly assigned proxy…")
-                cookies_pool_list = []
-                for acc in pool_accounts:
-                    entry = {
-                        "auth_token": acc["auth_token"],
-                        "ct0": acc["ct0"],
-                        "username": f"acc_{acc['id']}" if acc.get("id") else f"acc_{acc['auth_token'][:8]}",
-                    }
-                    if acc.get("proxy"): entry["proxy"] = acc["proxy"]
-                    if acc.get("id"): entry["id"] = acc["id"]
-                    cookies_pool_list.append(entry)
-                s = Scweet(
-                    cookies=cookies_pool_list if len(cookies_pool_list) > 1 else cookies_pool_list[0],
-                    config=cfg,
-                )
-                results = s.get_followers(source_profiles, limit=fetch_limit, save=False, resume=True)
+        # If results empty, only trigger auto-heal if proxy is genuinely failing HTTP probe
+        if not results and pool_accounts:
+            active_acc = pool_accounts[0]
+            active_acc_id = active_acc.get("id")
+            if active_acc_id and not _is_proxy_working(active_acc.get("proxy")):
+                log_fn("WARNING", f"🔌 Scraper Account #{active_acc_id} proxy connection failed probe. Auto-healing proxy…")
+                new_proxy = _auto_heal_account_proxy(active_acc_id, log_fn)
+                if new_proxy:
+                    active_acc["proxy"] = new_proxy
+                    cookies_pool_list[0]["proxy"] = new_proxy
+                    s = Scweet(cookies=cookies_pool_list[0], config=cfg)
+                    results = s.get_followers(source_profiles, limit=fetch_limit, save=False, resume=True)
 
         raw_count = len(results) if results else 0
         log_fn("INFO", f"📥 Retrieved {raw_count} raw profiles from Twitter stream. Processing & verifying candidates live...")
@@ -483,6 +446,22 @@ def _scrape_followers(
             log_fn("ERROR", f"Scraping failed: {exc}")
         logger.exception("_scrape_followers failed")
         return [], False, 0
+
+
+def _is_proxy_working(proxy_str: Optional[str], timeout: float = 4.0) -> bool:
+    """Fast probe to check if proxy is actually alive."""
+    if not proxy_str:
+        return False
+    try:
+        from poster import _get_httpx_proxy_url
+        px_url = _get_httpx_proxy_url(proxy_str)
+        if not px_url:
+            return False
+        with httpx.Client(proxy=px_url, timeout=timeout) as client:
+            resp = client.get("http://api.ipify.org")
+            return resp.status_code == 200 and len(resp.text.strip()) > 0
+    except Exception:
+        return False
 
 
 _TESTED_PROXY_HEALTH_CACHE: dict[str, float] = {}
